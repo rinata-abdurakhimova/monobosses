@@ -75,3 +75,9 @@
 - Немає пояснення evidence → це задача R3, а не привід приховати source.
 - Бракує часу → прибирай декоративні елементи й необов’язкові панелі; залиш форму, 11 секцій, evidence, revision та errors.
 
+## Твої GitHub Issues
+
+- [R1-01: #3](https://github.com/rinata-abdurakhimova/monobosses/issues/3) — Зробити Next.js форму та сторінку звіту на synthetic fixture.
+- [R1-02: #8](https://github.com/rinata-abdurakhimova/monobosses/issues/8) — Підключити форму, polling і report до Python API.
+- [R1-03: #15](https://github.com/rinata-abdurakhimova/monobosses/issues/15) — Зробити evidence drill-down, upload та порівняння версій.
+- [R1-04: #18](https://github.com/rinata-abdurakhimova/monobosses/issues/18) — Розгорнути Next.js і Python та перевірити весь сценарій.

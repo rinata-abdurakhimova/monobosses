@@ -63,3 +63,9 @@ Python у `services/api/src/vic/agents/business/`: `market.py`, `investment.py`,
 
 Окремі partner/IP/TPP agents та великий finance model. У MVP ці питання можуть бути явними diligence gaps. Спочатку — потрібні sections, доказове рішення, evaluation та revision demo.
 
+## Твої GitHub Issues
+
+- [R5-01: #6](https://github.com/rinata-abdurakhimova/monobosses/issues/6) — Реалізувати competitive landscape та commercial analysis.
+- [R5-02: #11](https://github.com/rinata-abdurakhimova/monobosses/issues/11) — Реалізувати capital/time to milestone та фінансові сценарії.
+- [R5-03: #13](https://github.com/rinata-abdurakhimova/monobosses/issues/13) — Реалізувати голову комітету, risks та 5–10 diligence questions.
+- [R5-04: #17](https://github.com/rinata-abdurakhimova/monobosses/issues/17) — Зібрати dataset, провести evaluation та оформити результати.

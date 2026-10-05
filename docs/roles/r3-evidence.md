@@ -53,3 +53,8 @@ Python у `services/api/src/vic/evidence/`: `models` використовуют�
 - R1 отримує через API title/URL/excerpt/locator для drill-down.
 - При браку даних поверни конкретний gap. Не заповнюй непублічні результати, IP чи ціни із здогадок.
 
+## Твої GitHub Issues
+
+- [R3-01: #4](https://github.com/rinata-abdurakhimova/monobosses/issues/4) — Реалізувати text/PDF import та synthetic evidence pack.
+- [R3-02: #9](https://github.com/rinata-abdurakhimova/monobosses/issues/9) — Підключити live sources та пошук суперечливих доказів.
+- [R3-03: #12](https://github.com/rinata-abdurakhimova/monobosses/issues/12) — Реалізувати аудит claim → evidence та leakage checks.

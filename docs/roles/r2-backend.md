@@ -57,3 +57,8 @@
 
 Не створюй власний scientific prompt у pipeline замість модуля R4; не визначай recommendation кількістю голосів; не повертай raw LLM text як Report. Не перетворюй transient storage або in-process task на обіцянку production durability.
 
+## Твої GitHub Issues
+
+- [R2-01: #2](https://github.com/rinata-abdurakhimova/monobosses/issues/2) — Створити Python API skeleton, contracts v1 та спільні fixtures.
+- [R2-02: #7](https://github.com/rinata-abdurakhimova/monobosses/issues/7) — Запустити background runs, спільний LLM adapter та повний pipeline.
+- [R2-03: #14](https://github.com/rinata-abdurakhimova/monobosses/issues/14) — Додати evidence uploads, report revisions та evaluation runner.

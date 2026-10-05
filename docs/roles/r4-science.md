@@ -52,3 +52,8 @@ Python у `services/api/src/vic/agents/science/`: `scientific.py`, `translation.
 - R5: clinical plan, next milestone, meaningful benefit, risk/unknown/question lists та evaluation expectations.
 - R1 отримує твої результати через спільний Report, а не окремий science endpoint.
 
+## Твої GitHub Issues
+
+- [R4-01: #5](https://github.com/rinata-abdurakhimova/monobosses/issues/5) — Написати scientific і human translation agents.
+- [R4-02: #10](https://github.com/rinata-abdurakhimova/monobosses/issues/10) — Реалізувати clinical plan та визначення наступного milestone.
+- [R4-03: #16](https://github.com/rinata-abdurakhimova/monobosses/issues/16) — Перевірити зміну science/clinical висновків і підготувати expectations.

@@ -1,6 +1,6 @@
 # Задачі команди та порядок виконання
 
-Тут збережено повні тексти 18 задач для GitHub Issues. Це локальні специфікації, не підтвердження публікації. Фактичні номери й URL після створення будуть у `github-issues.json`. Сталі коди R1-01 тощо використовуйте в PR та комунікації незалежно від GitHub номерів.
+Усі 18 задач опубліковано у [GitHub Issues](https://github.com/rinata-abdurakhimova/monobosses/issues). Тут збережені їхні специфікації, а номери й URL — у [github-issues.json](github-issues.json). Інструкції доступні у [PR #1](https://github.com/rinata-abdurakhimova/monobosses/pull/1). Сталі коди R1-01 тощо використовуйте в PR та комунікації незалежно від GitHub номерів.
 
 Спочатку прочитайте [старт для ролей](../roles/README.md) та [спільний контракт](../implementation-contract.md).
 
@@ -41,4 +41,25 @@
 
 `Todo` → `In progress` → `Review` → `Done`. Blocker записати в issue із посиланням на залежність та конкретним відсутнім результатом. Issues не мають assignees до підтвердження GitHub usernames; людський розподіл уже вказаний у role guides.
 
+## Опубліковані GitHub Issues
 
+| Код | GitHub | Роль |
+| --- | --- | --- |
+| R2-01 | [#2](https://github.com/rinata-abdurakhimova/monobosses/issues/2) | R2 — Kateryna |
+| R1-01 | [#3](https://github.com/rinata-abdurakhimova/monobosses/issues/3) | R1 — Rinata |
+| R3-01 | [#4](https://github.com/rinata-abdurakhimova/monobosses/issues/4) | R3 — Victoria |
+| R4-01 | [#5](https://github.com/rinata-abdurakhimova/monobosses/issues/5) | R4 — Arina |
+| R5-01 | [#6](https://github.com/rinata-abdurakhimova/monobosses/issues/6) | R5 — Uliana |
+| R2-02 | [#7](https://github.com/rinata-abdurakhimova/monobosses/issues/7) | R2 — Kateryna |
+| R1-02 | [#8](https://github.com/rinata-abdurakhimova/monobosses/issues/8) | R1 — Rinata |
+| R3-02 | [#9](https://github.com/rinata-abdurakhimova/monobosses/issues/9) | R3 — Victoria |
+| R4-02 | [#10](https://github.com/rinata-abdurakhimova/monobosses/issues/10) | R4 — Arina |
+| R5-02 | [#11](https://github.com/rinata-abdurakhimova/monobosses/issues/11) | R5 — Uliana |
+| R3-03 | [#12](https://github.com/rinata-abdurakhimova/monobosses/issues/12) | R3 — Victoria |
+| R5-03 | [#13](https://github.com/rinata-abdurakhimova/monobosses/issues/13) | R5 — Uliana |
+| R2-03 | [#14](https://github.com/rinata-abdurakhimova/monobosses/issues/14) | R2 — Kateryna |
+| R1-03 | [#15](https://github.com/rinata-abdurakhimova/monobosses/issues/15) | R1 — Rinata |
+| R4-03 | [#16](https://github.com/rinata-abdurakhimova/monobosses/issues/16) | R4 — Arina |
+| R5-04 | [#17](https://github.com/rinata-abdurakhimova/monobosses/issues/17) | R5 — Uliana |
+| R1-04 | [#18](https://github.com/rinata-abdurakhimova/monobosses/issues/18) | R1 — Rinata |
+| TEAM-01 | [#19](https://github.com/rinata-abdurakhimova/monobosses/issues/19) | Вся команда; R1 координує demo, R5 — quality gates |

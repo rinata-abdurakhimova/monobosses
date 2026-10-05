@@ -1,5 +1,7 @@
 # [TEAM-01] Провести фінальну перевірку, demo та підготувати README
 
+**GitHub issue:** [#19](https://github.com/rinata-abdurakhimova/monobosses/issues/19)
+
 **Відповідальна роль:** Вся команда; R1 координує demo, R5 — quality gates. GitHub assignee призначає команда.
 
 **Етап:** E. **Залежності для завершення:** [R1-04](r1-04.md), [R5-04](r5-04.md)
