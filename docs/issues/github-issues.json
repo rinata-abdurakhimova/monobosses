@@ -1,0 +1,224 @@
+{
+  "repository": "rinata-abdurakhimova/monobosses",
+  "status": "published",
+  "documentation_branch": "codex/team-role-playbooks",
+  "documentation_pull_request": "https://github.com/rinata-abdurakhimova/monobosses/pull/1",
+  "note": "Усі 18 issues створено й відкрито. Інструкції опубліковані в окремій гілці та PR; assignees не призначені.",
+  "issues": [
+    {
+      "code": "R2-01",
+      "title": "[R2-01] Створити Python API skeleton, contracts v1 та спільні fixtures",
+      "role": "R2 — Kateryna",
+      "body_file": "docs/issues/r2-01.md",
+      "depends_on": [],
+      "github_number": 2,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/2"
+    },
+    {
+      "code": "R1-01",
+      "title": "[R1-01] Зробити Next.js форму та сторінку звіту на synthetic fixture",
+      "role": "R1 — Rinata",
+      "body_file": "docs/issues/r1-01.md",
+      "depends_on": [
+        "R2-01"
+      ],
+      "github_number": 3,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/3"
+    },
+    {
+      "code": "R3-01",
+      "title": "[R3-01] Реалізувати text/PDF import та synthetic evidence pack",
+      "role": "R3 — Victoria",
+      "body_file": "docs/issues/r3-01.md",
+      "depends_on": [
+        "R2-01"
+      ],
+      "github_number": 4,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/4"
+    },
+    {
+      "code": "R4-01",
+      "title": "[R4-01] Написати scientific і human translation agents",
+      "role": "R4 — Arina",
+      "body_file": "docs/issues/r4-01.md",
+      "depends_on": [
+        "R2-01",
+        "R3-01"
+      ],
+      "github_number": 5,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/5"
+    },
+    {
+      "code": "R5-01",
+      "title": "[R5-01] Реалізувати competitive landscape та commercial analysis",
+      "role": "R5 — Uliana",
+      "body_file": "docs/issues/r5-01.md",
+      "depends_on": [
+        "R2-01",
+        "R3-01"
+      ],
+      "github_number": 6,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/6"
+    },
+    {
+      "code": "R2-02",
+      "title": "[R2-02] Запустити background runs, спільний LLM adapter та повний pipeline",
+      "role": "R2 — Kateryna",
+      "body_file": "docs/issues/r2-02.md",
+      "depends_on": [
+        "R2-01"
+      ],
+      "github_number": 7,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/7"
+    },
+    {
+      "code": "R1-02",
+      "title": "[R1-02] Підключити форму, polling і report до Python API",
+      "role": "R1 — Rinata",
+      "body_file": "docs/issues/r1-02.md",
+      "depends_on": [
+        "R1-01",
+        "R2-02"
+      ],
+      "github_number": 8,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/8"
+    },
+    {
+      "code": "R3-02",
+      "title": "[R3-02] Підключити live sources та пошук суперечливих доказів",
+      "role": "R3 — Victoria",
+      "body_file": "docs/issues/r3-02.md",
+      "depends_on": [
+        "R3-01"
+      ],
+      "github_number": 9,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/9"
+    },
+    {
+      "code": "R4-02",
+      "title": "[R4-02] Реалізувати clinical plan та визначення наступного milestone",
+      "role": "R4 — Arina",
+      "body_file": "docs/issues/r4-02.md",
+      "depends_on": [
+        "R4-01"
+      ],
+      "github_number": 10,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/10"
+    },
+    {
+      "code": "R5-02",
+      "title": "[R5-02] Реалізувати capital/time to milestone та фінансові сценарії",
+      "role": "R5 — Uliana",
+      "body_file": "docs/issues/r5-02.md",
+      "depends_on": [
+        "R5-01",
+        "R4-02"
+      ],
+      "github_number": 11,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/11"
+    },
+    {
+      "code": "R3-03",
+      "title": "[R3-03] Реалізувати аудит claim → evidence та leakage checks",
+      "role": "R3 — Victoria",
+      "body_file": "docs/issues/r3-03.md",
+      "depends_on": [
+        "R3-01",
+        "R4-01",
+        "R5-01"
+      ],
+      "github_number": 12,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/12"
+    },
+    {
+      "code": "R5-03",
+      "title": "[R5-03] Реалізувати голову комітету, risks та 5–10 diligence questions",
+      "role": "R5 — Uliana",
+      "body_file": "docs/issues/r5-03.md",
+      "depends_on": [
+        "R4-02",
+        "R5-02",
+        "R3-03"
+      ],
+      "github_number": 13,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/13"
+    },
+    {
+      "code": "R2-03",
+      "title": "[R2-03] Додати evidence uploads, report revisions та evaluation runner",
+      "role": "R2 — Kateryna",
+      "body_file": "docs/issues/r2-03.md",
+      "depends_on": [
+        "R2-02",
+        "R3-01"
+      ],
+      "github_number": 14,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/14"
+    },
+    {
+      "code": "R1-03",
+      "title": "[R1-03] Зробити evidence drill-down, upload та порівняння версій",
+      "role": "R1 — Rinata",
+      "body_file": "docs/issues/r1-03.md",
+      "depends_on": [
+        "R1-02",
+        "R2-03",
+        "R3-03",
+        "R5-03"
+      ],
+      "github_number": 15,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/15"
+    },
+    {
+      "code": "R4-03",
+      "title": "[R4-03] Перевірити зміну science/clinical висновків і підготувати expectations",
+      "role": "R4 — Arina",
+      "body_file": "docs/issues/r4-03.md",
+      "depends_on": [
+        "R4-02",
+        "R2-03"
+      ],
+      "github_number": 16,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/16"
+    },
+    {
+      "code": "R5-04",
+      "title": "[R5-04] Зібрати dataset, провести evaluation та оформити результати",
+      "role": "R5 — Uliana",
+      "body_file": "docs/issues/r5-04.md",
+      "depends_on": [
+        "R5-03",
+        "R2-03",
+        "R4-03",
+        "R3-03"
+      ],
+      "github_number": 17,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/17"
+    },
+    {
+      "code": "R1-04",
+      "title": "[R1-04] Розгорнути Next.js і Python та перевірити весь сценарій",
+      "role": "R1 — Rinata",
+      "body_file": "docs/issues/r1-04.md",
+      "depends_on": [
+        "R1-03",
+        "R2-03",
+        "R3-02"
+      ],
+      "github_number": 18,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/18"
+    },
+    {
+      "code": "TEAM-01",
+      "title": "[TEAM-01] Провести фінальну перевірку, demo та підготувати README",
+      "role": "Вся команда; R1 координує demo, R5 — quality gates",
+      "body_file": "docs/issues/team-01.md",
+      "depends_on": [
+        "R1-04",
+        "R5-04"
+      ],
+      "github_number": 19,
+      "url": "https://github.com/rinata-abdurakhimova/monobosses/issues/19"
+    }
+  ]
+}
