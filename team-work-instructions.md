@@ -38,11 +38,11 @@ IP, партнерства й пороги привабливості розви
 
 | № | Людська роль | Основна зона | Виконавець |
 | --- | --- | --- | --- |
-| R1 | Product UI, frontend, інтеграція та deploy | Дизайн, Next.js, користувацький сценарій, підключення API, реліз | __________ |
-| R2 | Backend platform та agent orchestration | Python API, контракти, збереження, виконання flow, traces | __________ |
-| R3 | Data та evidence engineering | Retrieval, нормалізація, provenance, аудит доказів | __________ |
-| R4 | Scientific, translational та clinical agents | Біологія, перенесення на людину, клініка й регуляторний контекст | __________ |
-| R5 | Commercial, investment та evaluation | Ринок, фінанси, синтез рішення, ризики, методика оцінювання | __________ |
+| R1 | Product UI, frontend, інтеграція та deploy | Дизайн, Next.js, користувацький сценарій, підключення API, реліз | Rinata |
+| R2 | Backend platform та agent orchestration | Python API, контракти, збереження, виконання flow, traces | Kateryna |
+| R3 | Data та evidence engineering | Retrieval, нормалізація, provenance, аудит доказів | Victoria |
+| R4 | Scientific, translational та clinical agents | Біологія, перенесення на людину, клініка й регуляторний контекст | Arina |
+| R5 | Commercial, investment та evaluation | Ринок, фінанси, синтез рішення, ризики, методика оцінювання | Uliana |
 
 Розподіл об’єднує суміжні задачі. R1 має весь видимий продукт і тому не отримує власних backend-агентів. R2 будує спільну платформу для трьох предметних напрямів. R3 централізує джерела й перевірки, щоб кожен агент не створював власний retrieval. R4 відповідає за зв’язний ланцюг від біології до клініки. R5 переводить його в інвестиційне рішення та координує перевірку якості.
 
