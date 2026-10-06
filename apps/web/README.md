@@ -4,7 +4,7 @@ Next.js App Router + TypeScript UI for the independent part of [R1-01](https://g
 
 ## Visual direction
 
-Rinata's preference is a light, pretty, airy interface with comfortably readable text. Use white surfaces, soft lavender/blush accents, pale report cards, 16–17px body/form text, and secondary labels of at least 12px. Keep large panels light; use stronger colour for small accents and buttons. Mobile layouts must not reduce text to fit.
+The current reference uses a richer sage workspace, a deep pine navigation sidebar, elevated white cards, and emerald actions. Coral identifies the preview label, teal frames the synthetic banner, and gold highlights conditions and warnings. Unknown counts use terracotta badges; document and perspective counts use violet. Inter is loaded via a Google Fonts CSS import, with Arial/sans-serif fallback. Use the requested 30px/800 dark-green report heading, 20px/700 card headings, 13.5px actions/navigation, 12.5px metrics/callouts, and 10px uppercase categories. Main body/form text remains 16–17px. Metric numbers use tabular figures. Preserve high contrast and adjust spacing rather than shrinking mobile text. The breadcrumb bar sticks to the top; anchor offsets keep report sections visible beneath it. Use custom CSS, not Tailwind. The personal profile footer stays removed. Metrics use actual report counts; the green scope pill identifies a category, not a validated investment outcome.
 
 ## Run
 
@@ -23,7 +23,7 @@ npm run build
 npm start
 ```
 
-Dependencies are pinned in `package.json` and `package-lock.json`. No environment variables or external fonts are required.
+Dependencies are pinned in `package.json` and `package-lock.json`. No environment variables are required. Inter needs browser access to Google Fonts; when unavailable, the interface uses its Arial/sans-serif fallback.
 
 ## Code formatting
 

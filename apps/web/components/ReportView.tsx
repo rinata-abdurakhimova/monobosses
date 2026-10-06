@@ -30,7 +30,7 @@ export function ReportView({
           <p>{report.title}</p>
         </div>
         <Link
-          className="button button-secondary"
+          className="button button-primary"
           href="/"
         >
           <Icon
@@ -127,19 +127,42 @@ export function ReportView({
             <dl>
               <div>
                 <dt>Assessment scope</dt>
-                <dd>Biological approach</dd>
+                <dd>
+                  <span className="scope-pill">
+                    {report.scope === "approach"
+                      ? "Biological approach"
+                      : "Specific programme"}
+                  </span>
+                </dd>
               </div>
               <div>
                 <dt>Critical unknowns</dt>
-                <dd>{report.unknowns.length} questions unresolved</dd>
+                <dd>
+                  <span className="metric-count metric-count-warning">
+                    {report.unknowns.length}
+                  </span>{" "}
+                  <span className="metric-description">
+                    questions unresolved
+                  </span>
+                </dd>
               </div>
               <div>
                 <dt>Sources</dt>
-                <dd>{report.sources.length} fictional documents</dd>
+                <dd>
+                  <span className="metric-count">{report.sources.length}</span>{" "}
+                  <span className="metric-description">
+                    fictional documents
+                  </span>
+                </dd>
               </div>
               <div>
                 <dt>Committee</dt>
-                <dd>{report.roles.length} AI perspectives in fixture</dd>
+                <dd>
+                  <span className="metric-count">{report.roles.length}</span>{" "}
+                  <span className="metric-description">
+                    AI perspectives in fixture
+                  </span>
+                </dd>
               </div>
             </dl>
             <p>

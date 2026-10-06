@@ -4,13 +4,13 @@ Implemented by R1 on `codex/r1-01-synthetic-ui`, independently of R2's pending A
 
 ## Visual direction
 
-Rinata requested a light, pretty design with larger, easy-to-read text. The preview uses white surfaces, soft lavender and blush accents, pale recommendation cards, 16–17px body/form text, and secondary labels of at least 12px. Preserve this direction in subsequent frontend work; adjust spacing rather than shrinking mobile text.
+The updated reference uses a richer sage workspace, deep pine navigation, elevated white cards, emerald actions, a coral preview label, a teal synthetic banner, and gold conditions/warnings. Unknown-count badges are terracotta; source/perspective counts are violet. Inter is loaded via Google Fonts with Arial/sans-serif fallback. The report heading is 30px/800 in dark green; card headings are 20px/700; actions/navigation are 13.5px; metrics/callouts are 12.5px; uppercase categories are 10px. Main body/form text remains 16–17px. Preserve high contrast, tabular numbers, and responsive spacing. The breadcrumb bar sticks to the top, with anchor offsets for report navigation. Keep the personal profile footer removed. Badges use actual counts; the scope pill is a category label, not a validated investment outcome.
 
 ## Run and review
 
 From `apps/web`, run `npm ci`, then `npm run dev`. Open `http://127.0.0.1:3000`; `/cases/sample` opens the fixed fictional report immediately. `npm run typecheck` and `npm run build` pass.
 
-Dependencies: Next.js 16.3.8, React/React DOM 19.3.0, TypeScript 7.0.2; exact versions and lockfile are committed-ready. No backend service, API keys, external fonts, or model calls are needed.
+Dependencies: Next.js 16.3.8, React/React DOM 19.3.0, TypeScript 7.0.2; exact versions and lockfile are ready for commit. No backend service, API keys, or model calls are needed. Inter loads in the browser from Google Fonts; fallback fonts keep the interface usable if that service is unavailable.
 
 ## Components
 
