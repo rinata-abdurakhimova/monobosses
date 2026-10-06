@@ -25,6 +25,10 @@ npm start
 
 Dependencies are pinned in `package.json` and `package-lock.json`. No environment variables or external fonts are required.
 
+## Code formatting
+
+Run `npm run format` to format frontend code, or `npm run format:check` to verify it. Prettier uses two-space indentation, an 80-character preferred line width, and one JSX attribute per line. JSX elements, function bodies, and fixture objects stay readable across multiple lines. Long strings may exceed the preferred line width without being split into different values.
+
 ## What to try
 
 1. Submit the empty form: required indication and mechanism validation appears, with focus on the first invalid field.

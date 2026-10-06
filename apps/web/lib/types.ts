@@ -13,9 +13,17 @@ export type CaseInput = {
 };
 export type Recommendation = "Invest" | "Conditional" | "Do Not Invest";
 export type SectionKey =
-  | "recommendation" | "scientific_thesis" | "human_translation_thesis"
-  | "clinical_development_plan" | "competitive_landscape" | "commercial_opportunity"
-  | "capital_to_milestone" | "key_risks" | "critical_unknowns" | "diligence_questions" | "sources";
+  | "recommendation"
+  | "scientific_thesis"
+  | "human_translation_thesis"
+  | "clinical_development_plan"
+  | "competitive_landscape"
+  | "commercial_opportunity"
+  | "capital_to_milestone"
+  | "key_risks"
+  | "critical_unknowns"
+  | "diligence_questions"
+  | "sources";
 export type ClaimStatus = "supported" | "mixed" | "unknown" | "unverified";
 export type Claim = {
   id: string;
@@ -32,19 +40,44 @@ export type Source = {
   available: boolean;
   limitation: string;
 };
-export type Evidence = { id: string; source_id: string; excerpt: string; locator: string };
+export type Evidence = {
+  id: string;
+  source_id: string;
+  excerpt: string;
+  locator: string;
+};
 export type ReportSection = {
   key: SectionKey;
   title: string;
   summary: string;
-  status: "Supported in sample" | "Uncertain" | "Data needed" | "Illustrative plan";
+  status:
+    "Supported in sample" | "Uncertain" | "Data needed" | "Illustrative plan";
   points: string[];
   claim_ids: string[];
   limitation?: string;
 };
-export type RoleResult = { id: string; name: string; initials: string; summary: string; position: string; unknown: string };
-export type Risk = { id: string; title: string; priority: "Critical" | "Material"; impact: string; next_check: string };
-export type DiligenceQuestion = { question: string; why: string; evidence_needed: string; positive: string; negative: string };
+export type RoleResult = {
+  id: string;
+  name: string;
+  initials: string;
+  summary: string;
+  position: string;
+  unknown: string;
+};
+export type Risk = {
+  id: string;
+  title: string;
+  priority: "Critical" | "Material";
+  impact: string;
+  next_check: string;
+};
+export type DiligenceQuestion = {
+  question: string;
+  why: string;
+  evidence_needed: string;
+  positive: string;
+  negative: string;
+};
 export type Report = {
   id: string;
   title: string;
