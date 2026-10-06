@@ -1,0 +1,13 @@
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Local development artifacts
+apps/web/artifacts/

@@ -2,7 +2,9 @@
 
 ## 1. Призначення та підстави
 
-Цей документ переводить [продуктову концепцію](virtual-investment-committee.md) у план реалізації командою з п’яти людей на **Next.js + Python**. Команда: Rinata, Uliana, Kateryna, Victoria, Arina. Імена до ролей призначає команда; нижче залишені порожні поля.
+Цей документ переводить [продуктову концепцію](virtual-investment-committee.md) у план реалізації командою з п’яти людей на **Next.js + Python**. Команда: Rinata, Uliana, Kateryna, Victoria, Arina. Призначення ролей командою вже внесено в таблицю нижче.
+
+Практичний початок: [покрокові інструкції п’яти ролей](docs/roles/README.md), [спільний технічний контракт](docs/implementation-contract.md) та [реєстр задач](docs/issues/README.md). Технічний контракт уточнює структуру package, API й signatures для реалізації; використовуємо його при написанні коду.
 
 Підстави для плану:
 
@@ -148,9 +150,9 @@ R2 контролює повноту schema, R1 відображає всі се
 ```text
 apps/web/                         # R1: Next.js
 services/api/                     # R2: FastAPI, API та orchestration
-services/api/src/evidence/        # R3: retrieval, normalization, audit
-services/api/src/agents/science/  # R4: science, translation, clinical
-services/api/src/agents/business/ # R5: market, investment, chair, risks
+services/api/src/vic/evidence/        # R3: retrieval, normalization, audit
+services/api/src/vic/agents/science/  # R4: science, translation, clinical
+services/api/src/vic/agents/business/ # R5: market, investment, chair, risks
 contracts/                       # R2: schema, OpenAPI, fixtures
 evals/                           # R5: rubric/cases; runner R2; packs R3/R4
 docs/                            # architecture, source registry, demo
