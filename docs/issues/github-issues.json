@@ -1,9 +1,9 @@
 {
   "repository": "rinata-abdurakhimova/monobosses",
   "status": "published",
-  "documentation_branch": "codex/team-role-playbooks",
+  "documentation_branch": "main",
   "documentation_pull_request": "https://github.com/rinata-abdurakhimova/monobosses/pull/1",
-  "note": "Усі 18 issues створено й відкрито. Інструкції опубліковані в окремій гілці та PR; assignees не призначені.",
+  "note": "Усі 18 issues опубліковано. PR з інструкціями злитий у main; посилання на документацію в issues ведуть до main.",
   "issues": [
     {
       "code": "R2-01",
