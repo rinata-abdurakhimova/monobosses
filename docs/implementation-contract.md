@@ -127,3 +127,4 @@ Science/translation/market можуть виконуватись паралел�
 R2 створює `contracts/fixtures/case.json`, `evidence-pack.json`, `report-v1.json`, `report-v2.json`, `run-running.json`, `run-failed.json`. У synthetic before/after кейсі v1 — Conditional через відсутню безпечну експозицію; v2 — Do Not Invest через явний synthetic safety result. Це контрольована історія, не твердження про реальний механізм.
 
 Перевірки: IDs існують; усі 11 sections присутні; questions 5–10; джерело відповідає excerpt; missing links не вигадані; v1 незмінний після v2; нерелевантний документ не змінює категорію без підстав. Fixtures спочатку використовуються всіма ролями; live cases оцінюємо окремо.
+

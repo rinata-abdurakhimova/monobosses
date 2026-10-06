@@ -317,3 +317,4 @@ R1 починає на JSON fixtures від R2. Зміни schema проходя
 | Додаткові джерела, selective reruns, оптимізація latency/cost | R3/R2 | Evaluation підтверджує збереження якості |
 
 Розширення не мають затримувати evidence drill-down, evaluation, роботу на нових запитах або обов’язкове демо зі зміною висновку.
+

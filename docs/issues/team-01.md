@@ -45,3 +45,5 @@ README.md; docs/architecture.md; docs/demo-script.md; docs/evaluation-report.md;
 Команда готова показати систему та пояснити evidence, quality controls і limitations.
 
 У PR: посилання на цю задачу, опис working behavior, commands/input/result перевірки та відомі обмеження. Не закривати live-задачу лише на mock output. API/schema change погодити з R2 і споживачами.
+
+
