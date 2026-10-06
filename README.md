@@ -1,6 +1,18 @@
 # monobosses
 
-Віртуальний інвестиційний комітет для biotech underwriting. Стек реалізації: Next.js + Python. Наразі репозиторій містить продуктову концепцію та план реалізації; команди запуску будуть додані разом із кодом у R2-01/R1-01.
+Віртуальний інвестиційний комітет для biotech underwriting. Стек реалізації: Next.js + Python. Незалежна frontend-частина R1-01 реалізована у `apps/web` на явно позначеному синтетичному прикладі. Python API та live analysis ще не підключено.
+
+## Запуск frontend preview
+
+Потрібні Node.js 20.9+ та npm:
+
+```sh
+cd apps/web
+npm ci
+npm run dev
+```
+
+Відкрити `http://127.0.0.1:3000`. Перевірки: `npm run typecheck`, `npm run build`. [Frontend README](apps/web/README.md) описує стани, локальні дані та залежності від R2.
 
 ## Документація для команди
 
@@ -21,4 +33,3 @@
 | Uliana | R5: market/investment/chair/evaluation | [R5](docs/roles/r5-investment.md) |
 
 Перший спільний крок — contracts та fixtures від R2. До їх готовності інші ролі можуть готувати UI, synthetic documents, prompts і evaluation rubric. Подальший порядок описано у реєстрі задач.
-
