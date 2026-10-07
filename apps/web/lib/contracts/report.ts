@@ -1,6 +1,7 @@
 import type {
   Report as ContractReport,
   CaseInput as ContractCase,
+  RoleId,
 } from "./generated";
 import type { Report, SectionKey, ReportSection } from "../types";
 import { validateContract } from "./validate.ts";
@@ -19,19 +20,29 @@ export const SECTION_TITLES: Record<SectionKey, string> = {
   sources: "Sources",
 };
 
-const ROLE_NAMES: Record<string, [string, string]> = {
+const ROLE_NAMES: Record<RoleId, [string, string]> = {
   science: ["Scientific perspective", "SC"],
   translation: ["Human translation", "HT"],
   clinical: ["Clinical development", "CL"],
-  market: ["Market and competition", "MK"],
-  investment: ["Investment perspective", "IN"],
+  market: ["Market and commercial opportunity", "MK"],
+  investment: ["Finance and investment scenarios", "IN"],
   chair: ["Committee chair", "CH"],
   audit: ["Evidence audit", "AU"],
+  failure_miner: ["Critical risks and failure modes", "FM"],
+  investment_threshold: ["Investment conditions", "IT"],
+  partnerships: ["Partnerships", "PA"],
+  ip_licensing: ["Intellectual property and licensing", "IP"],
 };
+
+function roleName(id: string): [string, string] {
+  return Object.hasOwn(ROLE_NAMES, id)
+    ? ROLE_NAMES[id as RoleId]
+    : [`Additional perspective (${id})`, "AI"];
+}
 
 /** Synthetic-only adapter: this does not enable or fabricate live API analysis. */
 export function mapSyntheticReport(raw: unknown, rawCase: unknown): Report {
-  validateContract("Report", raw);
+  validateContract("Report", raw, { allowUnknownRoles: true });
   validateContract("CaseInput", rawCase);
   const report = raw as ContractReport;
   const input = rawCase as ContractCase;
@@ -88,6 +99,9 @@ export function mapSyntheticReport(raw: unknown, rawCase: unknown): Report {
       (role.claims ?? []).map((c) => c.id),
       claimIds,
     );
+    (role.claims ?? []).forEach((claim) =>
+      references(claim.evidence_ids ?? [], evidenceIds),
+    );
     (role.section_content ?? []).forEach((s) =>
       references(s.claim_ids ?? [], claimIds),
     );
@@ -124,10 +138,19 @@ export function mapSyntheticReport(raw: unknown, rawCase: unknown): Report {
     })),
     roles: report.roles.map((role) => ({
       id: role.role_id,
-      name: ROLE_NAMES[role.role_id][0],
-      initials: ROLE_NAMES[role.role_id][1],
+      name: roleName(role.role_id)[0],
+      initials: roleName(role.role_id)[1],
       summary: role.summary,
       position: role.position,
+      claims: (role.claims ?? []).map((c) => ({
+        ...c,
+        evidence_ids: c.evidence_ids ?? [],
+        assumptions: c.assumptions ?? [],
+      })),
+      risks: role.risks ?? [],
+      unknowns: role.unknowns ?? [],
+      change_conditions: role.change_conditions ?? [],
+      section_content: role.section_content ?? [],
       unknown:
         (role.unknowns ?? []).join("; ") ||
         "No additional unknowns reported in this fixture.",

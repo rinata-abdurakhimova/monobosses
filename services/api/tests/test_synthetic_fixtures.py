@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
 
-from vic.contracts import Recommendation
+from vic.contracts import Recommendation, RoleId
+from vic.integrity import check_report
 from vic.synthetic import build_all
 
 FIXTURES = Path(__file__).resolve().parents[3] / "contracts" / "fixtures"
@@ -19,6 +20,17 @@ def test_generator_is_deterministic():
     a = {k: v.model_dump(mode="json") for k, v in build_all().items()}
     b = {k: v.model_dump(mode="json") for k, v in build_all().items()}
     assert a == b
+
+
+def test_r5_display_fixture_contains_all_roles_without_changing_the_original_story():
+    built = build_all()
+    report = built["report-r5"]
+    assert {r.role_id for r in report.roles} == set(RoleId)
+    assert len(report.roles) == len(RoleId)
+    assert report.synthetic and all(s.synthetic for s in report.sources)
+    assert report.sections == built["report-v1"].sections
+    assert report.recommendation == Recommendation.CONDITIONAL
+    assert check_report(report) == []
 
 
 def test_story_v1_conditional_v2_do_not_invest():
