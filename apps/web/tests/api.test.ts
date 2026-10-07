@@ -109,7 +109,7 @@ test("mock completion persists one case/run and reload reads the same version", 
   assert.equal(report.run_id, started.run_id);
   assert.equal(
     report.content.title,
-    "Inflammatory disease X · AX-17 inhibition",
+    `${sampleInput.indication} · ${sampleInput.mechanism}`,
   );
   assert.equal(report.content.synthetic, true);
   const reloaded = setup.resume();

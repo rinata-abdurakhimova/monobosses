@@ -1389,6 +1389,14 @@ summary::-webkit-details-marker {
 .claim-dot.status-unverified {
   background: #5c675e;
 }
+.claim-dot.status-contradicted {
+  background: #b91c1c;
+}
+.tag.status-contradicted {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #991b1b;
+}
 .risk-list {
   display: grid;
   gap: 12px;

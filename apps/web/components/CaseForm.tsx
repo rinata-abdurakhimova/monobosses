@@ -42,9 +42,9 @@ export function CaseForm() {
       next.indication = "Enter an indication or disease.";
     if (!input.mechanism.trim())
       next.mechanism = "Enter a mechanism or biological target.";
-    if (input.scope === "program" && !input.program_data.trim())
+    if (input.scope === "program" && input.program_data.trim().length < 40)
       next.program_data =
-        "Add programme data, or select an approach assessment.";
+        "Add at least 40 characters of programme data, or select an approach assessment.";
     setErrors(next);
     if (Object.keys(next).length) {
       document.getElementById(Object.keys(next)[0])?.focus();
@@ -234,15 +234,20 @@ export function CaseForm() {
             >
               <option value="">Not specified</option>
               {[
-                "Small molecule",
-                "Antibody",
-                "Gene therapy",
-                "Cell therapy",
-                "RNA therapy",
-                "Other",
-              ].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
+                ...new Set([
+                  "Small molecule",
+                  "Antibody",
+                  "Gene therapy",
+                  "Cell therapy",
+                  "RNA therapy",
+                  "Other",
+                  input.modality,
+                ]),
+              ]
+                .filter(Boolean)
+                .map((x) => (
+                  <option key={x}>{x}</option>
+                ))}
             </select>
           </div>
           <div className="field">
@@ -254,14 +259,19 @@ export function CaseForm() {
             >
               <option value="">Not specified</option>
               {[
-                "Discovery",
-                "Preclinical",
-                "Phase 1",
-                "Phase 2",
-                "Phase 3",
-              ].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
+                ...new Set([
+                  "Discovery",
+                  "Preclinical",
+                  "Phase 1",
+                  "Phase 2",
+                  "Phase 3",
+                  input.development_stage,
+                ]),
+              ]
+                .filter(Boolean)
+                .map((x) => (
+                  <option key={x}>{x}</option>
+                ))}
             </select>
           </div>
           <div className="field span-two">

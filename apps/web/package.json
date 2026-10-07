@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write app components lib tests next.config.ts package.json tsconfig.json .prettierrc.json",
     "format:check": "prettier --check app components lib tests next.config.ts package.json tsconfig.json .prettierrc.json",
-    "test": "node --experimental-strip-types --test tests/*.test.ts"
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "contracts:generate": "node scripts/generate-contracts.mjs",
+    "contracts:check": "node scripts/generate-contracts.mjs --check"
   },
   "engines": {
     "node": ">=22.18.0"
