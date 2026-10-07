@@ -33,3 +33,30 @@ npm run dev
 | Uliana | R5: market/investment/chair/evaluation | [R5](docs/roles/r5-investment.md) |
 
 Перший спільний крок — contracts та fixtures від R2. До їх готовності інші ролі можуть готувати UI, synthetic documents, prompts і evaluation rubric. Подальший порядок описано у реєстрі задач.
+
+## Експертні перспективи й покриття R5
+
+Поточний R5-01 market node реалізує перспективу **експерта з ринку та доступу
+до лікування**: конкурентів, можливі переваги, цільову популяцію пацієнтів,
+бар'єри доступу та комерційні сценарії. Це локальна реалізація без підключеного
+live LLM adapter; семантичний аудит доказів надає R3. Prompt: **1.2.0**.
+Локальна реалізація готова до передачі для інтеграції, але повна live-задача
+R5-01 ще не підтверджена. Перевірка 2026-10-07: **47 тестів API пройшли,
+із них 40 — market**. Окремі тимчасові спроби Gemini завершилися тайм-аутами
+генерації; доступ до gemini-3.8-flash підтверджений, валідної відповіді немає.
+API-ключі та тимчасовий адаптер не входять до реалізації R5.
+
+[Карта всіх експертних ролей, 11 Required Output та фактичного покриття R5](docs/r5-output-coverage.md).
+[Підключення market node для R2](docs/r5-01-handoff.md).
+
+
+Офлайн-перевірка з кореня репозиторію:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -m pytest services/api/tests -q -p no:cacheprovider
+```
+
+Погоджений план R5: `market`, `investment`, `failure_miner`, `chair`,
+`investment_threshold`, `partnerships`, `ip_licensing`. Реалізовано тільки
+`market`; evaluation — окремий процес. R2 забезпечує adapter/runtime/Report,
+R3 — evidence та аудит, R4 — клінічне узгодження, R1 — відображення.

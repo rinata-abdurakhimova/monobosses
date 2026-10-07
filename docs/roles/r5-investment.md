@@ -8,7 +8,7 @@
 
 ## Що ти пишеш
 
-Python у `services/api/src/vic/agents/business/`: `market.py`, `investment.py`, `chair.py`, `risks.py`, `calculations.py`, `prompts/`. Evaluation content: `evals/rubric.md`, case manifests, `evals/error-log.md`, `docs/evaluation-report.md`. Functions використовують models і LLM adapter R2.
+Python у `services/api/src/vic/agents/business/`: `market.py`, `investment.py`, `chair.py`, `failure_miner.py`, `investment_threshold.py`, `partnerships.py`, `ip_licensing.py`, `calculations.py`, `prompts/`. Evaluation content: `evals/rubric.md`, case manifests, `evals/error-log.md`, `docs/evaluation-report.md`. Functions використовують models і LLM adapter R2.
 
 ## Крок 1. Competitive та commercial analysis — R5-01
 
@@ -59,9 +59,30 @@ Python у `services/api/src/vic/agents/business/`: `market.py`, `investment.py`,
 
 **Готово:** dataset і expectations відокремлені від runtime input; results відтворюються runner; критичні defects видимі незалежно від average score; report чесно описує team-reviewed proxy quality, а не доведену прибутковість.
 
-## Що відкласти
+## Погоджені сім вузлів R5
 
-Окремі partner/IP/TPP agents та великий finance model. У MVP ці питання можуть бути явними diligence gaps. Спочатку — потрібні sections, доказове рішення, evaluation та revision demo.
+1. market — конкуренти, пацієнти, ціни, доступ і комерційна цінність.
+2. investment — капітал/час до етапу, події зміни вартості, подальше фінансування й фінансові сценарії.
+3. failure_miner — єдиний критичний опонент: проблема → вплив → наслідок → вплив на інвестицію → перевірка; взаємозв’язки ризиків.
+4. chair — остаточна рекомендація за доказами, умови й фінальні питання.
+5. investment_threshold — необхідний результат → докази → прогалина → вплив на рішення; поріг обґрунтованості вкладення не дорівнює окупності.
+6. partnerships — відповідні партнери, формати співпраці та перевірки; відповідність не означає підтверджений інтерес.
+7. ip_licensing — патентні факти, права, бар’єри й ліцензійні питання для фахової перевірки.
+
+Усі сім входять у погоджений обсяг користувачки. Реалізований лише market.
+Деталі ліцензування аналізує ip_licensing; partnerships розглядає партнерів;
+investment використовує їхні висновки для фінансових сценаріїв. Evaluation
+R5-04 — окремий перевірочний процес. Вузли можна готувати незалежно на явно
+синтетичних fixtures; спільне підключення й запуск забезпечує R2.
+
+## Локальний стан R5-01 — 2026-10-07
+
+Market prompt 1.2.0, схема, розрахунки, перевірки й дві секції реалізовані.
+47 офлайн-тестів API проходять, із них 40 market. Локальна реалізація готова
+до review/commit; live-генерація, аудит і фінальний Report ще не підтверджені.
+Тимчасові Gemini-спроби завершувалися тайм-аутами після підтвердження доступу.
+У коміт не входять ключі, тимчасовий адаптер і його результати.
+[Передача R2/R3/R4/R1](../r5-01-handoff.md) · [Карта покриття](../r5-output-coverage.md).
 
 ## Твої GitHub Issues
 
