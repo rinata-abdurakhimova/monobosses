@@ -56,17 +56,19 @@ In **Preview states**, the mock workflow can simulate completion, failed runs, m
 - `components/ApiCase.tsx`: mock lifecycle and recovery UI.
 - `tests/api.test.ts`: meaningful transport, polling, and persistence checks.
 
-The HTTP adapter defaults to `/api/backend`, a future same-origin server proxy. That proxy is **not implemented or enabled yet**. R2 must supply the authoritative OpenAPI and host/auth configuration before wiring it. The HTTP report remains an unknown wire value until a `mapReport` adapter is supplied; it is never silently replaced with the synthetic fixture. No backend URL, API key, or LLM credential is exposed to the browser.
+The HTTP adapter defaults to `/api/backend`, a future same-origin server proxy. That proxy is **not implemented or enabled yet**. Shared OpenAPI is now available, while host/auth configuration and live pipeline verification remain pending. The HTTP report stays unknown until a live `mapReport` adapter is supplied; it is never silently replaced with the synthetic fixture. No backend URL, API key or LLM credential is exposed to the browser.
 
-- `lib/types.ts`: provisional frontend view models, pending R2's contracts v1.
-- `lib/fixtures/report-v1.ts`: fixed fictional report, local to R1. It does not create or overwrite `contracts/fixtures/report-v1.json`.
+- `lib/contracts/generated.ts`: TypeScript wire types generated from `contracts/openapi.json`. Run `npm run contracts:generate` after agreed schema changes; `npm run contracts:check` detects drift.
+- `lib/contracts/report.ts`: synthetic-report adapter with schema/reference checks and all 11 sections. Raw contract data remains available alongside presentation fields.
+- `lib/types.ts`: presentation models using shared scope, recommendation, section, claim, source and evidence types.
+- `lib/fixtures/report-v1.ts`: reads R2's shared `report-v1.json` and `case.json`; there is no independent R1 report copy.
 - `lib/preview.ts`: explicit local preview storage and fixture selection. It makes no API or model calls.
 - `components/CaseForm.tsx`: input and validation.
 - `components/CasePreview.tsx`: preview-only lifecycle, error and empty states.
 - `components/ReportView.tsx`, `ReportSections.tsx`, `RecommendationCard.tsx`, `RoleCard.tsx`: report rendering.
 
-Input is saved only in this browser tab's session storage; it is not sent to a backend or used to generate recommendations. The report remains the fictional disease X / AX-17 example regardless of entered input. A refresh replays the short simulated lifecycle; this is not server persistence.
+Input is saved only in this browser tab's session storage; it is not sent to a backend or used to generate recommendations. The report remains R2's fixed fictional disease X / target Y example regardless of entered input. Original Ukrainian content is preserved. A refresh replays the short simulated lifecycle; this is not server persistence. Session namespaces were versioned during alignment, so older preview URLs may require creating a new preview.
 
 ## Pending R2 / later tasks
 
-Adopt R2's OpenAPI and shared fixtures when supplied, and implement the agreed server proxy and report mapper at the data boundary. The independent client/polling preparation for R1-02 is implemented; verification against the actual Python API remains pending. Uploads and report revisions belong to R1-03; deployment belongs to R1-04. This work does not finish shared-contract alignment or close #8.
+R1-01 is aligned with R2's shared OpenAPI and synthetic fixture. R1-02 still needs the server proxy, live report mapping and verification against the Python runtime; PR #25 provides mock routes only. Uploads and report revisions belong to R1-03; deployment belongs to R1-04. This work does not close #8.

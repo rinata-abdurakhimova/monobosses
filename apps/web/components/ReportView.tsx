@@ -52,7 +52,7 @@ export function ReportView({
             The sample is fixed and does not assess your submitted input.
           </p>
         </div>
-        <span className="tiny-tag">Sample v1</span>
+        <span className="tiny-tag">Sample v{report.version}</span>
       </div>
       {submitted && (
         <details className="submitted-input">
@@ -113,8 +113,8 @@ export function ReportView({
           <div>
             <strong>A source is unavailable in this preview</strong>
             <p>
-              The competitor excerpt is a cached synthetic sample. Source
-              failure does not establish an absence of competition or risk.
+              The company excerpt is a cached synthetic sample. Source failure
+              does not establish an absence of competition or risk.
             </p>
           </div>
         </div>
@@ -136,7 +136,7 @@ export function ReportView({
                 </dd>
               </div>
               <div>
-                <dt>Critical unknowns</dt>
+                <dt>Open unknowns</dt>
                 <dd>
                   <span className="metric-count metric-count-warning">
                     {report.unknowns.length}

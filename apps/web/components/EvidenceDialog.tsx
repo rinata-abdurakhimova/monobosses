@@ -52,7 +52,9 @@ export function EvidenceDialog({
             <span className="tag">
               {claim.provenance === "ai"
                 ? "AI inference in fixture"
-                : "Source statement in fixture"}
+                : claim.provenance === "user"
+                  ? "User-provided statement · unverified"
+                  : "Source statement in fixture"}
             </span>
             <span className="tag">Synthetic</span>
           </div>
@@ -64,6 +66,11 @@ export function EvidenceDialog({
               {x}
             </p>
           ))}
+          {claim.evidence_ids.length === 0 && (
+            <p className="evidence-limitation">
+              No source evidence is linked to this claim.
+            </p>
+          )}
           {claim.evidence_ids.map((id) => {
             const evidence = report.evidence.find((x) => x.id === id);
             const source = report.sources.find(
@@ -103,8 +110,10 @@ export function EvidenceDialog({
                 <blockquote>{evidence.excerpt}</blockquote>
                 <p>{source.limitation}</p>
                 <small>
-                  No publication date or external link: this document is
-                  fictional.
+                  Fictional source · Publication date:{" "}
+                  {source.published_at ?? "unknown"} · Retrieved:{" "}
+                  {source.retrieved_at}. No external link is provided for this
+                  synthetic document.
                 </small>
               </article>
             );

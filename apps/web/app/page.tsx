@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CaseForm } from "@/components/CaseForm";
 import { Icon } from "@/components/Icon";
+import { reportV1 } from "@/lib/fixtures/report-v1";
 
 export default function HomePage() {
   return (
@@ -83,7 +84,10 @@ export default function HomePage() {
             <div>
               <span className="eyebrow">TAKE A LOOK FIRST</span>
               <strong>Explore a fictional report</strong>
-              <small>11 sections · 7 perspectives</small>
+              <small>
+                {reportV1.sections.length} sections · {reportV1.roles.length}{" "}
+                perspectives
+              </small>
             </div>
             <Icon
               name="arrow"

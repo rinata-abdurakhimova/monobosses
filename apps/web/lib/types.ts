@@ -1,57 +1,38 @@
-/** Provisional UI view models, not an implementation of R2's API contract.
- * Replace/adapt at the data boundary when R2 publishes contracts v1.
- */
-export type Scope = "approach" | "program";
+import type * as Contract from "./contracts/generated";
+
+/** Presentation models mapped from the shared R2 contract at the data boundary. */
+export type Scope = Contract.Scope;
 export type PreviewMode = "complete" | "failed" | "unavailable";
-export type CaseInput = {
-  indication: string;
-  mechanism: string;
-  scope: Scope;
+export type CaseInput = Pick<
+  Contract.CaseInput,
+  "indication" | "mechanism" | "scope"
+> & {
   modality: string;
   development_stage: string;
   program_data: string;
 };
-export type Recommendation = "Invest" | "Conditional" | "Do Not Invest";
-export type SectionKey =
-  | "recommendation"
-  | "scientific_thesis"
-  | "human_translation_thesis"
-  | "clinical_development_plan"
-  | "competitive_landscape"
-  | "commercial_opportunity"
-  | "capital_to_milestone"
-  | "key_risks"
-  | "critical_unknowns"
-  | "diligence_questions"
-  | "sources";
-export type ClaimStatus = "supported" | "mixed" | "unknown" | "unverified";
-export type Claim = {
-  id: string;
-  text: string;
-  provenance: "source" | "ai";
-  support_status: ClaimStatus;
+export type Recommendation = Contract.Recommendation;
+export type SectionKey = Contract.SectionKey;
+export type ClaimStatus = Contract.SupportStatus;
+export type Claim = Contract.Claim & {
   evidence_ids: string[];
   assumptions: string[];
 };
-export type Source = {
-  id: string;
-  title: string;
-  type: string;
+export type Source = Contract.Source & {
   available: boolean;
   limitation: string;
 };
-export type Evidence = {
-  id: string;
-  source_id: string;
-  excerpt: string;
-  locator: string;
-};
+export type Evidence = Contract.Evidence;
 export type ReportSection = {
   key: SectionKey;
   title: string;
   summary: string;
   status:
-    "Supported in sample" | "Uncertain" | "Data needed" | "Illustrative plan";
+    | "Supported in sample"
+    | "Contradicted in sample"
+    | "Uncertain"
+    | "Data needed"
+    | "Illustrative plan";
   points: string[];
   claim_ids: string[];
   limitation?: string;
@@ -67,7 +48,7 @@ export type RoleResult = {
 export type Risk = {
   id: string;
   title: string;
-  priority: "Critical" | "Material";
+  priority: "Critical" | "Material" | "Minor";
   impact: string;
   next_check: string;
 };
@@ -79,6 +60,8 @@ export type DiligenceQuestion = {
   negative: string;
 };
 export type Report = {
+  contract: Contract.Report;
+  version: number;
   id: string;
   title: string;
   recommendation: Recommendation;
