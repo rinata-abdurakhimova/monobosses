@@ -1,205 +1,336 @@
-import asyncio
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
-import sys
-import os
+import pytest
 
-# Вказуємо Python абсолютний шлях до папки src
-current_dir = os.path.dirname(os.path.abspath(__file__))
-src_path = os.path.join(current_dir, "../../../../src")
-sys.path.insert(0, os.path.abspath(src_path))
+from vic.agents.science.clinical import ClinicalPlanAnalysis, analyze_clinical
+from vic.contracts import (
+    CaseInput,
+    Claim,
+    Evidence,
+    EvidencePack,
+    Risk,
+    RoleResult,
+    RunContext,
+    SectionContent,
+)
 
-from pydantic import BaseModel, Field
-from typing import Any, List, Optional
 
-# ==========================================
-# 1. ТИМЧАСОВІ КОНТРАКТИ (замість vic.contracts)
-# ==========================================
-class CaseInput(BaseModel):
-    indication: str
-    mechanism: str
-    modality: str = "small molecule"
-    development_stage: str = "preclinical"
-    scope: str = "approach"
-    program_data: str = ""
+def _case() -> CaseInput:
+    return CaseInput(
+        indication="Severe asthma",
+        mechanism="IL-4 receptor inhibition",
+        scope="program",
+        modality="monoclonal antibody",
+        development_stage="phase 1",
+        program_data="Candidate-specific PK data are available.",
+    )
 
-class Source(BaseModel):
-    id: str
-    title: str
-    type: str = "publication"
-    published_at: str = "2026-10-01"
-    synthetic: bool = False
 
-class Evidence(BaseModel):
-    id: str
-    source_id: str
-    excerpt: str
-    locator: str = ""
-    scope: str = "approach"
-    limitations: str = ""
+def _pack() -> EvidencePack:
+    return EvidencePack(
+        evidence=[
+            Evidence(
+                id="ev-clinical-1",
+                source_id="src-clinical-1",
+                excerpt="A validated symptom score improved versus active comparator.",
+                scope="program",
+                locator="Results",
+            )
+        ]
+    )
 
-class EvidencePack(BaseModel):
-    sources: list[Source] = []
-    evidence: list[Evidence] = []
-    retrieval_warnings: list[str] = []
 
-class Claim(BaseModel):
-    id: str
-    text: str
-    provenance: str
-    support_status: str
-    evidence_ids: list[str]
-    assumptions: list[str]
-    scope: str
-    importance: str
+def _role_result(role_id: str, summary: str, claim_id: str) -> RoleResult:
+    claim = Claim(
+        id=claim_id,
+        text=f"{summary} claim",
+        provenance="ai",
+        support_status="mixed",
+        evidence_ids=["ev-clinical-1"],
+        assumptions=[],
+        scope="program",
+        importance="critical",
+    )
+    risk = Risk(
+        id=f"{role_id}.risk.data_gap",
+        description=f"{summary} data remain incomplete.",
+        priority="critical",
+        claim_ids=[claim_id],
+        impact="The clinical plan may need revision.",
+        next_check="Obtain candidate-specific human data.",
+    )
+    return RoleResult(
+        role_id=role_id,
+        summary=summary,
+        position="moderate",
+        claims=[claim],
+        risks=[risk],
+        unknowns=[f"{summary} unknown"],
+        change_conditions=[f"New {summary.lower()} evidence"],
+        section_content=SectionContent(
+            key=f"{role_id}_section",
+            summary=summary,
+            claim_ids=[claim_id],
+            limitations=[f"{summary} limitation"],
+            structured_data={},
+        ),
+    )
 
-class Risk(BaseModel):
-    id: str
-    description: str
-    priority: str
-    claim_ids: list[str]
-    impact: str
-    next_check: str
 
-class SectionContent(BaseModel):
-    key: str
-    summary: str
-    claim_ids: list[str]
-    limitations: list[str]
-    structured_data: dict
+def _scientific_result() -> RoleResult:
+    return _role_result(
+        role_id="scientific",
+        summary="Scientific rationale is moderately supported.",
+        claim_id="science.target_validation",
+    )
 
-class RoleResult(BaseModel):
-    role_id: str
-    summary: str
-    position: str
-    claims: list[Claim]
-    risks: list[Risk]
-    unknowns: list[str]
-    change_conditions: list[str]
-    section_content: SectionContent
 
-# ==========================================
-# 2. ІМІТАЦІЯ LLM АДАПТЕРА
-# ==========================================
-class MockModelAdapter:
-    async def generate_structured(self, prompt_id: str, payload: dict, response_model: Any, ctx: Any):
-        print(f"\n🚀 [LLM Adapter] Викликано промпт: {prompt_id}")
-        print(f"📦 Payload містить ключів: {len(payload)}")
-        
-        # Базові поля, які є у відповідях всіх трьох агентів
-        mock_data = {
-            "thesis": "Тестова теза",
-            "position": "moderate",
-            "unknowns": [],
-            "change_conditions": [],
-            "limitations": []
+def _translation_result() -> RoleResult:
+    return _role_result(
+        role_id="translation",
+        summary="Human translation remains conditional.",
+        claim_id="translation.human_exposure",
+    )
+
+
+def _clinical_analysis(**overrides) -> ClinicalPlanAnalysis:
+    values = {
+        "thesis": "A biomarker-guided clinical path is feasible with safety monitoring.",
+        "position": "conditionally_feasible",
+        "target_population": "Adults with severe asthma uncontrolled by standard therapy.",
+        "clinically_meaningful_outcome": "Reduced exacerbation frequency.",
+        "primary_endpoint": "Annualized severe exacerbation rate.",
+        "secondary_endpoints": ["Symptom score", "Rescue medication use"],
+        "comparator": "Active standard-of-care comparator.",
+        "biomarker_strategy": "Measure target engagement and stratify by baseline biomarker.",
+        "trial_size": {
+            "has_basis": True,
+            "estimate": "120-160 participants",
+            "assumptions": ["Effect-size estimate is supported by ev-clinical-1."],
+            "statistical_design_gap": None,
+            "evidence_ids": ["ev-clinical-1"],
+        },
+        "study_sequence": [
+            {
+                "phase": "Phase 1b",
+                "objective": "Confirm safety, exposure, and target engagement.",
+                "population": "Adults with severe asthma.",
+                "primary_endpoint": "Treatment-emergent adverse events.",
+                "duration_estimate": "16 weeks",
+                "key_assumptions": ["Human exposure reaches the target tissue."],
+            },
+            {
+                "phase": "Phase 2",
+                "objective": "Estimate clinical efficacy and dose response.",
+                "population": "Biomarker-selected adults with severe asthma.",
+                "primary_endpoint": "Annualized severe exacerbation rate.",
+                "duration_estimate": "52 weeks",
+                "key_assumptions": ["The biomarker enriches for responders."],
+            },
+        ],
+        "regulatory_context": "Precedent is informative but does not guarantee approval.",
+        "historical_analogues": [
+            {
+                "name": "Class analogue",
+                "relevance": "Same pathway and indication.",
+                "outcome": "Demonstrated clinical activity.",
+                "lessons": "Require prospectively defined biomarker analysis.",
+                "evidence_ids": ["ev-clinical-1"],
+            }
+        ],
+        "next_milestone": "Demonstrate safe exposure, target engagement, and efficacy signal.",
+        "standard_of_care": "High-dose inhaled therapy plus biologic treatment.",
+        "unmet_need": "Some patients remain uncontrolled despite available therapy.",
+        "claims": [
+            {
+                "key": "clinical.target_population",
+                "text": "The initial target population is adults with uncontrolled severe asthma.",
+                "support_status": "supported",
+                "evidence_ids": ["ev-clinical-1"],
+                "assumptions": [],
+                "scope": "program",
+                "importance": "critical",
+                "reasoning": "The evidence addresses the intended clinical population.",
+            },
+            {
+                "key": "clinical.next_milestone",
+                "text": "The next milestone is proof of safe exposure and clinical activity.",
+                "support_status": "mixed",
+                "evidence_ids": ["ev-clinical-1"],
+                "assumptions": ["Target engagement is measurable."],
+                "scope": "program",
+                "importance": "critical",
+                "reasoning": "Translation gaps must be resolved before pivotal development.",
+            },
+        ],
+        "risks": [
+            {
+                "id": "clinical.risk.safety",
+                "description": "Required exposure may not be tolerable.",
+                "priority": "critical",
+                "related_claim_keys": ["clinical.next_milestone"],
+                "impact": "Development could stop before proof of concept.",
+                "next_check": "Review dose-escalation safety and PK/PD data.",
+            }
+        ],
+        "unknowns": ["Durability of clinical benefit is unknown."],
+        "change_conditions": ["A negative human target-engagement result would change the plan."],
+        "diligence_questions": [
+            {
+                "question": "Is target engagement achieved at tolerated exposure?",
+                "why_it_matters": "It tests the central translation assumption.",
+                "evidence_needed": "Human PK/PD and safety data.",
+                "decision_if_positive": "Proceed to proof-of-concept testing.",
+                "decision_if_negative": "Reassess dose, modality, or program viability.",
+            }
+        ],
+        "limitations": ["Long-term safety evidence is unavailable."],
+        "science_gaps_carried_forward": ["Safe human exposure is not yet established."],
+    }
+    values.update(overrides)
+    return ClinicalPlanAnalysis(**values)
+
+
+def _context(analysis: ClinicalPlanAnalysis) -> tuple[RunContext, AsyncMock]:
+    generate_structured = AsyncMock(return_value=analysis)
+    ctx = RunContext(model=SimpleNamespace(generate_structured=generate_structured))
+    return ctx, generate_structured
+
+
+@pytest.mark.asyncio
+async def test_analyze_clinical_happy_path():
+    analysis = _clinical_analysis()
+    ctx, generate_structured = _context(analysis)
+
+    result = await analyze_clinical(
+        _case(),
+        _pack(),
+        _scientific_result(),
+        _translation_result(),
+        ctx,
+    )
+
+    assert result.role_id == "clinical"
+    assert result.summary == analysis.thesis
+    assert result.position == "conditionally_feasible"
+    assert [claim.id for claim in result.claims] == [
+        "clinical.target_population",
+        "clinical.next_milestone",
+    ]
+    assert result.risks[0].id == "clinical.risk.safety"
+    assert result.unknowns == ["Durability of clinical benefit is unknown."]
+    assert result.section_content.key == "clinical_development_plan"
+    assert result.section_content.structured_data["target_population"] == analysis.target_population
+    assert result.section_content.structured_data["study_sequence"][1]["phase"] == "Phase 2"
+    assert result.section_content.structured_data["next_milestone"] == analysis.next_milestone
+
+    generate_structured.assert_awaited_once()
+    prompt_id, payload, response_model, call_ctx = generate_structured.await_args.args
+    assert prompt_id == "clinical"
+    assert payload["indication"] == "Severe asthma"
+    assert response_model is ClinicalPlanAnalysis
+    assert call_ctx is ctx
+
+
+@pytest.mark.asyncio
+async def test_trial_size_without_basis_forces_fallback():
+    analysis = _clinical_analysis(
+        trial_size={
+            "has_basis": False,
+            "estimate": "240 participants",
+            "assumptions": [],
+            "statistical_design_gap": None,
+            "evidence_ids": [],
         }
-        
-        # Специфічні поля для кожного агента
-        if prompt_id == "science":
-            mock_data.update({
-                "claims": [],
-                "risks": [],
-                "supporting_arguments": ["Аргумент за"],
-                "opposing_arguments": ["Аргумент проти"]
-            })
+    )
+    ctx, _ = _context(analysis)
 
-        elif prompt_id == "translation":
-            mock_data.update({
-                "links": [],
-                "additional_claims": [],
-                "barriers": ["Тестовий бар'єр"],
-                "data_needed": ["Тестові дані"],
-                "risks": []
-            })
+    result = await analyze_clinical(
+        _case(),
+        _pack(),
+        _scientific_result(),
+        _translation_result(),
+        ctx,
+    )
 
-        elif prompt_id == "clinical":
-            class MockTrialSize:
-                has_basis = False
-                estimate = None
-                assumptions = []
-                statistical_design_gap = None
-                evidence_ids = []
-            
-            mock_data.update({
-                "target_population": "Тестова популяція",
-                "clinically_meaningful_outcome": "Тестовий результат",
-                "primary_endpoint": "Тестова кінцева точка",
-                "secondary_endpoints": [],
-                "comparator": "Плацебо",
-                "biomarker_strategy": "Тестова стратегія",
-                "trial_size": MockTrialSize(),
-                "study_sequence": [],
-                "regulatory_context": "Тестовий контекст",
-                "historical_analogues": [],
-                "next_milestone": "Тестовий етап",
-                "standard_of_care": "Стандартна терапія",
-                "unmet_need": "Тестова медична потреба",
-                "claims": [],
-                "risks": [],
-                "diligence_questions": [],
-                "science_gaps_carried_forward": []
-            })
+    trial_size = result.section_content.structured_data["trial_size"]
+    assert trial_size["has_basis"] is False
+    assert trial_size["estimate"] is None
+    assert trial_size["statistical_design_gap"] == (
+        "Insufficient data to determine trial size; statistical design consultation needed"
+    )
+    assert analysis.trial_size.estimate is None
+    assert analysis.trial_size.statistical_design_gap == trial_size["statistical_design_gap"]
 
-        return response_model.model_construct(**mock_data)
 
-class RunContext:
-    def __init__(self):
-        self.model = MockModelAdapter()
+@pytest.mark.asyncio
+async def test_prior_results_are_serialized_into_llm_payload():
+    analysis = _clinical_analysis()
+    ctx, generate_structured = _context(analysis)
+    scientific_result = _scientific_result()
+    translation_result = _translation_result()
 
-# ==========================================
-# 3. ТЕСТОВИЙ ЗАПУСК ТВОЇХ ФУНКЦІЙ
-# ==========================================
-# Тут ми імпортуємо твої реальні функції (шляхи мають збігатися з твоєю структурою папок)
-import sys
-import os
-# Додаємо шлях до папки services/api/src, щоб імпорти працювали
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "services/api/src")))
+    await analyze_clinical(
+        _case(),
+        _pack(),
+        scientific_result,
+        translation_result,
+        ctx,
+    )
 
-# Щоб імпорти from vic.contracts працювали, підміняємо модуль нашими заглушками
-import sys
-import types
-mock_contracts = types.ModuleType("vic.contracts")
-mock_contracts.CaseInput = CaseInput
-mock_contracts.Source = Source
-mock_contracts.Evidence = Evidence
-mock_contracts.EvidencePack = EvidencePack
-mock_contracts.Claim = Claim
-mock_contracts.Risk = Risk
-mock_contracts.RoleResult = RoleResult
-mock_contracts.SectionContent = SectionContent
-mock_contracts.RunContext = RunContext
-sys.modules["vic.contracts"] = mock_contracts
+    payload = generate_structured.await_args.args[1]
+    prior_analysis = payload["prior_analysis"]
+    assert "=== SCIENTIFIC ANALYSIS ===" in prior_analysis
+    assert scientific_result.summary in prior_analysis
+    assert "[science.target_validation] (mixed, critical)" in prior_analysis
+    assert "scientific.risk.data_gap" in prior_analysis
+    assert "Scientific rationale is moderately supported. unknown" in prior_analysis
+    assert "=== TRANSLATION ANALYSIS ===" in prior_analysis
+    assert translation_result.summary in prior_analysis
+    assert "[translation.human_exposure] (mixed, critical)" in prior_analysis
+    assert "translation.risk.data_gap" in prior_analysis
+    assert "Human translation remains conditional. unknown" in prior_analysis
 
-from vic.agents.science.scientific import analyze_science
-from vic.agents.science.translation import analyze_translation
-from vic.agents.science.clinical import analyze_clinical
 
-async def main():
-    print("=== ПОЧАТОК ТЕСТУВАННЯ R4 ===")
-    
-    # Створюємо фейкові вхідні дані
-    case = CaseInput(indication="Asthma", mechanism="IL-4 inhibition")
-    source = Source(id="src-1", title="Test Paper")
-    evidence = Evidence(id="ev-1", source_id="src-1", excerpt="Test excerpt")
-    pack = EvidencePack(sources=[source], evidence=[evidence])
-    ctx = RunContext()
+@pytest.mark.asyncio
+async def test_claim_evidence_ids_are_filtered_against_evidence_pack():
+    analysis = _clinical_analysis(
+        claims=[
+            {
+                "key": "clinical.primary_endpoint",
+                "text": "Annualized severe exacerbation rate is the primary endpoint.",
+                "support_status": "supported",
+                "evidence_ids": ["ev-clinical-1", "ev-invented"],
+                "assumptions": [],
+                "scope": "program",
+                "importance": "critical",
+                "reasoning": "The valid evidence supports this endpoint.",
+            },
+            {
+                "key": "clinical.biomarker_strategy",
+                "text": "The biomarker is validated for patient selection.",
+                "support_status": "supported",
+                "evidence_ids": ["ev-invented"],
+                "assumptions": [],
+                "scope": "program",
+                "importance": "major",
+                "reasoning": "The cited evidence is not present in the pack.",
+            },
+        ]
+    )
+    ctx, _ = _context(analysis)
 
-    # 1. Тест Scientific Agent
-    print("\n--- 1. Scientific Agent ---")
-    sci_result = await analyze_science(case, pack, ctx)
-    print(f"✅ Scientific Analysis пройшов! Role ID: {sci_result.role_id}")
+    result = await analyze_clinical(
+        _case(),
+        _pack(),
+        _scientific_result(),
+        _translation_result(),
+        ctx,
+    )
 
-    # 2. Тест Translation Agent
-    print("\n--- 2. Translation Agent ---")
-    trans_result = await analyze_translation(case, pack, ctx)
-    print(f"✅ Translation Analysis пройшов! Role ID: {trans_result.role_id}")
-
-    # 3. Тест Clinical Agent
-    print("\n--- 3. Clinical Agent ---")
-    clin_result = await analyze_clinical(case, pack, sci_result, trans_result, ctx)
-    print(f"✅ Clinical Analysis пройшов! Role ID: {clin_result.role_id}")
-    
-    print("\n=== ВСІ ТЕСТИ УСПІШНІ! 🎉 ===")
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    endpoint_claim, biomarker_claim = result.claims
+    assert endpoint_claim.support_status == "supported"
+    assert endpoint_claim.evidence_ids == ["ev-clinical-1"]
+    assert biomarker_claim.support_status == "unverified"
+    assert biomarker_claim.evidence_ids == []

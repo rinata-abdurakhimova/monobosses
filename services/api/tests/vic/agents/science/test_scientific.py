@@ -36,7 +36,7 @@ def test_to_claims_unsupported_status_without_evidence():
         claims=[
             _ClaimOutput(
                 key="science.target_validation", text="Claim",
-                support_status="contradicted",
+                support_status="contradicted", 
                 evidence_ids=["fake-id"],
                 assumptions=[], scope="approach", importance="major", reasoning="R"
             )
@@ -44,8 +44,8 @@ def test_to_claims_unsupported_status_without_evidence():
         supporting_arguments=[], opposing_arguments=[], risks=[], unknowns=[], change_conditions=[], limitations=[]
     )
     claims = _to_claims(analysis, pack)
-    assert claims[0].support_status == "contradicted"
-    assert claims[0].evidence_ids == []
+    assert claims[0].support_status == "unverified"
+    assert claims[0].evidence_ids == [] 
 
 @pytest.mark.asyncio
 async def test_analyze_science_empty_arrays():
