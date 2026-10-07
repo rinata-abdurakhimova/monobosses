@@ -11,3 +11,12 @@ out/
 
 # Local development artifacts
 apps/web/artifacts/
+
+.venv/
+__pycache__/
+*.pyc
+data/
+*.sqlite3
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
