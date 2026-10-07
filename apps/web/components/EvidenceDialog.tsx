@@ -52,12 +52,12 @@ export function EvidenceDialog({
             </span>
             <span className="tag">
               {claim.provenance === "ai"
-                ? "AI inference in fixture"
+                ? "AI inference"
                 : claim.provenance === "user"
                   ? "User-provided statement · unverified"
-                  : "Source statement in fixture"}
+                  : "Source statement"}
             </span>
-            <span className="tag">Synthetic</span>
+            {report.synthetic && <span className="tag">Synthetic report</span>}
           </div>
           {claim.assumptions.map((x) => (
             <p
@@ -111,11 +111,24 @@ export function EvidenceDialog({
                 <blockquote>{evidence.excerpt}</blockquote>
                 <p>{source.limitation}</p>
                 <small>
-                  Fictional source · Publication date:{" "}
-                  {source.published_at ?? "unknown"} · Retrieved:{" "}
-                  {source.retrieved_at}. No external link is provided for this
-                  synthetic document.
+                  {source.synthetic ? "Fictional source" : "Source document"} ·
+                  Publication date: {source.published_at ?? "unknown"} ·
+                  Retrieved: {source.retrieved_at}.
+                  {source.synthetic
+                    ? " No external link is provided for this synthetic document."
+                    : ""}
                 </small>
+                {!source.synthetic &&
+                  source.url &&
+                  /^https?:\/\//i.test(source.url) && (
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open source
+                    </a>
+                  )}
               </article>
             );
           })}

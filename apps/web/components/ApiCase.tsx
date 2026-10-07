@@ -2,12 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { createMockApiClient, pollRun, ApiError } from "@/lib/api";
+import {
+  createMockApiClient,
+  createHttpApiClient,
+  pollRun,
+  ApiError,
+} from "@/lib/api";
 import { asApiError } from "@/lib/api/errors";
 import type { LoadedReport, Run, RunStage } from "@/lib/api/types";
 import type { Report } from "@/lib/types";
 import { ReportView } from "@/components/ReportView";
 import { RunProgress } from "@/components/RunProgress";
+
+import { mapApiReport } from "@/lib/contracts/report";
 
 const stages: RunStage[] = [
   "validate",
@@ -21,11 +28,19 @@ const stages: RunStage[] = [
 export function ApiCase({
   caseId,
   runId,
+  flow = "mock-api",
 }: {
   caseId: string;
   runId: string | null;
+  flow?: "mock-api" | "api";
 }) {
-  const client = useMemo(() => createMockApiClient(), []);
+  const client = useMemo(
+    () =>
+      flow === "api"
+        ? createHttpApiClient({ mapReport: mapApiReport })
+        : createMockApiClient(),
+    [flow],
+  );
   const [attempt, setAttempt] = useState(0);
   const [run, setRun] = useState<Run | null>(null);
   const [report, setReport] = useState<LoadedReport<Report> | null>(null);
@@ -40,7 +55,7 @@ export function ApiCase({
       setError(
         new ApiError(
           "MISSING_RUN_ID",
-          "This mock workflow link has no saved run identifier. Start a new mock workflow from the form.",
+          "This link has no saved run identifier. Start an assessment from the form.",
         ),
       );
       return () => controller.abort();
@@ -49,7 +64,8 @@ export function ApiCase({
       try {
         const completed = await pollRun(client, runId!, {
           signal: controller.signal,
-          maxWaitMs: 8000,
+          maxWaitMs: flow === "api" ? 600000 : 8000,
+          intervalMs: flow === "api" ? 1500 : 650,
           onUpdate(next) {
             if (next.case_id !== caseId)
               throw new ApiError(
@@ -84,18 +100,22 @@ export function ApiCase({
     }
     void loadExistingRun();
     return () => controller.abort();
-  }, [caseId, runId, client, attempt]);
+  }, [caseId, runId, client, attempt, flow]);
 
   const notice = (
     <div
       className="mock-api-notice"
       role="status"
     >
-      <strong>Mock API workflow · synthetic data only</strong>
+      <strong>
+        {flow === "api"
+          ? "Python API assessment"
+          : "Mock API workflow · synthetic data only"}
+      </strong>
       <p>
-        Requests are simulated in this browser tab. No Python service or model
-        is connected. Submitted input does not change the fixed fictional
-        report.
+        {flow === "api"
+          ? "This assessment is stored by the Python service. Synthetic reports are examples and do not assess your input. Refreshing reads the same run."
+          : "Requests are simulated in this browser tab. No Python service or model is connected. Submitted input does not change the fixed fictional report."}
       </p>
     </div>
   );
@@ -105,8 +125,16 @@ export function ApiCase({
       <>
         <div className="page-container mock-notice-container">
           {notice}
+          {run?.warnings.map((warning, index) => (
+            <p
+              role="status"
+              key={index}
+            >
+              {warning}
+            </p>
+          ))}
           <p className="mock-version">
-            Saved mock report · version {report.version}
+            Saved report · version {report.version}
           </p>
         </div>
         <ReportView
@@ -125,16 +153,17 @@ export function ApiCase({
           role="alert"
         >
           <span className="eyebrow">
-            MOCK WORKFLOW · {error.status ?? error.code}
+            {flow === "api" ? "API ASSESSMENT" : "MOCK WORKFLOW"} ·{" "}
+            {error.status ?? error.code}
           </span>
           <h1>
             {error.status === 404
-              ? "This mock run could not be found."
+              ? "This run could not be found."
               : error.code === "POLL_TIMEOUT"
                 ? "Status checks are paused."
-                : error.code === "MOCK_RUN_FAILED"
-                  ? "The mock run failed."
-                  : "The mock request could not finish."}
+                : run?.status === "failed"
+                  ? "The assessment failed."
+                  : "The request could not finish."}
           </h1>
           <p>{error.message}</p>
           <p>
@@ -172,8 +201,8 @@ export function ApiCase({
     <div className="page-container">
       {notice}
       <RunProgress
-        step={run ? stages.indexOf(run.stage) : 0}
-        mode="mock-api"
+        step={run?.stage ? stages.indexOf(run.stage) : 0}
+        mode={flow}
       />
     </div>
   );

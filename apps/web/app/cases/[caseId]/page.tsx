@@ -11,9 +11,10 @@ export default async function CasePage({
 }) {
   const { caseId } = await params;
   const query = await searchParams;
-  if (query.flow === "mock-api")
+  if (query.flow === "mock-api" || query.flow === "api")
     return (
       <ApiCase
+        flow={query.flow}
         caseId={caseId}
         runId={typeof query.run === "string" ? query.run : null}
       />
@@ -24,8 +25,8 @@ export default async function CasePage({
         <section className="panel state-panel">
           <h1>This workflow is not enabled.</h1>
           <p>
-            The Python API is not connected. A backend request will never
-            silently fall back to a fictional report.
+            A backend request will never silently fall back to a fictional
+            report.
           </p>
           <Link
             className="button button-primary"

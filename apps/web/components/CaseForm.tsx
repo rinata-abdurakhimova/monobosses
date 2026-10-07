@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { sampleInput, savePreviewCase } from "@/lib/preview";
 import type { CaseInput, PreviewMode, Scope } from "@/lib/types";
-import { createMockApiClient } from "@/lib/api";
+import { createMockApiClient, createHttpApiClient } from "@/lib/api";
 import { asApiError } from "@/lib/api/errors";
 import { MOCK_SCENARIOS, type MockScenario } from "@/lib/api/types";
 
@@ -21,7 +21,7 @@ export function CaseForm() {
   const router = useRouter();
   const [input, setInput] = useState<CaseInput>(empty);
   const [mode, setMode] = useState<PreviewMode>("complete");
-  const [flow, setFlow] = useState<"fixture" | "mock-api">("fixture");
+  const [flow, setFlow] = useState<"fixture" | "mock-api" | "api">("api");
   const [mockScenario, setMockScenario] = useState<MockScenario>("complete");
   const [errors, setErrors] = useState<
     Partial<Record<keyof CaseInput, string>>
@@ -62,8 +62,11 @@ export function CaseForm() {
         indication: input.indication.trim(),
         mechanism: input.mechanism.trim(),
       };
-      if (flow === "mock-api") {
-        const client = createMockApiClient({ scenario: mockScenario });
+      if (flow !== "fixture") {
+        const client =
+          flow === "api"
+            ? createHttpApiClient()
+            : createMockApiClient({ scenario: mockScenario });
         const created = await client.createCase(normalizedInput, {
           signal: controller.signal,
         });
@@ -72,7 +75,7 @@ export function CaseForm() {
         });
         if (!controller.signal.aborted)
           router.push(
-            `/cases/${encodeURIComponent(created.case_id)}?flow=mock-api&run=${encodeURIComponent(started.run_id)}`,
+            `/cases/${encodeURIComponent(created.case_id)}?flow=${flow}&run=${encodeURIComponent(started.run_id)}`,
           );
         return;
       }
@@ -82,7 +85,7 @@ export function CaseForm() {
       if (controller.signal.aborted) return;
       submitted.current = false;
       setBusy(false);
-      if (flow === "mock-api") {
+      if (flow !== "fixture") {
         const error = asApiError(failure);
         setStorageError(error.message);
         setErrors(error.fieldErrors);
@@ -139,23 +142,24 @@ export function CaseForm() {
         </div>
       </fieldset>
       <div className="field workflow-select">
-        <label htmlFor="workflow">Preview workflow</label>
+        <label htmlFor="workflow">Assessment workflow</label>
         <select
           id="workflow"
           value={flow}
           onChange={(event) => {
-            setFlow(event.target.value as "fixture" | "mock-api");
+            setFlow(event.target.value as "fixture" | "mock-api" | "api");
             setStorageError("");
             setErrors({});
           }}
           disabled={busy}
         >
+          <option value="api">Python API assessment</option>
           <option value="fixture">Fixed fictional report preview</option>
           <option value="mock-api">Mock API workflow — local simulation</option>
         </select>
         <small>
-          The Python API is not connected. These workflows use separate local
-          data stores.
+          The Python API receives your input. Preview workflows use local
+          synthetic data.
         </small>
       </div>
       <div className="form-fields">
@@ -308,53 +312,66 @@ export function CaseForm() {
           size={18}
         />
         <p>
-          {flow === "mock-api"
-            ? "This mock API workflow opens a "
-            : "This preview opens a "}
-          <strong>fixed fictional report</strong>. Your input is saved locally
-          for the interface flow; it is not analysed or sent to a model.
+          {flow === "api" ? (
+            <>
+              Input is sent to the Python API. The current backend skeleton
+              returns a <strong>synthetic example</strong> until the analysis
+              pipeline is available.
+            </>
+          ) : (
+            <>
+              {flow === "mock-api"
+                ? "This mock API workflow opens a "
+                : "This preview opens a "}
+              <strong>fixed fictional report</strong>. Your input is saved
+              locally for the interface flow; it is not analysed or sent to a
+              model.
+            </>
+          )}
         </p>
       </div>
-      <details className="preview-settings">
-        <summary>Preview states</summary>
-        {flow === "mock-api" ? (
-          <>
-            <label htmlFor="mock-scenario">Choose a mock API scenario</label>
-            <select
-              id="mock-scenario"
-              value={mockScenario}
-              onChange={(event) =>
-                setMockScenario(event.target.value as MockScenario)
-              }
-              disabled={busy}
-            >
-              {MOCK_SCENARIOS.map((scenario) => (
-                <option
-                  key={scenario.value}
-                  value={scenario.value}
-                >
-                  {scenario.label}
+      {flow !== "api" && (
+        <details className="preview-settings">
+          <summary>Preview states</summary>
+          {flow === "mock-api" ? (
+            <>
+              <label htmlFor="mock-scenario">Choose a mock API scenario</label>
+              <select
+                id="mock-scenario"
+                value={mockScenario}
+                onChange={(event) =>
+                  setMockScenario(event.target.value as MockScenario)
+                }
+                disabled={busy}
+              >
+                {MOCK_SCENARIOS.map((scenario) => (
+                  <option
+                    key={scenario.value}
+                    value={scenario.value}
+                  >
+                    {scenario.label}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <>
+              <label htmlFor="preview-mode">Choose a UI scenario</label>
+              <select
+                id="preview-mode"
+                value={mode}
+                onChange={(e) => setMode(e.target.value as PreviewMode)}
+              >
+                <option value="complete">Completed sample report</option>
+                <option value="failed">Simulated failed run</option>
+                <option value="unavailable">
+                  Sample with an unavailable source
                 </option>
-              ))}
-            </select>
-          </>
-        ) : (
-          <>
-            <label htmlFor="preview-mode">Choose a UI scenario</label>
-            <select
-              id="preview-mode"
-              value={mode}
-              onChange={(e) => setMode(e.target.value as PreviewMode)}
-            >
-              <option value="complete">Completed sample report</option>
-              <option value="failed">Simulated failed run</option>
-              <option value="unavailable">
-                Sample with an unavailable source
-              </option>
-            </select>
-          </>
-        )}
-      </details>
+              </select>
+            </>
+          )}
+        </details>
+      )}
       {storageError && (
         <p
           className="field-error"
@@ -378,10 +395,14 @@ export function CaseForm() {
           disabled={busy}
         >
           {busy
-            ? "Opening preview…"
-            : flow === "mock-api"
-              ? "Start mock workflow"
-              : "Preview assessment"}
+            ? flow === "api"
+              ? "Starting assessment…"
+              : "Opening preview…"
+            : flow === "api"
+              ? "Start assessment"
+              : flow === "mock-api"
+                ? "Start mock workflow"
+                : "Preview assessment"}
           <Icon
             name="arrow"
             size={18}

@@ -1,9 +1,8 @@
 import type { CaseInput } from "../types";
+import type * as Contract from "../contracts/generated";
 
-/** Provisional boundary based on docs/implementation-contract.md, not OpenAPI. */
-export type RunStatus = "queued" | "running" | "completed" | "failed";
-export type RunStage =
-  "validate" | "retrieve" | "analyze" | "audit" | "synthesize" | "finalize";
+export type RunStatus = Contract.RunStatus;
+export type RunStage = Contract.RunStage;
 export type RequestOptions = { signal?: AbortSignal };
 export type CreatedCase = { case_id: string };
 export type StartedRun = { run_id: string };
@@ -11,7 +10,7 @@ export type Run = {
   id: string;
   case_id: string;
   status: RunStatus;
-  stage: RunStage;
+  stage: RunStage | null;
   report_version: number | null;
   warnings: string[];
   error: { code: string; message: string; retryable: boolean } | null;
