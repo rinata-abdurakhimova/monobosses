@@ -1,0 +1,14 @@
+{
+  "title": "SYNTHETIC: In vitro study of SYN-1 inhibition in a Disease-D cell model",
+  "published_at": "2024-02-01",
+  "synthetic": true,
+  "sections": [
+    {"heading": "Summary", "text": "Inhibition of the synthetic target SYN-1 reduced the disease marker M by 62% in cultured Disease-D model cells compared with vehicle (n=6 per group). This document is entirely synthetic and describes no real compound, target or disease."},
+    {"heading": "Genetic evidence", "text": "A synthetic cohort analysis associated loss-of-function variants in SYN1 with lower marker M levels. The analysis is correlative and does not establish causality."},
+    {"heading": "Limitations", "text": "Experiments were performed in a single cell line. No in vivo data are included in this document."}
+  ],
+  "evidence": [
+    {"excerpt": "Inhibition of the synthetic target SYN-1 reduced the disease marker M by 62% in cultured Disease-D model cells compared with vehicle (n=6 per group).", "scope": "approach", "limitations": ["In vitro, single cell line; synthetic data."]},
+    {"excerpt": "A synthetic cohort analysis associated loss-of-function variants in SYN1 with lower marker M levels.", "scope": "approach", "limitations": ["Association only; the document itself states causality is not established."]}
+  ]
+}

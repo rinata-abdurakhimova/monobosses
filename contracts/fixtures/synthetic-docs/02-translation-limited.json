@@ -1,0 +1,14 @@
+{
+  "title": "SYNTHETIC: Mouse efficacy study of candidate X-001",
+  "published_at": "2024-06-15",
+  "synthetic": true,
+  "sections": [
+    {"heading": "Animal model", "text": "In the synthetic Disease-D mouse model, the SYN-1 inhibitor candidate X-001 lowered marker M by 48% after 4 weeks of dosing. The mouse model reproduces only the inflammatory component of Disease-D."},
+    {"heading": "Species differences", "text": "The human SYN-1 ortholog shares 71% sequence identity with the mouse protein. Binding affinity of X-001 for the human protein was not measured."}
+  ],
+  "evidence": [
+    {"excerpt": "In the synthetic Disease-D mouse model, the SYN-1 inhibitor candidate X-001 lowered marker M by 48% after 4 weeks of dosing.", "scope": "program", "limitations": ["Mouse data only; not evidence of human efficacy."]},
+    {"excerpt": "The mouse model reproduces only the inflammatory component of Disease-D.", "scope": "program", "limitations": ["Limits translation of the mouse result to the full human disease."]},
+    {"excerpt": "Binding affinity of X-001 for the human protein was not measured.", "scope": "program", "limitations": ["Absence of a measurement; not a negative result."]}
+  ]
+}
