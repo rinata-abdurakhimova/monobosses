@@ -1,0 +1,843 @@
+[
+  {
+    "name": "category_with_unknowns",
+    "synthetic": true,
+    "generation": "hand-authored synthetic mock adapter; no live model",
+    "case": {
+      "indication": "Synthetic disease",
+      "mechanism": "Synthetic target",
+      "scope": "approach",
+      "program_data": null,
+      "modality": null,
+      "development_stage": null,
+      "as_of_date": null
+    },
+    "pack": {
+      "sources": [
+        {
+          "id": "s1",
+          "title": "Synthetic portfolio",
+          "url": null,
+          "type": "synthetic",
+          "published_at": null,
+          "retrieved_at": "2026-10-06T00:00:00Z",
+          "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "synthetic": true,
+          "document_id": null
+        }
+      ],
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "s1",
+          "excerpt": "Fictional Partner A researches synthetic target X.",
+          "locator": "portfolio",
+          "scope": "approach",
+          "limitations": []
+        }
+      ],
+      "retrieval_warnings": [],
+      "snapshot_id": "snapshot-test",
+      "synthetic": true
+    },
+    "result": {
+      "role_id": "partnerships",
+      "summary": "Synthetic candidate; interest unknown.",
+      "position": "insufficient_data",
+      "claims": [
+        {
+          "id": "partnerships.fit",
+          "text": "Synthetic partner category may fit",
+          "provenance": "ai",
+          "support_status": "unverified",
+          "evidence_ids": [],
+          "assumptions": [
+            "Synthetic category proposal"
+          ],
+          "scope": "approach",
+          "importance": "major"
+        }
+      ],
+      "risks": [
+        {
+          "id": "partnerships.rights",
+          "description": "Rights unknown",
+          "priority": "major",
+          "claim_ids": [
+            "partnerships.fit"
+          ],
+          "impact": "Transfer may be blocked",
+          "next_check": "Review IP"
+        }
+      ],
+      "unknowns": [
+        "Synthetic case",
+        "Search not complete",
+        "Fit of format unknown",
+        "Need confirmation",
+        "Human relevance data; evidence needed: Reviewed R4 study",
+        "Requires verification: partnerships.fit: Synthetic partner category may fit",
+        "market context absent; upstream alignment remains pending.",
+        "ip_licensing context absent; upstream alignment remains pending.",
+        "science context absent; upstream alignment remains pending.",
+        "clinical context absent; upstream alignment remains pending."
+      ],
+      "change_conditions": [
+        "Verified fit changes shortlist"
+      ],
+      "section_content": [
+        {
+          "key": "commercial_opportunity",
+          "summary": "Synthetic candidate; interest unknown.",
+          "claim_ids": [
+            "partnerships.fit"
+          ],
+          "limitations": [
+            "Synthetic test only",
+            "Structural validation is not semantic evidence audit; R3 review required.",
+            "Partner fit does not establish interest, deal readiness, price or investment return.",
+            "IP rights and restrictions require specialist review."
+          ],
+          "structured_data": {
+            "partnerships": {
+              "summary": "Synthetic candidate; interest unknown.",
+              "position": "insufficient_data",
+              "candidates": [
+                {
+                  "id": "partner_a",
+                  "kind": "category",
+                  "identity": {
+                    "value": "Synthetic category fit to verify",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "partnerships.fit"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal only"
+                    ],
+                    "unknowns": []
+                  },
+                  "fit": {
+                    "work_direction": {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    },
+                    "portfolio": {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    },
+                    "capabilities": {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    },
+                    "partner_needs": {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    },
+                    "rationale": {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    }
+                  },
+                  "required_competencies_and_resources": [
+                    {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    }
+                  ],
+                  "collaboration_options": [
+                    {
+                      "format": "joint_research",
+                      "assessment": "insufficient_data",
+                      "rationale": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need confirmation"
+                        ]
+                      },
+                      "prerequisites": [
+                        "Verify rights and milestone"
+                      ],
+                      "unknowns": [
+                        "Fit of format unknown"
+                      ]
+                    },
+                    {
+                      "format": "co_development",
+                      "assessment": "insufficient_data",
+                      "rationale": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need confirmation"
+                        ]
+                      },
+                      "prerequisites": [
+                        "Verify rights and milestone"
+                      ],
+                      "unknowns": [
+                        "Fit of format unknown"
+                      ]
+                    },
+                    {
+                      "format": "licensing",
+                      "assessment": "insufficient_data",
+                      "rationale": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need confirmation"
+                        ]
+                      },
+                      "prerequisites": [
+                        "Verify rights and milestone"
+                      ],
+                      "unknowns": [
+                        "Fit of format unknown"
+                      ]
+                    },
+                    {
+                      "format": "acquisition",
+                      "assessment": "insufficient_data",
+                      "rationale": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need confirmation"
+                        ]
+                      },
+                      "prerequisites": [
+                        "Verify rights and milestone"
+                      ],
+                      "unknowns": [
+                        "Fit of format unknown"
+                      ]
+                    }
+                  ],
+                  "project_offer": {
+                    "value": "Synthetic category fit to verify",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "partnerships.fit"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal only"
+                    ],
+                    "unknowns": []
+                  },
+                  "discussion_gaps": [
+                    {
+                      "missing_result_or_data": "Human relevance data",
+                      "why_needed_for_discussion": "Confirm rationale",
+                      "evidence_needed": "Reviewed R4 study"
+                    }
+                  ],
+                  "timing": {
+                    "stage": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need confirmation"
+                      ]
+                    },
+                    "milestone": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need confirmation"
+                      ]
+                    },
+                    "readiness": "insufficient_data",
+                    "conditions": [
+                      "Review human relevance"
+                    ]
+                  },
+                  "dependencies": [
+                    {
+                      "kind": "ip_licensing",
+                      "finding": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need confirmation"
+                        ]
+                      },
+                      "impact": "Rights uncertainty may block transfer",
+                      "next_check": "Review ownership"
+                    }
+                  ],
+                  "risk_ids": [
+                    "partnerships.rights"
+                  ],
+                  "next_checks": [
+                    {
+                      "question": "Does category fit?",
+                      "evidence_needed": "Reviewed portfolio",
+                      "decision_if_positive": "Retain candidate",
+                      "decision_if_negative": "Remove candidate",
+                      "claim_ids": []
+                    }
+                  ],
+                  "investment_implications": [
+                    {
+                      "finding": {
+                        "value": "Synthetic category fit to verify",
+                        "basis": "hypothesis",
+                        "claim_ids": [
+                          "partnerships.fit"
+                        ],
+                        "assumptions": [
+                          "Synthetic proposal only"
+                        ],
+                        "unknowns": []
+                      },
+                      "scenario_effect": "Resources may affect financing",
+                      "conditions": [
+                        "Confirm actual resources"
+                      ],
+                      "next_check": "Obtain resource plan"
+                    }
+                  ],
+                  "partner_interest": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need confirmation"
+                    ]
+                  },
+                  "deal_readiness": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need confirmation"
+                    ]
+                  }
+                }
+              ],
+              "candidate_search_unknowns": [
+                "Search not complete"
+              ],
+              "unknowns": [
+                "Synthetic case"
+              ],
+              "next_checks": [
+                {
+                  "question": "Which candidates fit?",
+                  "evidence_needed": "Partner portfolio",
+                  "decision_if_positive": "Assess candidate",
+                  "decision_if_negative": "Seek another category",
+                  "claim_ids": []
+                }
+              ],
+              "change_conditions": [
+                "Verified fit changes shortlist"
+              ],
+              "limitations": [
+                "Synthetic test only"
+              ],
+              "source_requests": [
+                "Synthetic case",
+                "Search not complete",
+                "Fit of format unknown",
+                "Need confirmation",
+                "Human relevance data; evidence needed: Reviewed R4 study",
+                "Requires verification: partnerships.fit: Synthetic partner category may fit",
+                "market context absent; upstream alignment remains pending.",
+                "ip_licensing context absent; upstream alignment remains pending.",
+                "science context absent; upstream alignment remains pending.",
+                "clinical context absent; upstream alignment remains pending."
+              ],
+              "prompt_version": "1.0.0",
+              "snapshot_id": "snapshot-test",
+              "as_of_date": null,
+              "synthetic": true,
+              "context_availability": {
+                "market": false,
+                "ip_licensing": false,
+                "science": false,
+                "clinical": false
+              },
+              "claim_evidence_links": {
+                "partnerships.fit": []
+              },
+              "evidence_source_links": {
+                "e1": "s1"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "empty_evidence",
+    "synthetic": true,
+    "generation": "hand-authored synthetic mock adapter; no live model",
+    "case": {
+      "indication": "Synthetic disease",
+      "mechanism": "Synthetic target",
+      "scope": "approach",
+      "program_data": null,
+      "modality": null,
+      "development_stage": null,
+      "as_of_date": null
+    },
+    "pack": {
+      "sources": [],
+      "evidence": [],
+      "retrieval_warnings": [],
+      "snapshot_id": "snapshot-test",
+      "synthetic": true
+    },
+    "result": {
+      "role_id": "partnerships",
+      "summary": "Synthetic candidate; interest unknown.",
+      "position": "insufficient_data",
+      "claims": [
+        {
+          "id": "partnerships.fit",
+          "text": "Synthetic partner category may fit",
+          "provenance": "ai",
+          "support_status": "unverified",
+          "evidence_ids": [],
+          "assumptions": [
+            "Synthetic category proposal"
+          ],
+          "scope": "approach",
+          "importance": "major"
+        }
+      ],
+      "risks": [
+        {
+          "id": "partnerships.rights",
+          "description": "Rights unknown",
+          "priority": "major",
+          "claim_ids": [
+            "partnerships.fit"
+          ],
+          "impact": "Transfer may be blocked",
+          "next_check": "Review IP"
+        }
+      ],
+      "unknowns": [
+        "Synthetic case",
+        "Search not complete",
+        "Fit of format unknown",
+        "Need confirmation",
+        "Human relevance data; evidence needed: Reviewed R4 study",
+        "Requires verification: partnerships.fit: Synthetic partner category may fit",
+        "market context absent; upstream alignment remains pending.",
+        "ip_licensing context absent; upstream alignment remains pending.",
+        "science context absent; upstream alignment remains pending.",
+        "clinical context absent; upstream alignment remains pending.",
+        "No evidence supplied: partner fit and transaction feasibility are unverified."
+      ],
+      "change_conditions": [
+        "Verified fit changes shortlist"
+      ],
+      "section_content": [
+        {
+          "key": "commercial_opportunity",
+          "summary": "Synthetic candidate; interest unknown.",
+          "claim_ids": [
+            "partnerships.fit"
+          ],
+          "limitations": [
+            "Synthetic test only",
+            "Structural validation is not semantic evidence audit; R3 review required.",
+            "Partner fit does not establish interest, deal readiness, price or investment return.",
+            "IP rights and restrictions require specialist review."
+          ],
+          "structured_data": {
+            "partnerships": {
+              "summary": "Synthetic candidate; interest unknown.",
+              "position": "insufficient_data",
+              "candidates": [
+                {
+                  "id": "partner_a",
+                  "kind": "category",
+                  "identity": {
+                    "value": "Synthetic category fit to verify",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "partnerships.fit"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal only"
+                    ],
+                    "unknowns": []
+                  },
+                  "fit": {
+                    "work_direction": {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    },
+                    "portfolio": {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    },
+                    "capabilities": {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    },
+                    "partner_needs": {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    },
+                    "rationale": {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    }
+                  },
+                  "required_competencies_and_resources": [
+                    {
+                      "value": "Synthetic category fit to verify",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "partnerships.fit"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal only"
+                      ],
+                      "unknowns": []
+                    }
+                  ],
+                  "collaboration_options": [
+                    {
+                      "format": "joint_research",
+                      "assessment": "insufficient_data",
+                      "rationale": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need confirmation"
+                        ]
+                      },
+                      "prerequisites": [
+                        "Verify rights and milestone"
+                      ],
+                      "unknowns": [
+                        "Fit of format unknown"
+                      ]
+                    },
+                    {
+                      "format": "co_development",
+                      "assessment": "insufficient_data",
+                      "rationale": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need confirmation"
+                        ]
+                      },
+                      "prerequisites": [
+                        "Verify rights and milestone"
+                      ],
+                      "unknowns": [
+                        "Fit of format unknown"
+                      ]
+                    },
+                    {
+                      "format": "licensing",
+                      "assessment": "insufficient_data",
+                      "rationale": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need confirmation"
+                        ]
+                      },
+                      "prerequisites": [
+                        "Verify rights and milestone"
+                      ],
+                      "unknowns": [
+                        "Fit of format unknown"
+                      ]
+                    },
+                    {
+                      "format": "acquisition",
+                      "assessment": "insufficient_data",
+                      "rationale": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need confirmation"
+                        ]
+                      },
+                      "prerequisites": [
+                        "Verify rights and milestone"
+                      ],
+                      "unknowns": [
+                        "Fit of format unknown"
+                      ]
+                    }
+                  ],
+                  "project_offer": {
+                    "value": "Synthetic category fit to verify",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "partnerships.fit"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal only"
+                    ],
+                    "unknowns": []
+                  },
+                  "discussion_gaps": [
+                    {
+                      "missing_result_or_data": "Human relevance data",
+                      "why_needed_for_discussion": "Confirm rationale",
+                      "evidence_needed": "Reviewed R4 study"
+                    }
+                  ],
+                  "timing": {
+                    "stage": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need confirmation"
+                      ]
+                    },
+                    "milestone": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need confirmation"
+                      ]
+                    },
+                    "readiness": "insufficient_data",
+                    "conditions": [
+                      "Review human relevance"
+                    ]
+                  },
+                  "dependencies": [
+                    {
+                      "kind": "ip_licensing",
+                      "finding": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need confirmation"
+                        ]
+                      },
+                      "impact": "Rights uncertainty may block transfer",
+                      "next_check": "Review ownership"
+                    }
+                  ],
+                  "risk_ids": [
+                    "partnerships.rights"
+                  ],
+                  "next_checks": [
+                    {
+                      "question": "Does category fit?",
+                      "evidence_needed": "Reviewed portfolio",
+                      "decision_if_positive": "Retain candidate",
+                      "decision_if_negative": "Remove candidate",
+                      "claim_ids": []
+                    }
+                  ],
+                  "investment_implications": [
+                    {
+                      "finding": {
+                        "value": "Synthetic category fit to verify",
+                        "basis": "hypothesis",
+                        "claim_ids": [
+                          "partnerships.fit"
+                        ],
+                        "assumptions": [
+                          "Synthetic proposal only"
+                        ],
+                        "unknowns": []
+                      },
+                      "scenario_effect": "Resources may affect financing",
+                      "conditions": [
+                        "Confirm actual resources"
+                      ],
+                      "next_check": "Obtain resource plan"
+                    }
+                  ],
+                  "partner_interest": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need confirmation"
+                    ]
+                  },
+                  "deal_readiness": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need confirmation"
+                    ]
+                  }
+                }
+              ],
+              "candidate_search_unknowns": [
+                "Search not complete"
+              ],
+              "unknowns": [
+                "Synthetic case"
+              ],
+              "next_checks": [
+                {
+                  "question": "Which candidates fit?",
+                  "evidence_needed": "Partner portfolio",
+                  "decision_if_positive": "Assess candidate",
+                  "decision_if_negative": "Seek another category",
+                  "claim_ids": []
+                }
+              ],
+              "change_conditions": [
+                "Verified fit changes shortlist"
+              ],
+              "limitations": [
+                "Synthetic test only"
+              ],
+              "source_requests": [
+                "Synthetic case",
+                "Search not complete",
+                "Fit of format unknown",
+                "Need confirmation",
+                "Human relevance data; evidence needed: Reviewed R4 study",
+                "Requires verification: partnerships.fit: Synthetic partner category may fit",
+                "market context absent; upstream alignment remains pending.",
+                "ip_licensing context absent; upstream alignment remains pending.",
+                "science context absent; upstream alignment remains pending.",
+                "clinical context absent; upstream alignment remains pending.",
+                "No evidence supplied: partner fit and transaction feasibility are unverified."
+              ],
+              "prompt_version": "1.0.0",
+              "snapshot_id": "snapshot-test",
+              "as_of_date": null,
+              "synthetic": true,
+              "context_availability": {
+                "market": false,
+                "ip_licensing": false,
+                "science": false,
+                "clinical": false
+              },
+              "claim_evidence_links": {
+                "partnerships.fit": []
+              },
+              "evidence_source_links": {}
+            }
+          }
+        }
+      ]
+    }
+  }
+]
