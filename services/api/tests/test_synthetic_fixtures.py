@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 from vic.contracts import Recommendation, RoleId
@@ -6,6 +7,15 @@ from vic.integrity import check_report
 from vic.synthetic import build_all
 
 FIXTURES = Path(__file__).resolve().parents[3] / "contracts" / "fixtures"
+
+
+def test_shared_fixtures_have_no_ukrainian_display_text():
+    """English fixture content must stay English after regeneration and in API mocks."""
+    for stem, model in build_all().items():
+        generated = json.dumps(model.model_dump(mode="json"), ensure_ascii=False)
+        committed = (FIXTURES / f"{stem}.json").read_text(encoding="utf-8")
+        for text in (generated, committed):
+            assert re.search(r"[\u0400-\u04ff]", text) is None, stem
 
 
 def test_committed_json_matches_generator():

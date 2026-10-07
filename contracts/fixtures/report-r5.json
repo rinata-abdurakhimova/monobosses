@@ -7,16 +7,16 @@
   "synthetic": true,
   "snapshot_id": "snap-synthetic-v1",
   "recommendation": "Conditional",
-  "rationale": "Механізм має часткове обґрунтування, але безпечна експозиція в людини не встановлена, а дані програми неповні. Рішення Conditional: інтерес залежить від підтвердження безпеки.",
+  "rationale": "The mechanism has partial support, but safe human exposure has not been established and programme data are incomplete. The decision is Conditional: interest depends on confirming safety.",
   "decision_conditions": [
-    "Отримати дані безпеки та експозиції у людини",
-    "Підтвердити біомаркер дії на мішень",
-    "Отримати кошторис і план дослідження фази 1"
+    "Obtain human safety and exposure data",
+    "Confirm the target engagement biomarker",
+    "Obtain a phase 1 cost estimate and trial plan"
   ],
   "sections": [
     {
       "key": "recommendation",
-      "summary": "Conditional: інтерес залежить від підтвердження безпеки експозиції.",
+      "summary": "Conditional: interest depends on confirming exposure safety.",
       "claim_ids": [
         "translation.safe_exposure"
       ],
@@ -27,19 +27,19 @@
     },
     {
       "key": "scientific_thesis",
-      "summary": "Є часткове генетичне та доклінічне обґрунтування мішені Y.",
+      "summary": "Target Y has partial genetic and preclinical support.",
       "claim_ids": [
         "science.target_validation",
         "science.animal_model"
       ],
       "limitations": [
-        "Асоціація не доводить причинності."
+        "Association does not establish causality."
       ],
       "structured_data": null
     },
     {
       "key": "human_translation_thesis",
-      "summary": "Безпечність потрібної експозиції у людини не встановлена.",
+      "summary": "The safety of the required human exposure has not been established.",
       "claim_ids": [
         "translation.safe_exposure",
         "translation.biomarker_link"
@@ -49,7 +49,7 @@
     },
     {
       "key": "clinical_development_plan",
-      "summary": "Фаза 1 орієнтована на безпеку; шлях до ефективності не визначено.",
+      "summary": "Phase 1 focuses on safety; the path to efficacy has not been defined.",
       "claim_ids": [
         "clinical.phase1_design",
         "clinical.efficacy_path"
@@ -59,7 +59,7 @@
     },
     {
       "key": "competitive_landscape",
-      "summary": "Конкурентне середовище потребує незалежної перевірки.",
+      "summary": "The competitive landscape requires independent verification.",
       "claim_ids": [
         "market.unmet_need"
       ],
@@ -68,30 +68,30 @@
     },
     {
       "key": "commercial_opportunity",
-      "summary": "Комерційна цінність не підтверджена незалежними джерелами.",
+      "summary": "Commercial value has not been confirmed by independent sources.",
       "claim_ids": [
         "market.company_claims",
         "market.unmet_need"
       ],
       "limitations": [
-        "Розмір популяції не прирівнюється до доступного ринку."
+        "Population size is not the same as the addressable market."
       ],
       "structured_data": null
     },
     {
       "key": "capital_to_milestone",
-      "summary": "Діапазон капіталу не оцінено: бракує бюджету й плану дослідження.",
+      "summary": "The capital range has not been estimated: a budget and trial plan are missing.",
       "claim_ids": [
         "investment.capital_unknown"
       ],
       "limitations": [
-        "Потрібні кошторис і план дослідження."
+        "A cost estimate and trial plan are needed."
       ],
       "structured_data": null
     },
     {
       "key": "key_risks",
-      "summary": "Критичний ризик — безпечність експозиції; суттєві — модель і бюджет.",
+      "summary": "The critical risk is exposure safety; the model and budget are material risks.",
       "claim_ids": [
         "translation.safe_exposure",
         "science.animal_model",
@@ -108,7 +108,7 @@
     },
     {
       "key": "critical_unknowns",
-      "summary": "Безпечна експозиція, біомаркер, шлях до ефективності, бюджет.",
+      "summary": "Safe exposure, biomarker, path to efficacy, and budget.",
       "claim_ids": [
         "translation.safe_exposure",
         "clinical.efficacy_path",
@@ -119,7 +119,7 @@
     },
     {
       "key": "diligence_questions",
-      "summary": "Шість пріоритетних питань для перевірки.",
+      "summary": "Six priority diligence questions.",
       "claim_ids": [
         "translation.safe_exposure",
         "translation.biomarker_link"
@@ -131,7 +131,7 @@
     },
     {
       "key": "sources",
-      "summary": "Чотири синтетичні джерела; частина — матеріали компанії.",
+      "summary": "Four synthetic sources; some are company materials.",
       "claim_ids": [],
       "limitations": [],
       "structured_data": {
@@ -147,12 +147,12 @@
   "roles": [
     {
       "role_id": "science",
-      "summary": "Часткове біологічне обґрунтування.",
-      "position": "Мішень Y має підтримку генетики й доклініки, причинність не доведена.",
+      "summary": "Partial biological support.",
+      "position": "Genetic and preclinical data support target Y; causality has not been established.",
       "claims": [
         {
           "id": "science.target_validation",
-          "text": "Генетичні дані пов'язують втрату функції мішені Y зі зниженим ризиком X, але це асоціація, а не доведена причинність.",
+          "text": "Genetic data link loss of target Y function to a lower risk of X, but this is an association, not established causality.",
           "provenance": "source",
           "support_status": "mixed",
           "evidence_ids": [
@@ -165,7 +165,7 @@
         },
         {
           "id": "science.animal_model",
-          "text": "Тваринна модель показує зменшення маркера прогресування, але її релевантність для людини обмежена.",
+          "text": "The animal model shows a reduction in a progression marker, but its relevance to humans is limited.",
           "provenance": "source",
           "support_status": "mixed",
           "evidence_ids": [
@@ -179,31 +179,31 @@
       "risks": [
         {
           "id": "risk-synthetic-02",
-          "description": "Ефект у тваринній моделі може не відтворитися у людини.",
+          "description": "The effect in the animal model may not translate to humans.",
           "priority": "major",
           "claim_ids": [
             "science.animal_model"
           ],
-          "impact": "Знижує наукову обґрунтованість механізму для людини.",
-          "next_check": "Знайти дані на людських тканинах або біомаркерні дані."
+          "impact": "Reduces the scientific support for the mechanism in humans.",
+          "next_check": "Find human tissue or biomarker data."
         }
       ],
       "unknowns": [
-        "Причинність генетичної асоціації"
+        "Causality of the genetic association"
       ],
       "change_conditions": [
-        "Незалежні когорти або дані на людських тканинах"
+        "Independent cohorts or human tissue data"
       ],
       "section_content": [
         {
           "key": "scientific_thesis",
-          "summary": "Є часткове генетичне та доклінічне обґрунтування мішені Y.",
+          "summary": "Target Y has partial genetic and preclinical support.",
           "claim_ids": [
             "science.target_validation",
             "science.animal_model"
           ],
           "limitations": [
-            "Асоціація не доводить причинності."
+            "Association does not establish causality."
           ],
           "structured_data": null
         }
@@ -211,12 +211,12 @@
     },
     {
       "role_id": "translation",
-      "summary": "Безпечність експозиції не встановлена.",
-      "position": "Ланка «експозиція → безпека» відсутня; властивості кандидата не переносяться на весь механізм.",
+      "summary": "Exposure safety has not been established.",
+      "position": "The exposure-to-safety link is missing; candidate properties cannot be generalized to the entire mechanism.",
       "claims": [
         {
           "id": "translation.safe_exposure",
-          "text": "Безпечність потрібної експозиції у людини не встановлено.",
+          "text": "The safety of the required human exposure has not been established.",
           "provenance": "ai",
           "support_status": "unknown",
           "evidence_ids": [
@@ -228,7 +228,7 @@
         },
         {
           "id": "translation.biomarker_link",
-          "text": "Біомаркер, що пов'язує дію на мішень із користю для пацієнта, не підтверджений.",
+          "text": "A biomarker linking target engagement to patient benefit has not been confirmed.",
           "provenance": "ai",
           "support_status": "unverified",
           "evidence_ids": [],
@@ -240,25 +240,25 @@
       "risks": [
         {
           "id": "risk-synthetic-01",
-          "description": "Безпечність потрібної експозиції у людини не встановлена.",
+          "description": "The safety of the required human exposure has not been established.",
           "priority": "critical",
           "claim_ids": [
             "translation.safe_exposure"
           ],
-          "impact": "Може зупинити розробку й зробити інвестиційну тезу недійсною.",
-          "next_check": "Отримати дані безпеки та експозиції з дослідження фази 1."
+          "impact": "May halt development and invalidate the investment thesis.",
+          "next_check": "Obtain safety and exposure data from the phase 1 trial."
         }
       ],
       "unknowns": [
-        "Біомаркер дії на мішень"
+        "Target engagement biomarker"
       ],
       "change_conditions": [
-        "Дані PK та безпеки з дослідження фази 1"
+        "PK and safety data from the phase 1 trial"
       ],
       "section_content": [
         {
           "key": "human_translation_thesis",
-          "summary": "Безпечність потрібної експозиції у людини не встановлена.",
+          "summary": "The safety of the required human exposure has not been established.",
           "claim_ids": [
             "translation.safe_exposure",
             "translation.biomarker_link"
@@ -270,12 +270,12 @@
     },
     {
       "role_id": "clinical",
-      "summary": "Фаза 1 запланована, далі невизначено.",
-      "position": "Шлях до ефективності залежить від безпеки.",
+      "summary": "Phase 1 is planned; subsequent development is uncertain.",
+      "position": "The path to efficacy depends on safety.",
       "claims": [
         {
           "id": "clinical.phase1_design",
-          "text": "Заплановане дослідження фази 1 орієнтоване на безпеку та переносимість.",
+          "text": "The planned phase 1 trial focuses on safety and tolerability.",
           "provenance": "source",
           "support_status": "supported",
           "evidence_ids": [
@@ -287,7 +287,7 @@
         },
         {
           "id": "clinical.efficacy_path",
-          "text": "Шлях до доказів ефективності залежить від результатів безпеки і не визначений.",
+          "text": "The path to evidence of efficacy depends on safety results and has not been defined.",
           "provenance": "ai",
           "support_status": "unknown",
           "evidence_ids": [],
@@ -298,15 +298,15 @@
       ],
       "risks": [],
       "unknowns": [
-        "Endpoints фази 2"
+        "Phase 2 endpoints"
       ],
       "change_conditions": [
-        "Результати безпеки"
+        "Safety results"
       ],
       "section_content": [
         {
           "key": "clinical_development_plan",
-          "summary": "Фаза 1 орієнтована на безпеку; шлях до ефективності не визначено.",
+          "summary": "Phase 1 focuses on safety; the path to efficacy has not been defined.",
           "claim_ids": [
             "clinical.phase1_design",
             "clinical.efficacy_path"
@@ -318,12 +318,12 @@
     },
     {
       "role_id": "market",
-      "summary": "Комерційна цінність не підтверджена.",
-      "position": "Заяви компанії не є незалежним доказом.",
+      "summary": "Commercial value has not been confirmed.",
+      "position": "Company statements are not independent evidence.",
       "claims": [
         {
           "id": "market.company_claims",
-          "text": "Заяви компанії про наміри не є незалежним доказом комерційної цінності.",
+          "text": "Company statements of intent are not independent evidence of commercial value.",
           "provenance": "source",
           "support_status": "supported",
           "evidence_ids": [
@@ -335,7 +335,7 @@
         },
         {
           "id": "market.unmet_need",
-          "text": "Незадоволена потреба при X потребує перевірки за незалежними джерелами.",
+          "text": "Unmet need in X requires verification using independent sources.",
           "provenance": "ai",
           "support_status": "unverified",
           "evidence_ids": [],
@@ -346,15 +346,15 @@
       ],
       "risks": [],
       "unknowns": [
-        "Стандарт лікування й альтернативи"
+        "Standard of care and alternatives"
       ],
       "change_conditions": [
-        "Незалежний огляд ринку"
+        "Independent market review"
       ],
       "section_content": [
         {
           "key": "competitive_landscape",
-          "summary": "Конкурентне середовище потребує незалежної перевірки.",
+          "summary": "The competitive landscape requires independent verification.",
           "claim_ids": [
             "market.unmet_need"
           ],
@@ -363,13 +363,13 @@
         },
         {
           "key": "commercial_opportunity",
-          "summary": "Комерційна цінність не підтверджена незалежними джерелами.",
+          "summary": "Commercial value has not been confirmed by independent sources.",
           "claim_ids": [
             "market.company_claims",
             "market.unmet_need"
           ],
           "limitations": [
-            "Розмір популяції не прирівнюється до доступного ринку."
+            "Population size is not the same as the addressable market."
           ],
           "structured_data": null
         }
@@ -377,12 +377,12 @@
     },
     {
       "role_id": "investment",
-      "summary": "Капітал не оцінено.",
-      "position": "Без бюджету діапазон не обґрунтовується; число не вигадуємо.",
+      "summary": "Capital has not been estimated.",
+      "position": "A range cannot be justified without a budget; no number is invented.",
       "claims": [
         {
           "id": "investment.capital_unknown",
-          "text": "Капітал до наступного milestone неможливо обґрунтувати без бюджету й плану дослідження.",
+          "text": "Capital to the next milestone cannot be justified without a budget and trial plan.",
           "provenance": "ai",
           "support_status": "unknown",
           "evidence_ids": [],
@@ -394,30 +394,30 @@
       "risks": [
         {
           "id": "risk-synthetic-03",
-          "description": "Невідомий бюджет і час до наступного milestone.",
+          "description": "The budget and time to the next milestone are unknown.",
           "priority": "major",
           "claim_ids": [
             "investment.capital_unknown"
           ],
-          "impact": "Неможливо оцінити потребу у фінансуванні.",
-          "next_check": "Отримати кошторис і план дослідження фази 1."
+          "impact": "Funding needs cannot be assessed.",
+          "next_check": "Obtain a phase 1 cost estimate and trial plan."
         }
       ],
       "unknowns": [
-        "Кошторис і час до milestone"
+        "Cost estimate and time to milestone"
       ],
       "change_conditions": [
-        "Кошторис CRO"
+        "CRO cost estimate"
       ],
       "section_content": [
         {
           "key": "capital_to_milestone",
-          "summary": "Діапазон капіталу не оцінено: бракує бюджету й плану дослідження.",
+          "summary": "The capital range has not been estimated: a budget and trial plan are missing.",
           "claim_ids": [
             "investment.capital_unknown"
           ],
           "limitations": [
-            "Потрібні кошторис і план дослідження."
+            "A cost estimate and trial plan are needed."
           ],
           "structured_data": null
         }
@@ -430,7 +430,7 @@
       "claims": [
         {
           "id": "translation.safe_exposure",
-          "text": "Безпечність потрібної експозиції у людини не встановлено.",
+          "text": "The safety of the required human exposure has not been established.",
           "provenance": "ai",
           "support_status": "unknown",
           "evidence_ids": [
@@ -444,13 +444,13 @@
       "risks": [
         {
           "id": "risk-synthetic-01",
-          "description": "Безпечність потрібної експозиції у людини не встановлена.",
+          "description": "The safety of the required human exposure has not been established.",
           "priority": "critical",
           "claim_ids": [
             "translation.safe_exposure"
           ],
-          "impact": "Може зупинити розробку й зробити інвестиційну тезу недійсною.",
-          "next_check": "Отримати дані безпеки та експозиції з дослідження фази 1."
+          "impact": "May halt development and invalidate the investment thesis.",
+          "next_check": "Obtain safety and exposure data from the phase 1 trial."
         }
       ],
       "unknowns": [
@@ -480,7 +480,7 @@
       "claims": [
         {
           "id": "translation.safe_exposure",
-          "text": "Безпечність потрібної експозиції у людини не встановлено.",
+          "text": "The safety of the required human exposure has not been established.",
           "provenance": "ai",
           "support_status": "unknown",
           "evidence_ids": [
@@ -593,7 +593,7 @@
       "claims": [
         {
           "id": "translation.safe_exposure",
-          "text": "Безпечність потрібної експозиції у людини не встановлено.",
+          "text": "The safety of the required human exposure has not been established.",
           "provenance": "ai",
           "support_status": "unknown",
           "evidence_ids": [
@@ -632,7 +632,7 @@
       "claims": [
         {
           "id": "translation.safe_exposure",
-          "text": "Безпечність потрібної експозиції у людини не встановлено.",
+          "text": "The safety of the required human exposure has not been established.",
           "provenance": "ai",
           "support_status": "unknown",
           "evidence_ids": [
@@ -668,7 +668,7 @@
   "claims": [
     {
       "id": "science.target_validation",
-      "text": "Генетичні дані пов'язують втрату функції мішені Y зі зниженим ризиком X, але це асоціація, а не доведена причинність.",
+      "text": "Genetic data link loss of target Y function to a lower risk of X, but this is an association, not established causality.",
       "provenance": "source",
       "support_status": "mixed",
       "evidence_ids": [
@@ -681,7 +681,7 @@
     },
     {
       "id": "science.animal_model",
-      "text": "Тваринна модель показує зменшення маркера прогресування, але її релевантність для людини обмежена.",
+      "text": "The animal model shows a reduction in a progression marker, but its relevance to humans is limited.",
       "provenance": "source",
       "support_status": "mixed",
       "evidence_ids": [
@@ -693,7 +693,7 @@
     },
     {
       "id": "translation.safe_exposure",
-      "text": "Безпечність потрібної експозиції у людини не встановлено.",
+      "text": "The safety of the required human exposure has not been established.",
       "provenance": "ai",
       "support_status": "unknown",
       "evidence_ids": [
@@ -705,7 +705,7 @@
     },
     {
       "id": "translation.biomarker_link",
-      "text": "Біомаркер, що пов'язує дію на мішень із користю для пацієнта, не підтверджений.",
+      "text": "A biomarker linking target engagement to patient benefit has not been confirmed.",
       "provenance": "ai",
       "support_status": "unverified",
       "evidence_ids": [],
@@ -715,7 +715,7 @@
     },
     {
       "id": "clinical.phase1_design",
-      "text": "Заплановане дослідження фази 1 орієнтоване на безпеку та переносимість.",
+      "text": "The planned phase 1 trial focuses on safety and tolerability.",
       "provenance": "source",
       "support_status": "supported",
       "evidence_ids": [
@@ -727,7 +727,7 @@
     },
     {
       "id": "clinical.efficacy_path",
-      "text": "Шлях до доказів ефективності залежить від результатів безпеки і не визначений.",
+      "text": "The path to evidence of efficacy depends on safety results and has not been defined.",
       "provenance": "ai",
       "support_status": "unknown",
       "evidence_ids": [],
@@ -737,7 +737,7 @@
     },
     {
       "id": "market.company_claims",
-      "text": "Заяви компанії про наміри не є незалежним доказом комерційної цінності.",
+      "text": "Company statements of intent are not independent evidence of commercial value.",
       "provenance": "source",
       "support_status": "supported",
       "evidence_ids": [
@@ -749,7 +749,7 @@
     },
     {
       "id": "market.unmet_need",
-      "text": "Незадоволена потреба при X потребує перевірки за незалежними джерелами.",
+      "text": "Unmet need in X requires verification using independent sources.",
       "provenance": "ai",
       "support_status": "unverified",
       "evidence_ids": [],
@@ -759,7 +759,7 @@
     },
     {
       "id": "investment.capital_unknown",
-      "text": "Капітал до наступного milestone неможливо обґрунтувати без бюджету й плану дослідження.",
+      "text": "Capital to the next milestone cannot be justified without a budget and trial plan.",
       "provenance": "ai",
       "support_status": "unknown",
       "evidence_ids": [],
@@ -769,7 +769,7 @@
     },
     {
       "id": "user.program_summary",
-      "text": "Користувач надав опис синтетичної програми; його не перевірено незалежно.",
+      "text": "The user provided a description of a synthetic programme; it has not been independently verified.",
       "provenance": "user",
       "support_status": "unverified",
       "evidence_ids": [],
@@ -802,17 +802,17 @@
     {
       "id": "ev-synthetic-01",
       "source_id": "src-synthetic-01",
-      "excerpt": "варіанти втрати функції гена мішені Y асоційовані зі зниженим ризиком захворювання X",
+      "excerpt": "loss-of-function variants in the target Y gene are associated with a lower risk of disease X",
       "locator": "abstract",
       "scope": "approach",
       "limitations": [
-        "Синтетична когорта; причинність не встановлена"
+        "Synthetic cohort; causality has not been established"
       ]
     },
     {
       "id": "ev-synthetic-02",
       "source_id": "src-synthetic-01",
-      "excerpt": "Асоціація не доводить причинності.",
+      "excerpt": "Association does not establish causality.",
       "locator": "limitations",
       "scope": "approach",
       "limitations": []
@@ -820,17 +820,17 @@
     {
       "id": "ev-synthetic-03",
       "source_id": "src-synthetic-02",
-      "excerpt": "інгібування мішені Y зменшувало маркер прогресування X",
+      "excerpt": "target Y inhibition reduced a marker of X progression",
       "locator": "results",
       "scope": "approach",
       "limitations": [
-        "Тваринна модель частково відтворює захворювання людини"
+        "The animal model only partially represents human disease"
       ]
     },
     {
       "id": "ev-synthetic-04",
       "source_id": "src-synthetic-03",
-      "excerpt": "експозицію в пацієнтів не повідомлено",
+      "excerpt": "patient exposure has not been reported",
       "locator": "record.results",
       "scope": "program",
       "limitations": []
@@ -838,7 +838,7 @@
     {
       "id": "ev-synthetic-05",
       "source_id": "src-synthetic-03",
-      "excerpt": "первинна кінцева точка — безпека та переносимість",
+      "excerpt": "the primary endpoint is safety and tolerability",
       "locator": "record.endpoints",
       "scope": "program",
       "limitations": []
@@ -846,145 +846,145 @@
     {
       "id": "ev-synthetic-06",
       "source_id": "src-synthetic-04",
-      "excerpt": "Це матеріал компанії, не незалежний доказ.",
+      "excerpt": "This is company material, not independent evidence.",
       "locator": "slide 5",
       "scope": "program",
       "limitations": [
-        "Матеріал компанії"
+        "Company material"
       ]
     }
   ],
   "sources": [
     {
       "id": "src-synthetic-01",
-      "title": "[SYNTHETIC] Стаття: генетична асоціація мішені Y із захворюванням X",
+      "title": "[SYNTHETIC] Article: genetic association of target Y with disease X",
       "url": null,
       "type": "peer_reviewed",
       "published_at": "2022-03-15",
       "retrieved_at": "2025-01-10T12:00:00Z",
-      "content_hash": "sha256:2de76d6e75d4bf59e2cad7f18d367e91494d7ff85d337a1e91b863375ee09ef2",
+      "content_hash": "sha256:ba1faa9d1ddef51a11586e9230dd01d6dbdf6110aba9ae8b616692461ef49bf7",
       "synthetic": true,
       "document_id": null
     },
     {
       "id": "src-synthetic-02",
-      "title": "[SYNTHETIC] Препринт: доклінічна модель інгібування мішені Y",
+      "title": "[SYNTHETIC] Preprint: preclinical model of target Y inhibition",
       "url": null,
       "type": "preprint",
       "published_at": "2023-05-02",
       "retrieved_at": "2025-01-10T12:00:00Z",
-      "content_hash": "sha256:57eb56d0dc18634310ad5eb48bedfe0cf9d81f090e26dc1e9bd29a636f6f212d",
+      "content_hash": "sha256:48a91113bec5724748127900950c3553a172fbdc9ec604f7e097deeae887d2c1",
       "synthetic": true,
       "document_id": null
     },
     {
       "id": "src-synthetic-03",
-      "title": "[SYNTHETIC] Запис реєстру клінічних досліджень",
+      "title": "[SYNTHETIC] Clinical trial registry record",
       "url": null,
       "type": "registry",
       "published_at": "2024-09-01",
       "retrieved_at": "2025-01-10T12:00:00Z",
-      "content_hash": "sha256:e81f869a09d3e0d3569592acc8b8af18e8cf208ca89259691be13571aed4f4fc",
+      "content_hash": "sha256:a92f495441fc6062a56bb54cc1c94db3f4d0991744063d98394ffcbb3bbd20ea",
       "synthetic": true,
       "document_id": null
     },
     {
       "id": "src-synthetic-04",
-      "title": "[SYNTHETIC] Презентація компанії-розробника",
+      "title": "[SYNTHETIC] Developer company presentation",
       "url": null,
       "type": "company",
       "published_at": "2024-11-20",
       "retrieved_at": "2025-01-10T12:00:00Z",
-      "content_hash": "sha256:04d6fb88279ddc6e8831b81a919487da1e82cb6970db6189e89317f80af4b67e",
+      "content_hash": "sha256:ec40ed13bf30897b1a8491e90a94dd7bcc875c3352581ad04b6544dc68d42cd1",
       "synthetic": true,
       "document_id": null
     }
   ],
   "disagreements": [
     {
-      "topic": "Достатність генетичних даних",
+      "topic": "Adequacy of the genetic evidence",
       "role_ids": [
         "science",
         "translation"
       ],
-      "summary": "Науковий аналіз бачить підтримку мішені; аналіз перенесення на людину — розрив у ланцюзі експозиції.",
-      "resolution": "Голова розглядає генетику як підтримку механізму, а не доказ користі."
+      "summary": "The scientific analysis sees support for the target; the human translation analysis identifies a gap in the exposure chain.",
+      "resolution": "The chair treats genetics as support for the mechanism, not evidence of benefit."
     }
   ],
   "risks": [
     {
       "id": "risk-synthetic-01",
-      "description": "Безпечність потрібної експозиції у людини не встановлена.",
+      "description": "The safety of the required human exposure has not been established.",
       "priority": "critical",
       "claim_ids": [
         "translation.safe_exposure"
       ],
-      "impact": "Може зупинити розробку й зробити інвестиційну тезу недійсною.",
-      "next_check": "Отримати дані безпеки та експозиції з дослідження фази 1."
+      "impact": "May halt development and invalidate the investment thesis.",
+      "next_check": "Obtain safety and exposure data from the phase 1 trial."
     },
     {
       "id": "risk-synthetic-02",
-      "description": "Ефект у тваринній моделі може не відтворитися у людини.",
+      "description": "The effect in the animal model may not translate to humans.",
       "priority": "major",
       "claim_ids": [
         "science.animal_model"
       ],
-      "impact": "Знижує наукову обґрунтованість механізму для людини.",
-      "next_check": "Знайти дані на людських тканинах або біомаркерні дані."
+      "impact": "Reduces the scientific support for the mechanism in humans.",
+      "next_check": "Find human tissue or biomarker data."
     },
     {
       "id": "risk-synthetic-03",
-      "description": "Невідомий бюджет і час до наступного milestone.",
+      "description": "The budget and time to the next milestone are unknown.",
       "priority": "major",
       "claim_ids": [
         "investment.capital_unknown"
       ],
-      "impact": "Неможливо оцінити потребу у фінансуванні.",
-      "next_check": "Отримати кошторис і план дослідження фази 1."
+      "impact": "Funding needs cannot be assessed.",
+      "next_check": "Obtain a phase 1 cost estimate and trial plan."
     }
   ],
   "diligence_questions": [
     {
-      "question": "Чи досягається потрібна експозиція в людини безпечно?",
-      "why_it_matters": "Це критичне невідоме, що блокує тезу про користь для пацієнта.",
-      "evidence_needed": "Дані PK та безпеки з дослідження фази 1.",
-      "decision_if_positive": "Рекомендація може стати Invest за умови інших підтверджень.",
-      "decision_if_negative": "Рекомендація стає Do Not Invest."
+      "question": "Can the required human exposure be achieved safely?",
+      "why_it_matters": "This is a critical unknown that blocks the patient benefit thesis.",
+      "evidence_needed": "PK and safety data from the phase 1 trial.",
+      "decision_if_positive": "The recommendation may become Invest if other conditions are confirmed.",
+      "decision_if_negative": "The recommendation becomes Do Not Invest."
     },
     {
-      "question": "Який біомаркер підтверджує дію на мішень у людини?",
-      "why_it_matters": "Без нього ланцюг «ефект → користь» залишається розірваним.",
-      "evidence_needed": "Біомаркерні дані з ранніх досліджень.",
-      "decision_if_positive": "Підсилює тезу перенесення результатів на людину.",
-      "decision_if_negative": "Знижує впевненість у механізмі."
+      "question": "Which biomarker confirms target engagement in humans?",
+      "why_it_matters": "Without it, the effect-to-benefit chain remains incomplete.",
+      "evidence_needed": "Biomarker data from early trials.",
+      "decision_if_positive": "Strengthens the human translation thesis.",
+      "decision_if_negative": "Reduces confidence in the mechanism."
     },
     {
-      "question": "Чи підтверджується генетична асоціація в незалежних когортах?",
-      "why_it_matters": "Одна когорта не доводить причинності.",
-      "evidence_needed": "Незалежні генетичні дослідження.",
-      "decision_if_positive": "Підсилює наукову тезу.",
-      "decision_if_negative": "Науковий аргумент слабшає."
+      "question": "Is the genetic association confirmed in independent cohorts?",
+      "why_it_matters": "A single cohort does not establish causality.",
+      "evidence_needed": "Independent genetic studies.",
+      "decision_if_positive": "Strengthens the scientific thesis.",
+      "decision_if_negative": "The scientific case weakens."
     },
     {
-      "question": "Який бюджет і графік дослідження фази 1?",
-      "why_it_matters": "Потрібен для оцінки капіталу до milestone.",
-      "evidence_needed": "Кошторис CRO та план дослідження.",
-      "decision_if_positive": "Дозволяє дати діапазон капіталу.",
-      "decision_if_negative": "Діапазон не обґрунтовується; рішення лишається умовним."
+      "question": "What are the budget and timeline for the phase 1 trial?",
+      "why_it_matters": "Needed to estimate capital to milestone.",
+      "evidence_needed": "CRO cost estimate and trial plan.",
+      "decision_if_positive": "Allows a capital range to be estimated.",
+      "decision_if_negative": "A range cannot be justified; the decision remains conditional."
     },
     {
-      "question": "Які існують альтернативи для пацієнтів із X і чим програма відрізняється?",
-      "why_it_matters": "Комерційна цінність залежить від відмінності від стандарту лікування.",
-      "evidence_needed": "Огляд стандарту лікування та конкурентних програм.",
-      "decision_if_positive": "Підсилює комерційну тезу.",
-      "decision_if_negative": "Знижує комерційну привабливість."
+      "question": "What alternatives exist for patients with X, and how does the programme differ?",
+      "why_it_matters": "Commercial value depends on differentiation from the standard of care.",
+      "evidence_needed": "Review of the standard of care and competing programmes.",
+      "decision_if_positive": "Strengthens the commercial thesis.",
+      "decision_if_negative": "Reduces commercial attractiveness."
     },
     {
-      "question": "Чи є обмеження прав або ліцензій, що впливають на програму?",
-      "why_it_matters": "Права третіх осіб можуть змінити умови угоди.",
-      "evidence_needed": "Патентний пошук і висновок юриста.",
-      "decision_if_positive": "Умови угоди можна обговорювати.",
-      "decision_if_negative": "Потрібні ліцензії або змінюється структура угоди."
+      "question": "Are there rights or licensing restrictions that affect the programme?",
+      "why_it_matters": "Third-party rights may change the deal terms.",
+      "evidence_needed": "Patent search and legal opinion.",
+      "decision_if_positive": "Deal terms can be discussed.",
+      "decision_if_negative": "Licences are needed, or the deal structure must change."
     }
   ],
   "revision": null

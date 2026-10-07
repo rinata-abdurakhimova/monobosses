@@ -80,4 +80,6 @@ Browser verification: submit the fictional example in API mode; check that one P
 
 **Fixed fictional report preview** and **Mock API workflow** remain explicit local options. Mock scenarios cover completion, failure, missing records, validation, connection interruption, malformed responses, unavailable sources and polling timeout. Their tab-local storage is separate from the API workflow. `/cases/sample` opens the shared synthetic fixture without contacting Python.
 
+Shared fixtures and API-owned display text use English, as specified in `docs/implementation-contract.md`. Fixture translations are made in the Python generator and regenerated with their source hashes and exact evidence excerpts. Restart Python and rebuild/restart the frontend to pick up fixture changes. Previously saved report snapshots are not translated in place; create a new assessment or open the rebuilt example report.
+
 Uploads and before/after comparison belong to #15. Live analysis and persisted reload after a Python restart still require R2's pipeline/storage work.
