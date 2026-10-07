@@ -107,6 +107,9 @@ class RoleId(str, Enum):  # prompt IDs from the contract
     INVESTMENT = "investment"
     CHAIR = "chair"
     AUDIT = "audit"
+    FAILURE_MINER = "failure_miner"
+    INVESTMENT_THRESHOLD = "investment_threshold"
+    PARTNERSHIPS = "partnerships"
     IP_LICENSING = "ip_licensing"
 
 

@@ -7,6 +7,8 @@ import type { Claim, Report } from "@/lib/types";
 
 export function ReportSections({ report }: { report: Report }) {
   const [claim, setClaim] = useState<Claim | null>(null);
+  const linkedIds = new Set(report.sections.flatMap((s) => s.claim_ids));
+  const additionalClaims = report.claims.filter((c) => !linkedIds.has(c.id));
   return (
     <>
       <div className="section-list">
@@ -108,14 +110,31 @@ export function ReportSections({ report }: { report: Report }) {
                       <div>
                         <h4>{source.title}</h4>
                         <small>
-                          {source.type} · Synthetic · No publication date
+                          {source.type} ·{" "}
+                          {source.synthetic ? "Synthetic" : "Source document"} ·{" "}
+                          {source.published_at ?? "Publication date unknown"}
                         </small>
                         <p>{source.limitation}</p>
+                        {!source.synthetic &&
+                          source.url &&
+                          /^https?:\/\//i.test(source.url) && (
+                            <a
+                              href={source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Open source
+                            </a>
+                          )}
                       </div>
                       <span
                         className={`tag ${source.available ? "" : "status-unverified"}`}
                       >
-                        {source.available ? "Fixture available" : "Unavailable"}
+                        {source.available
+                          ? source.synthetic
+                            ? "Fixture available"
+                            : "Evidence available"
+                          : "Unavailable"}
                       </span>
                     </article>
                   ))}
@@ -151,10 +170,20 @@ export function ReportSections({ report }: { report: Report }) {
                             {item.support_status === "unknown"
                               ? "Unknown · not a negative finding"
                               : item.support_status === "supported"
-                                ? "Supported within synthetic fixture"
+                                ? report.synthetic
+                                  ? "Supported within synthetic fixture"
+                                  : "Supported"
                                 : item.support_status === "mixed"
-                                  ? "Mixed support · inference"
-                                  : "Unverified inference"}
+                                  ? report.synthetic
+                                    ? "Mixed support within synthetic fixture"
+                                    : "Mixed support"
+                                  : item.support_status === "contradicted"
+                                    ? report.synthetic
+                                      ? "Contradicted within synthetic fixture"
+                                      : "Contradicted"
+                                    : item.provenance === "user"
+                                      ? "Unverified user-provided statement"
+                                      : "Unverified inference"}
                           </small>
                         </span>
                         <Icon
@@ -170,6 +199,36 @@ export function ReportSections({ report }: { report: Report }) {
           </details>
         ))}
       </div>
+      {additionalClaims.length > 0 && (
+        <section className="panel section-content">
+          <h3>Additional report claims</h3>
+          <p>
+            Statements included in the shared report without a section link.
+          </p>
+          <div className="claims-list">
+            {additionalClaims.map((item) => (
+              <button
+                className="claim-button"
+                type="button"
+                key={item.id}
+                onClick={() => setClaim(item)}
+              >
+                <span className={`claim-dot status-${item.support_status}`} />
+                <span>
+                  {item.text}
+                  <small>
+                    {item.provenance} · {item.support_status}
+                  </small>
+                </span>
+                <Icon
+                  name="arrow"
+                  size={16}
+                />
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       <EvidenceDialog
         claim={claim}
         report={report}

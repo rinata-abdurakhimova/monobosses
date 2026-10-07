@@ -26,6 +26,27 @@ SQLite — рекомендований мінімум для локальног
 
 R2 забезпечує встановлення API editable package і команду `python -m uvicorn vic.main:app --reload --port 8000` з каталогу `services/api`. R1 забезпечує `npm install` і `npm run dev` з `apps/web`. Остаточні версії dependencies та команди перевірити й записати в кореневий README під час реалізації. Рекомендовані Python dependencies: FastAPI, Pydantic, Uvicorn, HTTPX, pypdf, pytest та SDK обраної моделі.
 
+### Display language
+
+English is the default language of the interface and API-owned display text,
+including generated report narratives, claims, role summaries, risks, diligence
+questions, revision explanations, warnings, and error messages. Every shared
+fixture in `contracts/fixtures/` must use English for all human-readable values,
+including synthetic source titles/text, evidence excerpts, and case input.
+Generate fixtures from `services/api/src/vic/synthetic.py`; do not translate only
+the committed JSON or add a frontend-only translation that diverges from Python.
+
+For synthetic sources, translate the source text and its excerpts together so
+each excerpt remains an exact substring; recompute `content_hash` from the
+English source text. Preserve IDs, enums, provenance, support status, scope,
+recommendations, and the v1/v2 decision story. Existing saved reports are
+snapshots and are not silently rewritten by a fixture-language update.
+
+User input and real source quotations remain verbatim for provenance; do not
+rewrite a quoted source to enforce the display language. Any translation of real
+evidence must be identified separately from the original excerpt. This rule does
+not require translating the team's internal documentation.
+
 ## 2. Мінімальні сутності
 
 | Model | Поля та зміст |
@@ -56,7 +77,7 @@ R2 забезпечує встановлення API editable package і ком�
 ```json
 {
   "id": "translation.safe_exposure",
-  "text": "Безпечність потрібної експозиції у людини не встановлено.",
+  "text": "The safety of the required human exposure has not been established.",
   "provenance": "ai",
   "support_status": "unknown",
   "evidence_ids": ["ev-synthetic-01"],
@@ -115,6 +136,8 @@ Science/translation/market можуть виконуватись паралел�
 
 - Adapter R2: `generate_structured(prompt_id, payload, response_model, ctx)`. Відповідь проходить Pydantic validation; retry на provider errors обмежений, repair invalid JSON також обмежений.
 - Prompts зберігаються поряд з owner modules; записуються їх version/hash. IDs: science, translation, clinical, market, investment, chair, audit.
+- Доповнення для [#28](https://github.com/rinata-abdurakhimova/monobosses/issues/28): погоджені R5 IDs — `market`, `investment`, `failure_miner`, `chair`, `investment_threshold`, `partnerships`, `ip_licensing`. Разом зі `science`, `translation`, `clinical`, `audit` це 11 експертних IDs. Нові IDs також використовуються для відповідних prompts після підключення R2; evaluation не є експертною роллю. Реєстрація ID у схемі не означає, що вузол уже реалізований або виконується.
+- Результат кожної реалізованої перспективи — спільний `RoleResult`; `section_content` є списком `SectionContent`. Ролі й 11 report sections — різні сутності: додаткові ролі не створюють нових `SectionKey`. R2 зберігає claims/risks у канонічних списках Report, а R1 показує role-level claims, risks, unknowns і change_conditions із посиланнями claim → evidence → source. Майбутній невідомий ID можна показати нейтральною назвою у frontend; backend приймає лише погоджений enum.
 - API env: `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`, `DATABASE_URL`, `CORS_ORIGINS`, `MAX_UPLOAD_BYTES`, `MAX_RUN_COST_USD`, `MAX_RUN_SECONDS`. Остаточні defaults задає R2 й документує; cost limit не застосовуємо за невідомого provider pricing як точну гарантію.
 - Frontend використовує server-side API proxy із `API_BASE_URL`; polling теж через proxy. Browser не отримує LLM keys. Deployment proxy має право створювати тільки потрібні API requests.
 - API production доступ захищається погодженим application auth або server-side shared secret, який перевіряє R2 й передає Next.js server; CORS не замінює auth. Rate limits і бюджети обмежують публічні запуски.

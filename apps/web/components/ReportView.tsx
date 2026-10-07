@@ -24,7 +24,8 @@ export function ReportView({
       <div className="page-heading">
         <div>
           <span className="eyebrow">
-            INVESTMENT UNDERWRITING · FICTIONAL CASE
+            INVESTMENT UNDERWRITING ·{" "}
+            {report.synthetic ? "SYNTHETIC CASE" : "SAVED REPORT"}
           </span>
           <h1>A thesis, with the evidence in view.</h1>
           <p>{report.title}</p>
@@ -40,20 +41,22 @@ export function ReportView({
           New assessment
         </Link>
       </div>
-      <div className="synthetic-banner">
-        <Icon
-          name="flask"
-          size={19}
-        />
-        <div>
-          <strong>Synthetic example — not a live recommendation</strong>
-          <p>
-            Every claim, source, and committee perspective below is fictional.
-            The sample is fixed and does not assess your submitted input.
-          </p>
+      {report.synthetic && (
+        <div className="synthetic-banner">
+          <Icon
+            name="flask"
+            size={19}
+          />
+          <div>
+            <strong>Synthetic example — not a live recommendation</strong>
+            <p>
+              This report is marked synthetic by its provider. It is an example
+              and does not establish a live assessment of your submitted input.
+            </p>
+          </div>
+          <span className="tiny-tag">Sample v{report.version}</span>
         </div>
-        <span className="tiny-tag">Sample v1</span>
-      </div>
+      )}
       {submitted && (
         <details className="submitted-input">
           <summary>
@@ -113,8 +116,8 @@ export function ReportView({
           <div>
             <strong>A source is unavailable in this preview</strong>
             <p>
-              The competitor excerpt is a cached synthetic sample. Source
-              failure does not establish an absence of competition or risk.
+              The company excerpt is a cached synthetic sample. Source failure
+              does not establish an absence of competition or risk.
             </p>
           </div>
         </div>
@@ -136,7 +139,7 @@ export function ReportView({
                 </dd>
               </div>
               <div>
-                <dt>Critical unknowns</dt>
+                <dt>Open unknowns</dt>
                 <dd>
                   <span className="metric-count metric-count-warning">
                     {report.unknowns.length}
@@ -151,7 +154,9 @@ export function ReportView({
                 <dd>
                   <span className="metric-count">{report.sources.length}</span>{" "}
                   <span className="metric-description">
-                    fictional documents
+                    {report.synthetic
+                      ? "fictional documents"
+                      : "source documents"}
                   </span>
                 </dd>
               </div>
@@ -160,7 +165,9 @@ export function ReportView({
                 <dd>
                   <span className="metric-count">{report.roles.length}</span>{" "}
                   <span className="metric-description">
-                    AI perspectives in fixture
+                    {report.synthetic
+                      ? "AI perspectives in fixture"
+                      : "AI perspectives"}
                   </span>
                 </dd>
               </div>
@@ -237,14 +244,15 @@ export function ReportView({
           </div>
         </div>
         <p className="perspectives-intro">
-          Illustrative AI perspectives, not independent human experts. Their
-          agreement does not establish that a claim is true.
+          AI perspectives, not independent human experts. Their agreement does
+          not establish that a claim is true.
         </p>
         <div className="role-grid">
           {report.roles.map((role) => (
             <RoleCard
               key={role.id}
               role={role}
+              report={report}
             />
           ))}
         </div>

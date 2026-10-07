@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Icon } from "@/components/Icon";
 import type { Claim, Report } from "@/lib/types";
 
@@ -14,6 +14,7 @@ export function EvidenceDialog({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
@@ -24,7 +25,7 @@ export function EvidenceDialog({
     <dialog
       ref={ref}
       className="evidence-dialog"
-      aria-labelledby="evidence-title"
+      aria-labelledby={titleId}
       onClose={onClose}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -43,7 +44,7 @@ export function EvidenceDialog({
               <Icon name="close" />
             </button>
           </div>
-          <h2 id="evidence-title">Inspect the reasoning</h2>
+          <h2 id={titleId}>Inspect the reasoning</h2>
           <p className="dialog-claim">{claim.text}</p>
           <div className="claim-tags">
             <span className={`tag status-${claim.support_status}`}>
@@ -51,10 +52,12 @@ export function EvidenceDialog({
             </span>
             <span className="tag">
               {claim.provenance === "ai"
-                ? "AI inference in fixture"
-                : "Source statement in fixture"}
+                ? "AI inference"
+                : claim.provenance === "user"
+                  ? "User-provided statement · unverified"
+                  : "Source statement"}
             </span>
-            <span className="tag">Synthetic</span>
+            {report.synthetic && <span className="tag">Synthetic report</span>}
           </div>
           {claim.assumptions.map((x) => (
             <p
@@ -64,6 +67,11 @@ export function EvidenceDialog({
               {x}
             </p>
           ))}
+          {claim.evidence_ids.length === 0 && (
+            <p className="evidence-limitation">
+              No source evidence is linked to this claim.
+            </p>
+          )}
           {claim.evidence_ids.map((id) => {
             const evidence = report.evidence.find((x) => x.id === id);
             const source = report.sources.find(
@@ -103,9 +111,24 @@ export function EvidenceDialog({
                 <blockquote>{evidence.excerpt}</blockquote>
                 <p>{source.limitation}</p>
                 <small>
-                  No publication date or external link: this document is
-                  fictional.
+                  {source.synthetic ? "Fictional source" : "Source document"} ·
+                  Publication date: {source.published_at ?? "unknown"} ·
+                  Retrieved: {source.retrieved_at}.
+                  {source.synthetic
+                    ? " No external link is provided for this synthetic document."
+                    : ""}
                 </small>
+                {!source.synthetic &&
+                  source.url &&
+                  /^https?:\/\//i.test(source.url) && (
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open source
+                    </a>
+                  )}
               </article>
             );
           })}

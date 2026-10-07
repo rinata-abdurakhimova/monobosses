@@ -18,7 +18,7 @@ type MockRun = {
   network_fault_used: boolean;
   version: number;
 };
-const PREFIX = "vic-r1-mock-api:v1:";
+const PREFIX = "vic-r1-mock-api:contracts-v1:";
 const STAGES: RunStage[] = [
   "validate",
   "retrieve",
@@ -124,7 +124,7 @@ export function createMockApiClient(
       if (
         !input.indication.trim() ||
         !input.mechanism.trim() ||
-        (input.scope === "program" && !input.program_data.trim())
+        (input.scope === "program" && input.program_data.trim().length < 40)
       ) {
         throw new ApiError(
           "VALIDATION_ERROR",

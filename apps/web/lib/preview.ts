@@ -1,13 +1,14 @@
 import { reportV1 } from "./fixtures/report-v1.ts";
 import type { CaseInput, PreviewMode, Report } from "@/lib/types";
+import sharedCase from "../../../contracts/fixtures/case.json" with { type: "json" };
 
 export const sampleInput: CaseInput = {
-  indication: "Inflammatory disease X",
-  mechanism: "AX-17 inhibition",
-  scope: "approach",
-  modality: "Small molecule",
-  development_stage: "Preclinical",
-  program_data: "",
+  indication: sharedCase.indication,
+  mechanism: sharedCase.mechanism,
+  scope: reportV1.scope,
+  modality: sharedCase.modality ?? "",
+  development_stage: sharedCase.development_stage ?? "",
+  program_data: sharedCase.program_data ?? "",
 };
 export const PREVIEW_STEPS = [
   "Preparing the sample",
@@ -16,7 +17,7 @@ export const PREVIEW_STEPS = [
   "Preparing the report",
 ];
 export const PREVIEW_STEP_MS = 650;
-const STORAGE_PREFIX = "vic-r1-preview:";
+const STORAGE_PREFIX = "vic-r1-preview:contracts-v1:";
 export type PreviewCase = {
   input: CaseInput;
   mode: PreviewMode;
@@ -64,7 +65,7 @@ export function getPreviewReport(mode: PreviewMode): Report {
         : section,
     ),
     sources: reportV1.sources.map((source) =>
-      source.id === "src-market"
+      source.id === "src-synthetic-04"
         ? {
             ...source,
             available: false,
@@ -74,7 +75,7 @@ export function getPreviewReport(mode: PreviewMode): Report {
         : source,
     ),
     claims: reportV1.claims.map((claim) =>
-      claim.id === "market.differentiation"
+      claim.id === "market.company_claims"
         ? { ...claim, support_status: "unverified" }
         : claim,
     ),

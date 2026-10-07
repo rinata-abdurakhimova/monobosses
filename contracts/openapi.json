@@ -724,6 +724,9 @@
           "investment",
           "chair",
           "audit",
+          "failure_miner",
+          "investment_threshold",
+          "partnerships",
           "ip_licensing"
         ],
         "title": "RoleId",

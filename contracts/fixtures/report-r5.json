@@ -1,26 +1,28 @@
 {
-  "id": "rep-synthetic-v2",
+  "id": "rep-synthetic-r5",
   "case_id": "case-synthetic-01",
-  "run_id": "run-synthetic-v2",
-  "version": 2,
+  "run_id": "run-synthetic-r5",
+  "version": 1,
   "scope": "program",
   "synthetic": true,
-  "snapshot_id": "snap-synthetic-v2",
-  "recommendation": "Do Not Invest",
-  "rationale": "New synthetic safety evidence contradicts a key condition of the thesis; the decision is Do Not Invest.",
+  "snapshot_id": "snap-synthetic-v1",
+  "recommendation": "Conditional",
+  "rationale": "The mechanism has partial support, but safe human exposure has not been established and programme data are incomplete. The decision is Conditional: interest depends on confirming safety.",
   "decision_conditions": [
-    "Reconsider only with independent evidence of a safe regimen"
+    "Obtain human safety and exposure data",
+    "Confirm the target engagement biomarker",
+    "Obtain a phase 1 cost estimate and trial plan"
   ],
   "sections": [
     {
       "key": "recommendation",
-      "summary": "Do Not Invest: the synthetic result shows unsafe exposure.",
+      "summary": "Conditional: interest depends on confirming exposure safety.",
       "claim_ids": [
         "translation.safe_exposure"
       ],
       "limitations": [],
       "structured_data": {
-        "recommendation": "Do Not Invest"
+        "recommendation": "Conditional"
       }
     },
     {
@@ -37,7 +39,7 @@
     },
     {
       "key": "human_translation_thesis",
-      "summary": "The required exposure is associated with a serious adverse event.",
+      "summary": "The safety of the required human exposure has not been established.",
       "claim_ids": [
         "translation.safe_exposure",
         "translation.biomarker_link"
@@ -89,7 +91,7 @@
     },
     {
       "key": "key_risks",
-      "summary": "The synthetic safety result confirms a critical risk.",
+      "summary": "The critical risk is exposure safety; the model and budget are material risks.",
       "claim_ids": [
         "translation.safe_exposure",
         "science.animal_model",
@@ -106,7 +108,7 @@
     },
     {
       "key": "critical_unknowns",
-      "summary": "Whether a safe dosing regimen exists; biomarker; budget.",
+      "summary": "Safe exposure, biomarker, path to efficacy, and budget.",
       "claim_ids": [
         "translation.safe_exposure",
         "clinical.efficacy_path",
@@ -117,7 +119,7 @@
     },
     {
       "key": "diligence_questions",
-      "summary": "Six questions; the first concerns a safe regimen.",
+      "summary": "Six priority diligence questions.",
       "claim_ids": [
         "translation.safe_exposure",
         "translation.biomarker_link"
@@ -129,7 +131,7 @@
     },
     {
       "key": "sources",
-      "summary": "Five synthetic sources, including the safety report.",
+      "summary": "Four synthetic sources; some are company materials.",
       "claim_ids": [],
       "limitations": [],
       "structured_data": {
@@ -137,8 +139,7 @@
           "src-synthetic-01",
           "src-synthetic-02",
           "src-synthetic-03",
-          "src-synthetic-04",
-          "src-synthetic-05"
+          "src-synthetic-04"
         ]
       }
     }
@@ -210,17 +211,16 @@
     },
     {
       "role_id": "translation",
-      "summary": "Exposure is unsafe.",
-      "position": "New synthetic evidence contradicts safe exposure.",
+      "summary": "Exposure safety has not been established.",
+      "position": "The exposure-to-safety link is missing; candidate properties cannot be generalized to the entire mechanism.",
       "claims": [
         {
           "id": "translation.safe_exposure",
-          "text": "The required human exposure is unsafe: a serious adverse event was recorded in the synthetic trial.",
-          "provenance": "source",
-          "support_status": "contradicted",
+          "text": "The safety of the required human exposure has not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
           "evidence_ids": [
-            "ev-synthetic-04",
-            "ev-synthetic-07"
+            "ev-synthetic-04"
           ],
           "assumptions": [],
           "scope": "program",
@@ -240,25 +240,25 @@
       "risks": [
         {
           "id": "risk-synthetic-01",
-          "description": "A serious adverse event has been confirmed at the required exposure.",
+          "description": "The safety of the required human exposure has not been established.",
           "priority": "critical",
           "claim_ids": [
             "translation.safe_exposure"
           ],
-          "impact": "The programme thesis cannot be met without a different dosing regimen or candidate.",
-          "next_check": "Check whether an alternative regimen or candidate exists."
+          "impact": "May halt development and invalidate the investment thesis.",
+          "next_check": "Obtain safety and exposure data from the phase 1 trial."
         }
       ],
       "unknowns": [
         "Target engagement biomarker"
       ],
       "change_conditions": [
-        "A safe dosing regimen"
+        "PK and safety data from the phase 1 trial"
       ],
       "section_content": [
         {
           "key": "human_translation_thesis",
-          "summary": "The required exposure is associated with a serious adverse event.",
+          "summary": "The safety of the required human exposure has not been established.",
           "claim_ids": [
             "translation.safe_exposure",
             "translation.biomarker_link"
@@ -422,6 +422,247 @@
           "structured_data": null
         }
       ]
+    },
+    {
+      "role_id": "failure_miner",
+      "summary": "Synthetic display example: Safe human exposure remains an unresolved failure mode.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "translation.safe_exposure",
+          "text": "The safety of the required human exposure has not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [
+            "ev-synthetic-04"
+          ],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "critical"
+        }
+      ],
+      "risks": [
+        {
+          "id": "risk-synthetic-01",
+          "description": "The safety of the required human exposure has not been established.",
+          "priority": "critical",
+          "claim_ids": [
+            "translation.safe_exposure"
+          ],
+          "impact": "May halt development and invalidate the investment thesis.",
+          "next_check": "Obtain safety and exposure data from the phase 1 trial."
+        }
+      ],
+      "unknowns": [
+        "Safe human exposure remains an unresolved failure mode."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "key_risks",
+          "summary": "Safe human exposure remains an unresolved failure mode.",
+          "claim_ids": [
+            "translation.safe_exposure"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "investment_threshold",
+      "summary": "Synthetic display example: Safe exposure is required before the thesis can advance.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "translation.safe_exposure",
+          "text": "The safety of the required human exposure has not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [
+            "ev-synthetic-04"
+          ],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "critical"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "Safe exposure is required before the thesis can advance."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "critical_unknowns",
+          "summary": "Safe exposure is required before the thesis can advance.",
+          "claim_ids": [
+            "translation.safe_exposure"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "partnerships",
+      "summary": "Synthetic display example: No partner interest is established in this fictional case.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "partnerships.interest_unknown",
+          "text": "No partner interest is established in this fictional case.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "major"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "No partner interest is established in this fictional case."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "commercial_opportunity",
+          "summary": "No partner interest is established in this fictional case.",
+          "claim_ids": [
+            "partnerships.interest_unknown"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "ip_licensing",
+      "summary": "Synthetic display example: Patent ownership and licensing rights have not been established.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "ip_licensing.rights_unknown",
+          "text": "Patent ownership and licensing rights have not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "major"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "Patent ownership and licensing rights have not been established."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "key_risks",
+          "summary": "Patent ownership and licensing rights have not been established.",
+          "claim_ids": [
+            "ip_licensing.rights_unknown"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "chair",
+      "summary": "Synthetic display example: The fictional committee remains Conditional pending safe exposure.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "translation.safe_exposure",
+          "text": "The safety of the required human exposure has not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [
+            "ev-synthetic-04"
+          ],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "critical"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "The fictional committee remains Conditional pending safe exposure."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "recommendation",
+          "summary": "The fictional committee remains Conditional pending safe exposure.",
+          "claim_ids": [
+            "translation.safe_exposure"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "audit",
+      "summary": "Synthetic display example: Evidence links in this display fixture do not establish live audit quality.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "translation.safe_exposure",
+          "text": "The safety of the required human exposure has not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [
+            "ev-synthetic-04"
+          ],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "critical"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "Evidence links in this display fixture do not establish live audit quality."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "sources",
+          "summary": "Evidence links in this display fixture do not establish live audit quality.",
+          "claim_ids": [
+            "translation.safe_exposure"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
     }
   ],
   "claims": [
@@ -452,12 +693,11 @@
     },
     {
       "id": "translation.safe_exposure",
-      "text": "The required human exposure is unsafe: a serious adverse event was recorded in the synthetic trial.",
-      "provenance": "source",
-      "support_status": "contradicted",
+      "text": "The safety of the required human exposure has not been established.",
+      "provenance": "ai",
+      "support_status": "unknown",
       "evidence_ids": [
-        "ev-synthetic-04",
-        "ev-synthetic-07"
+        "ev-synthetic-04"
       ],
       "assumptions": [],
       "scope": "program",
@@ -536,6 +776,26 @@
       "assumptions": [],
       "scope": "program",
       "importance": "minor"
+    },
+    {
+      "id": "partnerships.interest_unknown",
+      "text": "No partner interest is established in this fictional case.",
+      "provenance": "ai",
+      "support_status": "unknown",
+      "evidence_ids": [],
+      "assumptions": [],
+      "scope": "program",
+      "importance": "major"
+    },
+    {
+      "id": "ip_licensing.rights_unknown",
+      "text": "Patent ownership and licensing rights have not been established.",
+      "provenance": "ai",
+      "support_status": "unknown",
+      "evidence_ids": [],
+      "assumptions": [],
+      "scope": "program",
+      "importance": "major"
     }
   ],
   "evidence": [
@@ -592,16 +852,6 @@
       "limitations": [
         "Company material"
       ]
-    },
-    {
-      "id": "ev-synthetic-07",
-      "source_id": "src-synthetic-05",
-      "excerpt": "a serious adverse event was recorded, halting dose escalation",
-      "locator": "section 3",
-      "scope": "program",
-      "limitations": [
-        "Synthetic result for the controlled v1-to-v2 story"
-      ]
     }
   ],
   "sources": [
@@ -648,17 +898,6 @@
       "content_hash": "sha256:ec40ed13bf30897b1a8491e90a94dd7bcc875c3352581ad04b6544dc68d42cd1",
       "synthetic": true,
       "document_id": null
-    },
-    {
-      "id": "src-synthetic-05",
-      "title": "[SYNTHETIC] Phase 1 trial safety report",
-      "url": null,
-      "type": "company",
-      "published_at": "2025-06-01",
-      "retrieved_at": "2025-06-10T12:00:00Z",
-      "content_hash": "sha256:db092802140eff6fdde4e8c3a15e559b76a53562ddabebc89ab117d2ed0d04b3",
-      "synthetic": true,
-      "document_id": null
     }
   ],
   "disagreements": [
@@ -675,13 +914,13 @@
   "risks": [
     {
       "id": "risk-synthetic-01",
-      "description": "A serious adverse event has been confirmed at the required exposure.",
+      "description": "The safety of the required human exposure has not been established.",
       "priority": "critical",
       "claim_ids": [
         "translation.safe_exposure"
       ],
-      "impact": "The programme thesis cannot be met without a different dosing regimen or candidate.",
-      "next_check": "Check whether an alternative regimen or candidate exists."
+      "impact": "May halt development and invalidate the investment thesis.",
+      "next_check": "Obtain safety and exposure data from the phase 1 trial."
     },
     {
       "id": "risk-synthetic-02",
@@ -706,11 +945,11 @@
   ],
   "diligence_questions": [
     {
-      "question": "Is there a dosing regimen that achieves target engagement without a serious adverse event?",
-      "why_it_matters": "This determines whether the programme can be reconsidered.",
-      "evidence_needed": "Dosing and safety data from subsequent cohorts.",
-      "decision_if_positive": "Reconsider the recommendation towards Conditional.",
-      "decision_if_negative": "Retain Do Not Invest."
+      "question": "Can the required human exposure be achieved safely?",
+      "why_it_matters": "This is a critical unknown that blocks the patient benefit thesis.",
+      "evidence_needed": "PK and safety data from the phase 1 trial.",
+      "decision_if_positive": "The recommendation may become Invest if other conditions are confirmed.",
+      "decision_if_negative": "The recommendation becomes Do Not Invest."
     },
     {
       "question": "Which biomarker confirms target engagement in humans?",
@@ -748,43 +987,5 @@
       "decision_if_negative": "Licences are needed, or the deal structure must change."
     }
   ],
-  "revision": {
-    "parent_report_id": "rep-synthetic-v1",
-    "new_evidence_ids": [
-      "ev-synthetic-07"
-    ],
-    "changed_claims": [
-      {
-        "claim_id": "translation.safe_exposure",
-        "before": {
-          "id": "translation.safe_exposure",
-          "text": "The safety of the required human exposure has not been established.",
-          "provenance": "ai",
-          "support_status": "unknown",
-          "evidence_ids": [
-            "ev-synthetic-04"
-          ],
-          "assumptions": [],
-          "scope": "program",
-          "importance": "critical"
-        },
-        "after": {
-          "id": "translation.safe_exposure",
-          "text": "The required human exposure is unsafe: a serious adverse event was recorded in the synthetic trial.",
-          "provenance": "source",
-          "support_status": "contradicted",
-          "evidence_ids": [
-            "ev-synthetic-04",
-            "ev-synthetic-07"
-          ],
-          "assumptions": [],
-          "scope": "program",
-          "importance": "critical"
-        }
-      }
-    ],
-    "previous_recommendation": "Conditional",
-    "new_recommendation": "Do Not Invest",
-    "explanation": "New evidence ev-synthetic-07 shows a serious adverse event at the required exposure: claim translation.safe_exposure changes from unknown to contradicted, and the recommendation changes from Conditional to Do Not Invest."
-  }
+  "revision": null
 }
