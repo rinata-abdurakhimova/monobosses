@@ -126,7 +126,7 @@ def _to_claims(analysis: ScientificAnalysis, pack: EvidencePack) -> list[Claim]:
     for c in analysis.claims:
         valid_ids = _valid_evidence_ids(c.evidence_ids, pack)
         status = c.support_status
-        if status == "supported" and not valid_ids:
+        if status in ("supported", "contradicted", "mixed") and not valid_ids:
             status = "unverified"
         claims.append(
             Claim(
@@ -183,12 +183,12 @@ async def analyze_science(
     )
 
     return RoleResult(
-        role_id="scientific",
+        role_id="science",
         summary=analysis.thesis,
         position=analysis.position,
         claims=claims,
         risks=risks,
         unknowns=analysis.unknowns,
         change_conditions=analysis.change_conditions,
-        section_content=section,
+        section_content=[section],
     )

@@ -1,0 +1,109 @@
+{
+  "sources": [
+    {
+      "id": "src-synthetic-01",
+      "title": "[SYNTHETIC] Стаття: генетична асоціація мішені Y із захворюванням X",
+      "url": null,
+      "type": "peer_reviewed",
+      "published_at": "2022-03-15",
+      "retrieved_at": "2025-01-10T12:00:00Z",
+      "content_hash": "sha256:2de76d6e75d4bf59e2cad7f18d367e91494d7ff85d337a1e91b863375ee09ef2",
+      "synthetic": true,
+      "document_id": null
+    },
+    {
+      "id": "src-synthetic-02",
+      "title": "[SYNTHETIC] Препринт: доклінічна модель інгібування мішені Y",
+      "url": null,
+      "type": "preprint",
+      "published_at": "2023-05-02",
+      "retrieved_at": "2025-01-10T12:00:00Z",
+      "content_hash": "sha256:57eb56d0dc18634310ad5eb48bedfe0cf9d81f090e26dc1e9bd29a636f6f212d",
+      "synthetic": true,
+      "document_id": null
+    },
+    {
+      "id": "src-synthetic-03",
+      "title": "[SYNTHETIC] Запис реєстру клінічних досліджень",
+      "url": null,
+      "type": "registry",
+      "published_at": "2024-09-01",
+      "retrieved_at": "2025-01-10T12:00:00Z",
+      "content_hash": "sha256:e81f869a09d3e0d3569592acc8b8af18e8cf208ca89259691be13571aed4f4fc",
+      "synthetic": true,
+      "document_id": null
+    },
+    {
+      "id": "src-synthetic-04",
+      "title": "[SYNTHETIC] Презентація компанії-розробника",
+      "url": null,
+      "type": "company",
+      "published_at": "2024-11-20",
+      "retrieved_at": "2025-01-10T12:00:00Z",
+      "content_hash": "sha256:04d6fb88279ddc6e8831b81a919487da1e82cb6970db6189e89317f80af4b67e",
+      "synthetic": true,
+      "document_id": null
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-synthetic-01",
+      "source_id": "src-synthetic-01",
+      "excerpt": "варіанти втрати функції гена мішені Y асоційовані зі зниженим ризиком захворювання X",
+      "locator": "abstract",
+      "scope": "approach",
+      "limitations": [
+        "Синтетична когорта; причинність не встановлена"
+      ]
+    },
+    {
+      "id": "ev-synthetic-02",
+      "source_id": "src-synthetic-01",
+      "excerpt": "Асоціація не доводить причинності.",
+      "locator": "limitations",
+      "scope": "approach",
+      "limitations": []
+    },
+    {
+      "id": "ev-synthetic-03",
+      "source_id": "src-synthetic-02",
+      "excerpt": "інгібування мішені Y зменшувало маркер прогресування X",
+      "locator": "results",
+      "scope": "approach",
+      "limitations": [
+        "Тваринна модель частково відтворює захворювання людини"
+      ]
+    },
+    {
+      "id": "ev-synthetic-04",
+      "source_id": "src-synthetic-03",
+      "excerpt": "експозицію в пацієнтів не повідомлено",
+      "locator": "record.results",
+      "scope": "program",
+      "limitations": []
+    },
+    {
+      "id": "ev-synthetic-05",
+      "source_id": "src-synthetic-03",
+      "excerpt": "первинна кінцева точка — безпека та переносимість",
+      "locator": "record.endpoints",
+      "scope": "program",
+      "limitations": []
+    },
+    {
+      "id": "ev-synthetic-06",
+      "source_id": "src-synthetic-04",
+      "excerpt": "Це матеріал компанії, не незалежний доказ.",
+      "locator": "slide 5",
+      "scope": "program",
+      "limitations": [
+        "Матеріал компанії"
+      ]
+    }
+  ],
+  "retrieval_warnings": [
+    "Синтетичний пакет: мережеве отримання джерел не виконувалось."
+  ],
+  "snapshot_id": "snap-synthetic-v1",
+  "synthetic": true
+}

@@ -34,6 +34,19 @@ npm run dev
 
 Перший спільний крок — contracts та fixtures від R2. До їх готовності інші ролі можуть готувати UI, synthetic documents, prompts і evaluation rubric. Подальший порядок описано у реєстрі задач.
 
+## Backend (services/api)
+
+```bash
+cd services/api
+python -m venv .venv
+.venv\Scripts\Activate.ps1          # macOS/Linux: source .venv/bin/activate
+pip install -e ".[dev]"
+copy .env.example .env              # macOS/Linux: cp .env.example .env
+python -m uvicorn vic.main:app --reload --port 8000
+```
+
+Details, endpoints, mock behavior and contract changelog: [services/api/README.md](services/api/README.md).
+
 ## Експертні перспективи й покриття R5
 
 Поточний R5-01 market node реалізує перспективу **експерта з ринку та доступу
