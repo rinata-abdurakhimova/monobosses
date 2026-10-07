@@ -1,4 +1,4 @@
-import { reportV1 } from "@/lib/fixtures/report-v1";
+import { reportV1 } from "./fixtures/report-v1.ts";
 import type { CaseInput, PreviewMode, Report } from "@/lib/types";
 
 export const sampleInput: CaseInput = {

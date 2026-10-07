@@ -1,5 +1,33 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
+.workflow-select {
+  margin-top: 22px;
+}
+.mock-api-notice {
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  border: 1px solid #f87171;
+  border-left: 4px solid #b93737;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #7d2020;
+}
+.mock-api-notice strong {
+  font-size: 14px;
+}
+.mock-api-notice p,
+.mock-version {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+.mock-notice-container {
+  padding-bottom: 0;
+}
+.mock-notice-container + .report-page {
+  padding-top: 24px;
+}
+
 :root {
   --paper: #d4e4da;
   --surface: #ffffff;

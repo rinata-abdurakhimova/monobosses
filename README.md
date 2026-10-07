@@ -4,7 +4,7 @@
 
 ## Запуск frontend preview
 
-Потрібні Node.js 20.9+ та npm:
+Потрібні Node.js 22.18+ та npm (перевірено на Node 24):
 
 ```sh
 cd apps/web
@@ -12,7 +12,7 @@ npm ci
 npm run dev
 ```
 
-Відкрити `http://127.0.0.1:3000`. Перевірки: `npm run typecheck`, `npm run build`. [Frontend README](apps/web/README.md) описує стани, локальні дані та залежності від R2.
+Відкрити `http://127.0.0.1:3000`. Перевірки: `npm run typecheck`, `npm test`, `npm run build`. [Frontend README](apps/web/README.md) описує стани, локальні дані та залежності від R2. Для підготовки R1-02 у формі є окремий Mock API workflow; це локальна симуляція, а не підключення до Python. [Handoff R1-02](docs/r1-02-handoff.md) описує контракт, polling і наступні кроки інтеграції.
 
 ## Документація для команди
 
