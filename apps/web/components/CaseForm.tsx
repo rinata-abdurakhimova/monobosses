@@ -28,9 +28,13 @@ export function CaseForm() {
   >({});
   const [storageError, setStorageError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
   const submitted = useRef(false);
   const request = useRef<AbortController | null>(null);
-  useEffect(() => () => request.current?.abort(), []);
+  useEffect(() => {
+    setReady(true);
+    return () => request.current?.abort();
+  }, []);
   function update<K extends keyof CaseInput>(key: K, value: CaseInput[K]) {
     setInput((previous) => ({ ...previous, [key]: value }));
     setErrors((previous) => ({ ...previous, [key]: undefined }));
@@ -103,6 +107,14 @@ export function CaseForm() {
       onSubmit={submit}
       noValidate
     >
+      <noscript>
+        <p
+          className="field-error"
+          role="alert"
+        >
+          Enable JavaScript to use the assessment form, then reload this page.
+        </p>
+      </noscript>
       <div className="panel-heading">
         <div>
           <span className="eyebrow">THE STARTING POINT</span>
@@ -151,7 +163,7 @@ export function CaseForm() {
             setStorageError("");
             setErrors({});
           }}
-          disabled={busy}
+          disabled={busy || !ready}
         >
           <option value="api">Python API assessment</option>
           <option value="fixture">Fixed fictional report preview</option>
@@ -392,17 +404,19 @@ export function CaseForm() {
         <button
           className="button button-primary"
           type="submit"
-          disabled={busy}
+          disabled={busy || !ready}
         >
-          {busy
-            ? flow === "api"
-              ? "Starting assessment…"
-              : "Opening preview…"
-            : flow === "api"
-              ? "Start assessment"
-              : flow === "mock-api"
-                ? "Start mock workflow"
-                : "Preview assessment"}
+          {!ready
+            ? "Preparing form…"
+            : busy
+              ? flow === "api"
+                ? "Starting assessment…"
+                : "Opening preview…"
+              : flow === "api"
+                ? "Start assessment"
+                : flow === "mock-api"
+                  ? "Start mock workflow"
+                  : "Preview assessment"}
           <Icon
             name="arrow"
             size={18}
