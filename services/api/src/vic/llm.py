@@ -7,7 +7,7 @@ from vic.run_context import RunContext
 
 T = TypeVar("T", bound=BaseModel)
 
-PROMPT_IDS = ("science", "translation", "clinical", "market", "investment", "chair", "audit")
+PROMPT_IDS = ("science", "translation", "clinical", "market", "investment", "chair", "audit", "ip_licensing")
 
 
 async def generate_structured(prompt_id: str, payload: dict[str, Any], response_model: type[T],
