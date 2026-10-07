@@ -142,7 +142,12 @@ def test_contradictory_additional_claim_without_valid_evidence_is_downgraded():
 
     claim = next(
         claim
-        for claim in _to_claims(analysis, EvidencePack())
+        for claim in _to_claims(analysis, EvidencePack(
+    sources=[],
+    evidence=[],
+    snapshot_id="snapshot-test",
+    synthetic=True,
+))
         if claim.id == "translation.biomarker_gap"
     )
 
@@ -153,16 +158,28 @@ def test_contradictory_additional_claim_without_valid_evidence_is_downgraded():
 
 def test_contradictory_additional_claim_retains_valid_evidence():
     pack = EvidencePack(
-        sources=[Source(id="src-1", title="Negative result", type="publication")],
-        evidence=[
-            Evidence(
-                id="ev-negative",
-                source_id="src-1",
-                excerpt="The prespecified biomarker response was not observed in participants.",
-                scope="program",
-            )
-        ],
-    )
+    sources=[
+        Source(
+            id="src-1",
+            title="Negative result",
+            type="peer_reviewed",
+            retrieved_at="2026-01-01T00:00:00Z",
+            content_hash="sha256:" + "0" * 64,
+            synthetic=True,
+        )
+    ],
+    evidence=[
+        Evidence(
+            id="ev-negative",
+            source_id="src-1",
+            excerpt="The prespecified biomarker response was not observed in participants.",
+            scope="program",
+            locator="Results",
+        )
+    ],
+    snapshot_id="snapshot-test",
+    synthetic=True,
+)
     analysis = _analysis(
         additional_claims=[
             _additional_claim(
@@ -187,15 +204,27 @@ def test_contradictory_additional_claim_retains_valid_evidence():
 @pytest.mark.asyncio
 async def test_animal_efficacy_is_not_presented_as_human_benefit():
     pack = EvidencePack(
-        sources=[Source(id="src-animal", title="Mouse study", type="publication")],
+        sources=[
+            Source(
+                id="src-animal",
+                title="Mouse study",
+                type="peer_reviewed",
+                retrieved_at="2026-01-01T00:00:00Z",
+                content_hash="sha256:" + "0" * 64,
+                synthetic=True,
+            )
+        ],
         evidence=[
             Evidence(
                 id="ev-mouse",
                 source_id="src-animal",
                 excerpt="Treatment improved disease scores in mice in a preclinical model.",
                 scope="approach",
+                locator="Results",
             )
         ],
+        snapshot_id="snapshot-test",
+        synthetic=True,
     )
     analysis = _analysis(
         links=_links(
@@ -227,7 +256,7 @@ async def test_animal_efficacy_is_not_presented_as_human_benefit():
         "Human patient benefit is unknown; animal efficacy is not evidence of clinical benefit."
     )
     assert "animal or preclinical efficacy" in result.unknowns[0]
-    assert result.section_content.structured_data["translation_links"][
+    assert result.section_content[0].structured_data["translation_links"][
         "translation.patient_benefit"
     ]["status"] == "gap"
 
@@ -241,7 +270,12 @@ async def test_missing_safe_human_exposure_is_explicitly_unknown():
 
     result = await analyze_translation(
         CaseInput(indication="A", mechanism="B", scope="approach"),
-        EvidencePack(),
+        EvidencePack(
+            sources=[],
+            evidence=[],
+            snapshot_id="snapshot-test",
+            synthetic=True,
+        ),
         ctx,
     )
     safe_exposure = next(
@@ -273,13 +307,18 @@ async def test_supported_link_without_valid_evidence_becomes_explicit_gap():
 
     result = await analyze_translation(
         CaseInput(indication="A", mechanism="B", scope="approach"),
-        EvidencePack(),
+        EvidencePack(
+            sources=[],
+            evidence=[],
+            snapshot_id="snapshot-test",
+            synthetic=True,
+        ),
         ctx,
     )
     exposure = next(
         claim for claim in result.claims if claim.id == "translation.human_exposure"
     )
-    summary = result.section_content.structured_data["translation_links"][
+    summary = result.section_content[0].structured_data["translation_links"][
         "translation.human_exposure"
     ]
 
@@ -309,7 +348,12 @@ async def test_analyze_translation_revalidates_incomplete_model_construct_output
     with pytest.raises(ValidationError, match="all five distinct keys"):
         await analyze_translation(
             CaseInput(indication="A", mechanism="B", scope="approach"),
-            EvidencePack(),
+            EvidencePack(
+                sources=[],
+                evidence=[],
+                snapshot_id="snapshot-test",
+                synthetic=True,
+            ),
             ctx,
         )
 

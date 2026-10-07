@@ -150,6 +150,9 @@ def _format_evidence(pack: EvidencePack) -> str:
     return "\n\n".join(blocks) if blocks else "(no evidence provided)"
 
 
+def _val(x) -> str:
+    return str(getattr(x, "value", x))
+
 def _format_prior_results(
     scientific_result: RoleResult,
     translation_result: RoleResult,
@@ -163,7 +166,7 @@ def _format_prior_results(
         sections.append("Claims:")
         for c in scientific_result.claims:
             sections.append(
-                f"  [{c.id}] ({c.support_status}, {c.importance}) {c.text}"
+                f"  [{c.id}] ({_val(c.support_status)}, {_val(c.importance)}) {c.text}"
             )
     if scientific_result.risks:
         sections.append("Risks:")
@@ -184,7 +187,7 @@ def _format_prior_results(
         sections.append("Claims:")
         for c in translation_result.claims:
             sections.append(
-                f"  [{c.id}] ({c.support_status}, {c.importance}) {c.text}"
+                f"  [{c.id}] ({_val(c.support_status)}, {_val(c.importance)}) {c.text}"
             )
     if translation_result.risks:
         sections.append("Risks:")

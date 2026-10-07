@@ -29,6 +29,9 @@ def _case() -> CaseInput:
 
 def _pack() -> EvidencePack:
     return EvidencePack(
+        sources=[],
+        snapshot_id="snapshot-test",
+        synthetic=True,
         evidence=[
             Evidence(
                 id="ev-clinical-1",
@@ -41,6 +44,10 @@ def _pack() -> EvidencePack:
     )
 
 
+_SECTION_KEYS = {
+    "science": "scientific_thesis",
+    "translation": "human_translation_thesis",
+}
 def _role_result(role_id: str, summary: str, claim_id: str) -> RoleResult:
     claim = Claim(
         id=claim_id,
@@ -68,19 +75,21 @@ def _role_result(role_id: str, summary: str, claim_id: str) -> RoleResult:
         risks=[risk],
         unknowns=[f"{summary} unknown"],
         change_conditions=[f"New {summary.lower()} evidence"],
-        section_content=SectionContent(
-            key=f"{role_id}_section",
-            summary=summary,
-            claim_ids=[claim_id],
-            limitations=[f"{summary} limitation"],
-            structured_data={},
-        ),
+        section_content=[
+            SectionContent(
+                key=_SECTION_KEYS[role_id],
+                summary=summary,
+                claim_ids=[claim_id],
+                limitations=[f"{summary} limitation"],
+                structured_data={},
+            )
+        ],
     )
 
 
 def _scientific_result() -> RoleResult:
     return _role_result(
-        role_id="scientific",
+        role_id="science",
         summary="Scientific rationale is moderately supported.",
         claim_id="science.target_validation",
     )
@@ -194,7 +203,14 @@ def _clinical_analysis(**overrides) -> ClinicalPlanAnalysis:
 
 def _context(analysis: ClinicalPlanAnalysis) -> tuple[RunContext, AsyncMock]:
     generate_structured = AsyncMock(return_value=analysis)
-    ctx = RunContext(model=SimpleNamespace(generate_structured=generate_structured))
+    ctx = RunContext(
+    case_id="case-test",
+    run_id="run-test",
+    snapshot_id="snapshot-test",
+    as_of_date=None,
+    mode="evidence_only",
+    model=SimpleNamespace(generate_structured=generate_structured),
+    )
     return ctx, generate_structured
 
 
@@ -220,10 +236,10 @@ async def test_analyze_clinical_happy_path():
     ]
     assert result.risks[0].id == "clinical.risk.safety"
     assert result.unknowns == ["Durability of clinical benefit is unknown."]
-    assert result.section_content.key == "clinical_development_plan"
-    assert result.section_content.structured_data["target_population"] == analysis.target_population
-    assert result.section_content.structured_data["study_sequence"][1]["phase"] == "Phase 2"
-    assert result.section_content.structured_data["next_milestone"] == analysis.next_milestone
+    assert result.section_content[0].key == "clinical_development_plan"
+    assert result.section_content[0].structured_data["target_population"] == analysis.target_population
+    assert result.section_content[0].structured_data["study_sequence"][1]["phase"] == "Phase 2"
+    assert result.section_content[0].structured_data["next_milestone"] == analysis.next_milestone
 
     generate_structured.assert_awaited_once()
     prompt_id, payload, response_model, call_ctx = generate_structured.await_args.args
@@ -254,7 +270,7 @@ async def test_trial_size_without_basis_forces_fallback():
         ctx,
     )
 
-    trial_size = result.section_content.structured_data["trial_size"]
+    trial_size = result.section_content[0].structured_data["trial_size"]
     assert trial_size["has_basis"] is False
     assert trial_size["estimate"] is None
     assert trial_size["statistical_design_gap"] == (
@@ -284,7 +300,7 @@ async def test_prior_results_are_serialized_into_llm_payload():
     assert "=== SCIENTIFIC ANALYSIS ===" in prior_analysis
     assert scientific_result.summary in prior_analysis
     assert "[science.target_validation] (mixed, critical)" in prior_analysis
-    assert "scientific.risk.data_gap" in prior_analysis
+    assert "science.risk.data_gap" in prior_analysis
     assert "Scientific rationale is moderately supported. unknown" in prior_analysis
     assert "=== TRANSLATION ANALYSIS ===" in prior_analysis
     assert translation_result.summary in prior_analysis

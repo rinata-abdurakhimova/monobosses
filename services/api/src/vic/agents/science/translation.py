@@ -412,5 +412,5 @@ async def analyze_translation(
         risks=risks,
         unknowns=unknowns,
         change_conditions=analysis.change_conditions,
-        section_content=section,
+        section_content=[section],
     )

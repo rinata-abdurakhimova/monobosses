@@ -67,7 +67,7 @@ def test_to_claims_unsupported_status_without_evidence(status):
         claims=[
             _ClaimOutput(
                 key="science.target_validation", text="Claim",
-                support_status="contradicted", 
+                support_status=status, 
                 evidence_ids=["fake-id"],
                 assumptions=[],
                 scope="approach",
