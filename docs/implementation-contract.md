@@ -26,6 +26,27 @@ SQLite — рекомендований мінімум для локальног
 
 R2 забезпечує встановлення API editable package і команду `python -m uvicorn vic.main:app --reload --port 8000` з каталогу `services/api`. R1 забезпечує `npm install` і `npm run dev` з `apps/web`. Остаточні версії dependencies та команди перевірити й записати в кореневий README під час реалізації. Рекомендовані Python dependencies: FastAPI, Pydantic, Uvicorn, HTTPX, pypdf, pytest та SDK обраної моделі.
 
+### Display language
+
+English is the default language of the interface and API-owned display text,
+including generated report narratives, claims, role summaries, risks, diligence
+questions, revision explanations, warnings, and error messages. Every shared
+fixture in `contracts/fixtures/` must use English for all human-readable values,
+including synthetic source titles/text, evidence excerpts, and case input.
+Generate fixtures from `services/api/src/vic/synthetic.py`; do not translate only
+the committed JSON or add a frontend-only translation that diverges from Python.
+
+For synthetic sources, translate the source text and its excerpts together so
+each excerpt remains an exact substring; recompute `content_hash` from the
+English source text. Preserve IDs, enums, provenance, support status, scope,
+recommendations, and the v1/v2 decision story. Existing saved reports are
+snapshots and are not silently rewritten by a fixture-language update.
+
+User input and real source quotations remain verbatim for provenance; do not
+rewrite a quoted source to enforce the display language. Any translation of real
+evidence must be identified separately from the original excerpt. This rule does
+not require translating the team's internal documentation.
+
 ## 2. Мінімальні сутності
 
 | Model | Поля та зміст |
@@ -56,7 +77,7 @@ R2 забезпечує встановлення API editable package і ком�
 ```json
 {
   "id": "translation.safe_exposure",
-  "text": "Безпечність потрібної експозиції у людини не встановлено.",
+  "text": "The safety of the required human exposure has not been established.",
   "provenance": "ai",
   "support_status": "unknown",
   "evidence_ids": ["ev-synthetic-01"],

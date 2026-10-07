@@ -2,7 +2,7 @@ import { ApiError, throwIfAborted } from "./errors.ts";
 import { decodeRun, identifier, object, version } from "./decode.ts";
 import type { ApiClient, RequestOptions } from "./types";
 
-/** Future same-origin proxy client. Not enabled in the UI before R2 integration.
+/** Same-origin proxy client.
  * mapReport converts the authoritative wire report into a UI model when supplied.
  */
 type HttpOptions = {

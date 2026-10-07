@@ -4,9 +4,29 @@ import reportV1 from "../../../contracts/fixtures/report-v1.json" with { type: "
 import reportV2 from "../../../contracts/fixtures/report-v2.json" with { type: "json" };
 import reportR5 from "../../../contracts/fixtures/report-r5.json" with { type: "json" };
 import caseInput from "../../../contracts/fixtures/case.json" with { type: "json" };
-import { mapSyntheticReport } from "../lib/contracts/report.ts";
+import { mapSyntheticReport, mapApiReport } from "../lib/contracts/report.ts";
 import { getPreviewReport } from "../lib/preview.ts";
 import { validateContract } from "../lib/contracts/validate.ts";
+
+test("API mapping preserves real and synthetic report flags without fabricating fixture data", () => {
+  const real = structuredClone(reportV1);
+  real.synthetic = false;
+  real.sources.forEach((s) => {
+    s.synthetic = false;
+  });
+  const result = mapApiReport(real);
+  assert.equal(result.synthetic, false);
+  assert.equal(result.scope, real.scope);
+  assert.deepEqual(result.contract, real);
+  assert.equal(
+    result.sections.find((s) => s.key === "scientific_thesis")?.status,
+    "Uncertain",
+  );
+  assert.equal(mapApiReport(reportV1).synthetic, true);
+  const broken = structuredClone(real);
+  broken.evidence[0].source_id = "missing";
+  assert.throws(() => mapApiReport(broken));
+});
 
 test("all seven R5 roles and R3/R4 perspectives retain their reasoning and evidence", () => {
   validateContract("Report", reportR5);

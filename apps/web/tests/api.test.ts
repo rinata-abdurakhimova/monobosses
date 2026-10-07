@@ -7,6 +7,19 @@ import { ApiError } from "../lib/api/errors.ts";
 import { sampleInput } from "../lib/preview.ts";
 import type { MockScenario, Run } from "../lib/api/types.ts";
 
+test("HTTP polling accepts nullable stages and preserves terminal failure details", async () => {
+  const client = createHttpApiClient({
+    fetcher: async () => Response.json({ ...run("failed"), stage: null }),
+  });
+  const failed = await pollRun(client, "run-1");
+  assert.equal(failed.stage, null);
+  assert.equal(failed.error?.message, "Failed");
+  const invalid = createHttpApiClient({
+    fetcher: async () => Response.json({ ...run("failed"), error: null }),
+  });
+  await assert.rejects(invalid.getRun("run-1"), code("INVALID_RESPONSE"));
+});
+
 test("HTTP reports stay unknown unless an explicit mapper is supplied", async () => {
   const client = createHttpApiClient({
     fetcher: async () =>
