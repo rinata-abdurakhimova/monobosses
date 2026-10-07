@@ -5,24 +5,46 @@ contracts/fixtures/*.json, and the mock repository serves the same objects.
 Story: v1 = Conditional (safe exposure unknown); v2 = Do Not Invest (synthetic safety result).
 """
 import hashlib
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from pydantic import BaseModel
 
 from vic import integrity
-from vic.contracts import (CaseInput, Claim, ClaimChange, DiligenceQuestion, Disagreement,
-                           Evidence, EvidencePack, ErrorBody, Importance, Provenance,
-                           Recommendation, Report, Revision, Risk, RoleId, RoleResult, Run,
-                           RunMode, RunStage, RunStatus, Scope, SectionContent, SectionKey,
-                           Source, SupportStatus)
+from vic.contracts import (
+    CaseInput,
+    Claim,
+    ClaimChange,
+    DiligenceQuestion,
+    Disagreement,
+    ErrorBody,
+    Evidence,
+    EvidencePack,
+    Importance,
+    Provenance,
+    Recommendation,
+    Report,
+    Revision,
+    Risk,
+    RoleId,
+    RoleResult,
+    Run,
+    RunMode,
+    RunStage,
+    RunStatus,
+    Scope,
+    SectionContent,
+    SectionKey,
+    Source,
+    SupportStatus,
+)
 
 CASE_ID = "case-synthetic-01"
 REPORT_V1_ID = "rep-synthetic-v1"
 REPORT_V2_ID = "rep-synthetic-v2"
 SNAPSHOT_V1 = "snap-synthetic-v1"
 SNAPSHOT_V2 = "snap-synthetic-v2"
-RETRIEVED_AT = datetime(2025, 1, 10, 12, 0, 0, tzinfo=timezone.utc)
-RETRIEVED_AT_V2 = datetime(2025, 6, 10, 12, 0, 0, tzinfo=timezone.utc)
+RETRIEVED_AT = datetime(2025, 1, 10, 12, 0, 0, tzinfo=UTC)
+RETRIEVED_AT_V2 = datetime(2025, 6, 10, 12, 0, 0, tzinfo=UTC)
 
 # ------------------------------------------------------------------ sources & evidence
 _TEXTS = {

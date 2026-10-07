@@ -30,6 +30,26 @@ def test_dangling_claim_in_section():
     assert any("science.nonexistent" in p for p in _problems(data))
 
 
+def test_role_risk_rejects_dangling_claim():
+    data = _data()
+    data["roles"][0]["risks"][0]["claim_ids"] = ["science.nonexistent"]
+    assert any("role science risk" in p and "missing claim science.nonexistent" in p
+               for p in _problems(data))
+
+
+def test_role_risk_must_match_canonical_risk():
+    data = _data()
+    data["roles"][0]["risks"][0]["impact"] = "Different impact"
+    assert any("role science risk" in p and "differs from report.risks" in p
+               for p in _problems(data))
+
+
+def test_role_risk_must_exist_in_canonical_risks():
+    data = _data()
+    data["roles"][0]["risks"][0]["id"] = "risk-missing"
+    assert any("risk-missing is missing from report.risks" in p for p in _problems(data))
+
+
 def test_duplicate_claim_id():
     data = _data()
     data["claims"].append(data["claims"][0])

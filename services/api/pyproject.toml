@@ -30,3 +30,7 @@ where = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI uses these marker objects in endpoint parameter defaults.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.File", "fastapi.Form"]

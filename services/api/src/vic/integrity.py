@@ -4,8 +4,14 @@ Each check_* function returns a list of human-readable problems (empty list = va
 assert_* functions raise IntegrityError listing every problem. In R2-02 this is the
 gate a report must pass before a run may become `completed`.
 """
-from vic.contracts import (EvidencePack, Importance, Recommendation, Report, SectionKey,
-                           SupportStatus)
+from vic.contracts import (
+    EvidencePack,
+    Importance,
+    Recommendation,
+    Report,
+    SectionKey,
+    SupportStatus,
+)
 
 FORBIDDEN_IDS = {"", "todo", "tbd", "unknown", "n/a", "na", "null", "none", "placeholder"}
 
@@ -97,7 +103,18 @@ def check_report(report: Report) -> list[str]:
             if cid not in cl_set:
                 p.append(f"risk {r.id} references missing claim {cid}")
     canonical = {c.id: c for c in report.claims}
+    canonical_risks = {r.id: r for r in report.risks}
     for role in report.roles:
+        _check_ids(p, f"role {role.role_id.value} risk", [r.id for r in role.risks])
+        for risk in role.risks:
+            for cid in risk.claim_ids:
+                if cid not in cl_set:
+                    p.append(f"role {role.role_id.value} risk {risk.id} "
+                             f"references missing claim {cid}")
+            if risk.id not in canonical_risks:
+                p.append(f"role {role.role_id.value} risk {risk.id} is missing from report.risks")
+            elif risk != canonical_risks[risk.id]:
+                p.append(f"role {role.role_id.value} risk {risk.id} differs from report.risks")
         for c in role.claims:
             if c.id not in cl_set:
                 p.append(f"role {role.role_id.value} claim {c.id} is missing from report.claims")

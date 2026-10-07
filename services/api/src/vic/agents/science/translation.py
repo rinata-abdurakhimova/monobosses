@@ -149,7 +149,9 @@ def _to_claims(analysis: TranslationAnalysis, pack: EvidencePack) -> list[Claim]
     for link in analysis.links:
         valid_ids = _valid_evidence_ids(link.evidence_ids, pack)
         raw_status = _LINK_STATUS_TO_SUPPORT.get(link.status, "unverified")
-        status = raw_status if raw_status != "supported" or valid_ids else "unverified"
+        status = raw_status
+        if status in ("supported", "contradicted", "mixed") and not valid_ids:
+            status = "unverified"
         claims.append(
             Claim(
                 id=link.key,
@@ -165,7 +167,7 @@ def _to_claims(analysis: TranslationAnalysis, pack: EvidencePack) -> list[Claim]
     for ac in analysis.additional_claims:
         valid_ids = _valid_evidence_ids(ac.evidence_ids, pack)
         status = ac.support_status
-        if status == "supported" and not valid_ids:
+        if status in ("supported", "contradicted", "mixed") and not valid_ids:
             status = "unverified"
         claims.append(
             Claim(
@@ -239,5 +241,5 @@ async def analyze_translation(
         risks=risks,
         unknowns=analysis.unknowns,
         change_conditions=analysis.change_conditions,
-        section_content=section,
+        section_content=[section],
     )

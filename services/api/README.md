@@ -80,5 +80,13 @@ from vic.run_context import RunContext
 | 10 | Claim: `source`/`supported`/`contradicted`/`mixed` вимагають `evidence_ids` | так | R3/R4/R5 |
 
 ## Відомі обмеження
+
+R4/R5 використовують спільні моделі `vic.contracts`: `RoleResult.section_content` — список
+секцій; market повертає `competitive_landscape` та `commercial_opportunity` окремо.
+Clinical input серіалізується через Pydantic `model_dump`. Ризики ролей мають посилатися на
+наявні claims і збігатися з відповідними записами `Report.risks`.
+Повний `pytest -q` включає агентні тести зі справжніми контрактами; підміни `vic.contracts`
+у тестах немає. Це перевірка сумісності, а не підтвердження якості інвестиційних рекомендацій.
+
 In-memory сховище; немає auth, rate limits, реальних run-ів і PDF-парсингу; OpenAPI та fixtures треба
 перегенерувати після змін моделей (`pytest` це перевіряє).

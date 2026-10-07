@@ -8,8 +8,14 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Annotated, Any, Literal, Protocol, TypeVar
 
-from pydantic import (BaseModel, ConfigDict, Field, StringConstraints, field_validator,
-                      model_validator)
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 MIN_PROGRAM_DATA_CHARS = 40  # placeholder threshold for "sufficient program data"
 

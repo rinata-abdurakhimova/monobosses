@@ -6,13 +6,12 @@ R2-02 adds a SQLite implementation behind the same `Repository` interface.
 import hashlib
 import threading
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Protocol
 
 from vic import synthetic
-from vic.contracts import (CaseInput, Evidence, EvidenceCreate, EvidenceCreated, Report, Run,
-                           Source)
+from vic.contracts import CaseInput, Evidence, EvidenceCreate, EvidenceCreated, Report, Run, Source
 
 
 def new_id(prefix: str) -> str:
@@ -117,7 +116,7 @@ class InMemoryRepository:
             digest = hashlib.sha256(payload.text.encode("utf-8")).hexdigest()
             self._sources.setdefault(case_id, []).append(Source(
                 id=source_id, title=payload.title, url=None, type="user_upload",
-                published_at=payload.published_at, retrieved_at=datetime.now(timezone.utc),
+                published_at=payload.published_at, retrieved_at=datetime.now(UTC),
                 content_hash=f"sha256:{digest}", synthetic=payload.synthetic))
             self._evidence.setdefault(case_id, []).append(Evidence(
                 id=evidence_id, source_id=source_id, excerpt=payload.text, locator="text",

@@ -13,6 +13,6 @@ def health(repo: Repository = Depends(get_repo)) -> HealthStatus:
     """Readiness: checks that the storage is reachable."""
     try:
         repo.ping()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise ApiError(503, "storage_unavailable", "Storage is not available", True) from exc
     return HealthStatus(status="ok")

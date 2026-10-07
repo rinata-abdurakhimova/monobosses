@@ -1,9 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from src.vic.config import get_settings
-from src.vic.main import create_app
-from src.vic.storage import get_repository
+from vic.config import get_settings
+from vic.main import create_app
+from vic.storage import get_repository
 
 
 def new_client() -> TestClient:

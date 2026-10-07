@@ -1,12 +1,20 @@
 """R5-01 market node. One structured LLM call through the shared R2 adapter."""
-from dataclasses import asdict
 from datetime import date
 from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from vic.contracts import CaseInput, Claim, EvidencePack, Risk, RoleResult, RunContext, SectionContent
+from vic.contracts import (
+    CaseInput,
+    Claim,
+    EvidencePack,
+    Risk,
+    RoleResult,
+    RunContext,
+    SectionContent,
+)
+
 from .calculations import MarketScenario, estimate_market_scenarios, summarize_market_ranges
 
 PROMPT_ID = "market"
@@ -179,7 +187,7 @@ def prepare_market_inputs(case: CaseInput, pack: EvidencePack,
             "case": {k: getattr(case, k, None) for k in
                      ("indication", "mechanism", "scope", "modality", "development_stage", "program_data", "as_of_date")},
             "evidence": evidence, "retrieval_warnings": pack.retrieval_warnings,
-            "clinical_input": asdict(clinical) if clinical is not None else None,
+            "clinical_input": clinical.model_dump(mode="json") if clinical is not None else None,
             "clinical_alignment": "R4 input supplied; reconcile eligibility" if clinical else "R4 review pending",
             "calculated_scenarios": estimate_market_scenarios(scenarios or [])}
 
@@ -251,9 +259,10 @@ def validate_market_result(analysis: MarketAnalysis, case: CaseInput, pack: Evid
             raise ValueError("Program claim cannot expand approach scope")
         if c.support_status in ("supported", "contradicted", "mixed") and not c.evidence_ids:
             raise ValueError(f"Evidence required for {c.id}")
-        if c.scope == "program" and c.support_status in ("supported", "contradicted", "mixed"):
-            if not any(evidence[eid].scope == "program" for eid in c.evidence_ids):
-                raise ValueError("Program claim requires program evidence")
+        if (c.scope == "program"
+                and c.support_status in ("supported", "contradicted", "mixed")
+                and not any(evidence[eid].scope == "program" for eid in c.evidence_ids)):
+            raise ValueError("Program claim requires program evidence")
     population = analysis.target_population
     if not any((population.description, population.indication, population.eligibility, population.geography, population.access_limitations)) and not population.unknowns:
         raise ValueError("Unknown target population must explain missing data")
@@ -361,12 +370,13 @@ async def analyze_market(case: CaseInput, pack: EvidencePack, ctx: RunContext,
                              "diligence_questions": [q.model_dump() for q in analysis.diligence_questions],
                              "source_requests": gaps}},
     ]
-    # Current R4 test contract has singular section_content. Preserve it rather
-    # than editing R2 contracts; expose both canonical sections for integration.
-    section = SectionContent(key="competitive_landscape", summary=analysis.summary,
-                             claim_ids=[c.id for c in claims], limitations=limitations,
-                             structured_data={"sections": sections, "prompt_version": PROMPT_VERSION,
-                                              "synthetic": any(s.synthetic for s in pack.sources)})
+    section_content = []
+    for data in sections:
+        data["structured_data"].update({
+            "prompt_version": PROMPT_VERSION,
+            "synthetic": pack.synthetic,
+        })
+        section_content.append(SectionContent.model_validate(data))
     return RoleResult(role_id="market", summary=analysis.summary, position=analysis.position,
                       claims=claims, risks=risks, unknowns=gaps,
-                      change_conditions=analysis.change_conditions, section_content=section)
+                      change_conditions=analysis.change_conditions, section_content=section_content)
