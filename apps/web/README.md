@@ -8,7 +8,7 @@ The current reference uses a richer sage workspace, a deep pine navigation sideb
 
 ## Run
 
-Requires Node.js 20.9+ and npm. From this directory:
+Requires Node.js 22.18+ and npm (Node 24 was used for verification). The test command uses Node's built-in TypeScript support. From this directory:
 
 ```sh
 npm ci
@@ -19,6 +19,7 @@ Open `http://127.0.0.1:3000`. For a production preview:
 
 ```sh
 npm run typecheck
+npm test
 npm run build
 npm start
 ```
@@ -43,6 +44,20 @@ The evidence dialog is a local fixture display for review, not an implemented ba
 
 ## Data boundary
 
+R1-02 preparation adds a separate **Mock API workflow** selection to the form. It calls `createCase` once, `startRun` once, then polls `getRun` and reads the returned report version with `getReport`. The case/run identifiers remain in the URL; reload and **Check existing run again** only read the existing records. Mock records and completed report snapshots are stored in a separate tab-local namespace from the original fixed fixture preview.
+
+In **Preview states**, the mock workflow can simulate completion, failed runs, missing records, validation errors, one connection interruption, invalid responses, unavailable sources, and an 8-second polling deadline. Cancellation removes timers/listeners and aborts in-flight reads. A connection interruption can be resumed on the same run; a timeout never submits another run.
+
+- `lib/api.ts`: public client boundary and polling exports.
+- `lib/api/types.ts`: provisional request/run/client types, pending OpenAPI.
+- `lib/api/mock-client.ts`: local simulated service, saved run/report versions.
+- `lib/api/http-client.ts`: replaceable HTTP adapter with error decoding, response checks, request deadlines, and no automatic mutation retries.
+- `lib/api/poll-run.ts`: sequential, cancellable GET-only polling.
+- `components/ApiCase.tsx`: mock lifecycle and recovery UI.
+- `tests/api.test.ts`: meaningful transport, polling, and persistence checks.
+
+The HTTP adapter defaults to `/api/backend`, a future same-origin server proxy. That proxy is **not implemented or enabled yet**. R2 must supply the authoritative OpenAPI and host/auth configuration before wiring it. The HTTP report remains an unknown wire value until a `mapReport` adapter is supplied; it is never silently replaced with the synthetic fixture. No backend URL, API key, or LLM credential is exposed to the browser.
+
 - `lib/types.ts`: provisional frontend view models, pending R2's contracts v1.
 - `lib/fixtures/report-v1.ts`: fixed fictional report, local to R1. It does not create or overwrite `contracts/fixtures/report-v1.json`.
 - `lib/preview.ts`: explicit local preview storage and fixture selection. It makes no API or model calls.
@@ -54,4 +69,4 @@ Input is saved only in this browser tab's session storage; it is not sent to a b
 
 ## Pending R2 / later tasks
 
-Adopt R2's OpenAPI and shared fixtures when supplied, with a single adapter at the data boundary. Real API requests/polling belong to R1-02. Uploads and report revisions belong to R1-03; deployment belongs to R1-04. This work does not finish backend-dependent contract alignment or close R1-01 automatically.
+Adopt R2's OpenAPI and shared fixtures when supplied, and implement the agreed server proxy and report mapper at the data boundary. The independent client/polling preparation for R1-02 is implemented; verification against the actual Python API remains pending. Uploads and report revisions belong to R1-03; deployment belongs to R1-04. This work does not finish shared-contract alignment or close #8.
