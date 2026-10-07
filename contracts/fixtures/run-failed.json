@@ -1,0 +1,28 @@
+{
+  "id": "run-synthetic-failed",
+  "case_id": "case-synthetic-01",
+  "status": "failed",
+  "stage": "audit",
+  "report_version": null,
+  "warnings": [
+    "Синтетичний приклад збою"
+  ],
+  "error": {
+    "code": "run_interrupted",
+    "message": "Run перервано перезапуском сервера; запустіть повторно.",
+    "retryable": true
+  },
+  "trace_id": "trace-synthetic-failed",
+  "usage": {
+    "calls": 0,
+    "input_tokens": null,
+    "output_tokens": null
+  },
+  "latency_ms": {},
+  "cost_usd": null,
+  "model_version": "synthetic",
+  "prompt_versions": {},
+  "config_version": "synthetic-v1",
+  "mode": "live",
+  "parent_report_id": null
+}
