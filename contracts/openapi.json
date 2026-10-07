@@ -723,7 +723,11 @@
           "market",
           "investment",
           "chair",
-          "audit"
+          "audit",
+          "failure_miner",
+          "investment_threshold",
+          "partnerships",
+          "ip_licensing"
         ],
         "title": "RoleId",
         "type": "string"

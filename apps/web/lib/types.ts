@@ -44,6 +44,11 @@ export type RoleResult = {
   summary: string;
   position: string;
   unknown: string;
+  claims: Claim[];
+  risks: Contract.Risk[];
+  unknowns: string[];
+  change_conditions: string[];
+  section_content: Contract.SectionContent[];
 };
 export type Risk = {
   id: string;

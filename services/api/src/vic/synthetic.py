@@ -436,6 +436,47 @@ def build_report(version: int) -> Report:
         risks=risks, diligence_questions=questions, revision=revision)
 
 
+def build_r5_role_report() -> Report:
+    """Display-only fixture for all agreed roles; no expert nodes are executed."""
+    report = build_report(1)
+    report.id = "rep-synthetic-r5"
+    report.run_id = "run-synthetic-r5"
+    examples = [
+        (RoleId.FAILURE_MINER, "Safe human exposure remains an unresolved failure mode.",
+         "translation.safe_exposure", SectionKey.KEY_RISKS),
+        (RoleId.INVESTMENT_THRESHOLD, "Safe exposure is required before the thesis can advance.",
+         "translation.safe_exposure", SectionKey.CRITICAL_UNKNOWNS),
+        (RoleId.PARTNERSHIPS, "No partner interest is established in this fictional case.",
+         "partnerships.interest_unknown", SectionKey.COMMERCIAL_OPPORTUNITY),
+        (RoleId.IP_LICENSING, "Patent ownership and licensing rights have not been established.",
+         "ip_licensing.rights_unknown", SectionKey.KEY_RISKS),
+        (RoleId.CHAIR, "The fictional committee remains Conditional pending safe exposure.",
+         "translation.safe_exposure", SectionKey.RECOMMENDATION),
+        (RoleId.AUDIT, "Evidence links in this display fixture do not establish live audit quality.",
+         "translation.safe_exposure", SectionKey.SOURCES),
+    ]
+    for role_id, summary, claim_id, section_key in examples:
+        claim = next((c for c in report.claims if c.id == claim_id), None)
+        if claim is None:
+            claim = Claim(id=claim_id, text=summary, provenance=Provenance.AI,
+                          support_status=SupportStatus.UNKNOWN, scope=report.scope,
+                          importance=Importance.MAJOR)
+            report.claims.append(claim)
+        report.roles.append(RoleResult(
+            role_id=role_id, summary=f"Synthetic display example: {summary}",
+            position="Illustrative only; missing evidence remains unknown.",
+            claims=[claim], risks=[report.risks[0]] if role_id == RoleId.FAILURE_MINER else [],
+            unknowns=[summary],
+            change_conditions=["Obtain and audit the missing evidence before changing this position."],
+            section_content=[SectionContent(
+                key=section_key, summary=summary, claim_ids=[claim_id],
+                limitations=["Synthetic display fixture; no live analysis was performed."],
+            )],
+        ))
+    integrity.assert_report(report)
+    return report
+
+
 def build_runs() -> tuple[Run, Run]:
     running = Run(id="run-synthetic-running", case_id=CASE_ID, status=RunStatus.RUNNING,
                   stage=RunStage.ANALYZE, report_version=None, warnings=[],
@@ -462,4 +503,5 @@ def build_all() -> dict[str, BaseModel]:
     integrity.assert_report(v2, parent=v1)
     running, failed = build_runs()
     return {"case": build_case(), "evidence-pack": pack, "report-v1": v1, "report-v2": v2,
+            "report-r5": build_r5_role_report(),
             "run-running": running, "run-failed": failed}

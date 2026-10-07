@@ -139,7 +139,11 @@ export type RoleId =
   | "market"
   | "investment"
   | "chair"
-  | "audit";
+  | "audit"
+  | "failure_miner"
+  | "investment_threshold"
+  | "partnerships"
+  | "ip_licensing";
 
 export type RoleResult = {
   change_conditions?: Array<string>;

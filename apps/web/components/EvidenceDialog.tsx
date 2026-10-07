@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Icon } from "@/components/Icon";
 import type { Claim, Report } from "@/lib/types";
 
@@ -14,6 +14,7 @@ export function EvidenceDialog({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
@@ -24,7 +25,7 @@ export function EvidenceDialog({
     <dialog
       ref={ref}
       className="evidence-dialog"
-      aria-labelledby="evidence-title"
+      aria-labelledby={titleId}
       onClose={onClose}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -43,7 +44,7 @@ export function EvidenceDialog({
               <Icon name="close" />
             </button>
           </div>
-          <h2 id="evidence-title">Inspect the reasoning</h2>
+          <h2 id={titleId}>Inspect the reasoning</h2>
           <p className="dialog-claim">{claim.text}</p>
           <div className="claim-tags">
             <span className={`tag status-${claim.support_status}`}>

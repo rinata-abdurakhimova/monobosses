@@ -245,6 +245,7 @@ export function ReportView({
             <RoleCard
               key={role.id}
               role={role}
+              report={report}
             />
           ))}
         </div>

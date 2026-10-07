@@ -20,26 +20,46 @@ type Schema = {
 
 const schemas = openapi.components.schemas as Record<string, Schema>;
 
+type ValidationOptions = {
+  /** Display future expert IDs without weakening any other report fields. */
+  allowUnknownRoles?: boolean;
+};
+
 /** Validate the shared OpenAPI schemas used at the frontend data boundary. */
-export function validateContract(name: string, value: unknown): void {
+export function validateContract(
+  name: string,
+  value: unknown,
+  options: ValidationOptions = {},
+): void {
   const schema = schemas[name];
   if (!schema) throw new Error(`Unknown contract schema: ${name}`);
-  visit(schema, value, name);
+  visit(schema, value, name, options);
 }
 
-function visit(schema: Schema, value: unknown, path: string): void {
+function visit(
+  schema: Schema,
+  value: unknown,
+  path: string,
+  options: ValidationOptions,
+): void {
   function invalid(): never {
     throw new Error(`${path} does not match the shared contract`);
   }
   if (schema.$ref) {
-    const target = schemas[schema.$ref.split("/").at(-1)!];
+    const name = schema.$ref.split("/").at(-1)!;
+    const target = schemas[name];
     if (!target) invalid();
-    return visit(target, value, path);
+    if (name === "RoleId" && options.allowUnknownRoles) {
+      if (typeof value !== "string" || !/^[a-z][a-z0-9_]{0,127}$/.test(value))
+        invalid();
+      return;
+    }
+    return visit(target, value, path, options);
   }
   if (schema.anyOf) {
     for (const option of schema.anyOf) {
       try {
-        visit(option, value, path);
+        visit(option, value, path, options);
         return;
       } catch {
         /* Try the next schema alternative. */
@@ -71,7 +91,7 @@ function visit(schema: Schema, value: unknown, path: string): void {
     if (schema.maxItems !== undefined && value.length > schema.maxItems)
       invalid();
     value.forEach((item, index) =>
-      visit(schema.items ?? {}, item, `${path}[${index}]`),
+      visit(schema.items ?? {}, item, `${path}[${index}]`, options),
     );
   }
   if (schema.type === "object") {
@@ -82,10 +102,10 @@ function visit(schema: Schema, value: unknown, path: string): void {
     }
     for (const [key, item] of Object.entries(object)) {
       const property = schema.properties?.[key];
-      if (property) visit(property, item, `${path}.${key}`);
+      if (property) visit(property, item, `${path}.${key}`, options);
       else if (schema.additionalProperties === false) invalid();
       else if (typeof schema.additionalProperties === "object") {
-        visit(schema.additionalProperties, item, `${path}.${key}`);
+        visit(schema.additionalProperties, item, `${path}.${key}`, options);
       }
     }
   }
