@@ -1,7 +1,24 @@
 import { Icon } from "@/components/Icon";
 import { PREVIEW_STEPS } from "@/lib/preview";
 
-export function RunProgress({ step }: { step: number }) {
+export function RunProgress({
+  step,
+  mode = "fixture",
+}: {
+  step: number;
+  mode?: "fixture" | "mock-api";
+}) {
+  const steps =
+    mode === "fixture"
+      ? PREVIEW_STEPS
+      : [
+          "Validate mock request",
+          "Load fictional evidence",
+          "Simulate analysis",
+          "Simulate audit",
+          "Simulate synthesis",
+          "Complete the saved report",
+        ];
   return (
     <section
       className="panel progress-panel"
@@ -10,11 +27,12 @@ export function RunProgress({ step }: { step: number }) {
       <span className="eyebrow">SYNTHETIC WORKFLOW PREVIEW</span>
       <h1 id="progress-title">A considered conclusion takes a few steps.</h1>
       <p>
-        No model or data source is being called. This animation previews how a
-        future analysis will progress.
+        {mode === "fixture"
+          ? "No model or data source is being called. This animation previews how a future analysis will progress."
+          : "The mock client polls one saved local run. No Python service, live research, or model call is running."}
       </p>
       <ol className="progress-steps">
-        {PREVIEW_STEPS.map((label, index) => (
+        {steps.map((label, index) => (
           <li
             className={index < step ? "done" : index === step ? "current" : ""}
             key={label}
@@ -44,7 +62,7 @@ export function RunProgress({ step }: { step: number }) {
         role="status"
         aria-live="polite"
       >
-        {PREVIEW_STEPS[Math.min(step, PREVIEW_STEPS.length - 1)]}
+        {steps[Math.min(step, steps.length - 1)]}
       </p>
     </section>
   );
