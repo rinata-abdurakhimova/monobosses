@@ -107,6 +107,7 @@ class RoleId(str, Enum):  # prompt IDs from the contract
     INVESTMENT = "investment"
     CHAIR = "chair"
     AUDIT = "audit"
+    IP_LICENSING = "ip_licensing"
 
 
 # Open question for R3: final list of source types.

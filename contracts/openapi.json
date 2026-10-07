@@ -723,7 +723,8 @@
           "market",
           "investment",
           "chair",
-          "audit"
+          "audit",
+          "ip_licensing"
         ],
         "title": "RoleId",
         "type": "string"
