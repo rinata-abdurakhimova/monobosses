@@ -1,0 +1,22 @@
+{
+  "id": "run-synthetic-running",
+  "case_id": "case-synthetic-01",
+  "status": "running",
+  "stage": "analyze",
+  "report_version": null,
+  "warnings": [],
+  "error": null,
+  "trace_id": "trace-synthetic-running",
+  "usage": {
+    "calls": 0,
+    "input_tokens": null,
+    "output_tokens": null
+  },
+  "latency_ms": {},
+  "cost_usd": null,
+  "model_version": "synthetic",
+  "prompt_versions": {},
+  "config_version": "synthetic-v1",
+  "mode": "live",
+  "parent_report_id": null
+}

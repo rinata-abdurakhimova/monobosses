@@ -232,6 +232,7 @@ async def test_animal_efficacy_is_not_presented_as_human_benefit():
     ]["status"] == "gap"
 
 
+
 @pytest.mark.asyncio
 async def test_missing_safe_human_exposure_is_explicitly_unknown():
     analysis = _analysis()

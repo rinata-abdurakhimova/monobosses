@@ -223,7 +223,7 @@ async def analyze_science(
     )
 
     return RoleResult(
-        role_id="scientific",
+        role_id="science",
         summary=analysis.thesis,
         position=analysis.position,
         claims=claims,
