@@ -44,6 +44,7 @@ Backend environment variables:
 | --- | --- |
 | `LLM_PROVIDER`, `LLM_MODEL` | Provider/model agreed with R2 |
 | `LLM_API_KEY` | Provider dashboard; enter only in Railway API variables |
+| `LLM_BASE_URL` | For `LLM_PROVIDER=openai`: mentor wallet base URL ending in `/v1`; see [backend connection guide](../services/api/README.md#mentor-api-connection) |
 | `DATABASE_URL` | Durable database path/connection agreed with R2 |
 | `API_SHARED_SECRET` | Same server-only secret on **api** and **web**; sent as `X-API-Key` |
 | `APP_ENV` | `production` for live deployment |

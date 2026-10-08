@@ -19,6 +19,7 @@ out/
 
 # Local development artifacts
 apps/web/artifacts/
+artifacts/mentor-provider-deps/
 
 .venv/
 __pycache__/
