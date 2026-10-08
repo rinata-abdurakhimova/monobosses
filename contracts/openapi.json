@@ -1265,6 +1265,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing or invalid API key"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1520,7 +1530,7 @@
     },
     "/cases/{case_id}/runs": {
       "post": {
-        "description": "MOCK in R2-01: returns a run that is already completed with a synthetic report.",
+        "description": "Returns 202 at once; the pipeline runs in the background. Poll GET /runs/{run_id}.",
         "operationId": "create_run_cases__case_id__runs_post",
         "parameters": [
           {
@@ -1554,6 +1564,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing or invalid API key"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -1583,6 +1603,16 @@
               }
             },
             "description": "Validation error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Too many runs in progress"
           }
         },
         "security": [
@@ -1652,6 +1682,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing or invalid API key"
           },
           "404": {
             "content": {

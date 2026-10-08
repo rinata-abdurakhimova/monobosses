@@ -12,6 +12,8 @@ from vic.config import Settings, get_settings
 from vic.errors import register_error_handlers
 from vic.storage import get_repository
 
+from vic.runner import get_manager
+
 API_VERSION = "0.2.0"
 logger = logging.getLogger("vic")
 
@@ -39,6 +41,7 @@ async def lifespan(app: FastAPI):
     if recovered:
         logger.warning("Marked %d interrupted run(s) as failed", recovered)
     yield
+    await get_manager().shutdown()  # cancel running tasks; they record themselves as interrupted
 
 
 def build_openapi(app: FastAPI) -> dict:

@@ -70,7 +70,7 @@ class Repository(Protocol):
     def update_run(self, run: Run) -> None: ...
     def save_trace(self, run_id: str, trace: dict) -> None: ...
     def get_trace(self, run_id: str) -> dict | None: ...
-    def count_active_runs(self) -> int: ...
+    def count_active_runs(self, case_id: str | None = None) -> int: ...
     def save_snapshot(self, case_id: str, pack: EvidencePack) -> None: ...
     def get_snapshot(self, snapshot_id: str) -> EvidencePack | None: ...
     def save_report(self, report: Report) -> None: ...
@@ -208,11 +208,16 @@ class SqliteRepository:
             row = c.execute("SELECT trace FROM runs WHERE id=?", (run_id,)).fetchone()
         return json.loads(row[0]) if row and row[0] else None
 
-    def count_active_runs(self) -> int:
+    def count_active_runs(self, case_id: str | None = None) -> int:
+        marks = ",".join("?" for _ in _SEED_RUN_IDS)
+        sql = ("SELECT COUNT(*) FROM runs WHERE status IN ('queued','running') "
+               f"AND id NOT IN ({marks})")
+        params: list = list(_SEED_RUN_IDS)
+        if case_id is not None:
+            sql += " AND case_id=?"
+            params.append(case_id)
         with self._tx() as c:
-            marks = ",".join("?" for _ in _SEED_RUN_IDS)
-            return c.execute(f"SELECT COUNT(*) FROM runs WHERE status IN ('queued','running') "
-                             f"AND id NOT IN ({marks})", _SEED_RUN_IDS).fetchone()[0]
+            return c.execute(sql, params).fetchone()[0]
 
     # ------------------------------------------------------------ snapshots
     def save_snapshot(self, case_id: str, pack: EvidencePack) -> None:
