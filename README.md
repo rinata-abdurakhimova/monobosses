@@ -16,6 +16,8 @@ npm run dev
 
 ## Документація для команди
 
+- [Railway deployment: website + Python API, configuration and remaining checks for #18](docs/deployment.md).
+
 - [Продуктова концепція](virtual-investment-committee.md).
 - [Загальні інструкції та розподіл ролей](team-work-instructions.md).
 - [Почати роботу: хто що робить і в якому порядку](docs/roles/README.md).
