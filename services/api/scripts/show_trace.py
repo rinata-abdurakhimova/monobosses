@@ -7,6 +7,8 @@ from vic.storage import get_repository
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     if len(sys.argv) != 2:
         print("usage: python scripts/show_trace.py <run_id>")
         return 2

@@ -142,3 +142,11 @@ def test_scrub_removes_secrets():
     assert cleaned["LLM_API_KEY"] == "[redacted]"
     assert cleaned["max_output_tokens"] == 10
     assert "sk-secret-123456" not in cleaned["note"]
+
+
+def test_subject_repair_feedback_reaches_the_model():
+    provider = FakeProvider(['{"answer": "fixed"}'])
+    ctx = _ctx()
+    ctx.feedback["science"] = ["The cited evidence does not establish human efficacy"]
+    assert _run(provider, _settings(), ctx).answer == "fixed"
+    assert "human efficacy" in provider.calls[0][-1]["content"]

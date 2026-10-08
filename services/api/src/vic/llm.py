@@ -52,7 +52,7 @@ class AnthropicProvider:
         if not self._api_key:
             raise ProviderAuthError("LLM_API_KEY is empty")
         if self._client is None:
-            self._client = anthropic.AsyncAnthropic(api_key=self._api_key)
+            self._client = anthropic.AsyncAnthropic(api_key=self._api_key, max_retries=0)
         try:
             resp = await self._client.messages.create(model=model, max_tokens=max_tokens,
                                                       system=system, messages=messages,
@@ -109,6 +109,11 @@ class StructuredLlm:
         system = (f"{prompt.text}\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
                   f"that validates against this JSON Schema:\n{schema}")
         messages = [{"role": "user", "content": json.dumps(payload, ensure_ascii=False, default=str)}]
+        feedback = ctx.feedback.get("investment" if prompt_id == "investment_plan" else prompt_id)
+        if feedback:
+            messages.append({"role": "user", "content": "Correct the audit/completeness findings: "
+                + json.dumps([item.model_dump(mode="json") if isinstance(item, BaseModel) else item
+                              for item in feedback], ensure_ascii=False, default=str)})
         repairs = 0
         while True:
             response = await self._call(prompt.prompt_id, prompt.version, system, messages, ctx)

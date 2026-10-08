@@ -32,7 +32,7 @@ def _sections(roles: list[RoleResult], decision: CommitteeDecision, claims: list
     for role in roles:
         for sc in role.section_content:
             owner = SECTION_OWNERS.get(sc.key)
-            if owner is not None and (sc.key not in by_key or role.role_id == owner):
+            if owner is not None and role.role_id == owner:
                 by_key[sc.key] = sc
     critical = [c.id for c in claims if c.importance == Importance.CRITICAL]
     out: list[SectionContent] = []
@@ -94,7 +94,12 @@ def build_report(*, case: CaseInput, pack: EvidencePack, roles: list[RoleResult]
                  decision: CommitteeDecision, claims: list[Claim], case_id: str, run_id: str,
                  report_id: str, version: int, parent: Report | None = None,
                  synthetic: bool | None = None) -> Report:
-    risks = _dedupe(decision.risks or [r for role in roles for r in role.risks], lambda r: r.id)
+    canonical: dict[str, Risk] = {}
+    for risk in [*[r for role in roles for r in role.risks], *decision.risks]:
+        if risk.id in canonical and canonical[risk.id] != risk:
+            raise ValidationFailed(f"Risk '{risk.id}' has conflicting records", code="risk_id_conflict")
+        canonical.setdefault(risk.id, risk)
+    risks = list(canonical.values())
     sections = _sections(roles, decision, claims, risks, pack)
     return Report(
         id=report_id, case_id=case_id, run_id=run_id, version=version, scope=case.scope,

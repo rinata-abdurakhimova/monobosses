@@ -19,8 +19,9 @@ def main() -> int:
             continue
         mod, fn = items[0]
         params = modules.positional_names(fn)
-        flag = "OK" if params == expected else f"SIGNATURE DIFFERS: has {params}, contract says {expected}"
-        ok = ok and params == expected
+        compatible = modules.compatible_signature(name, fn)
+        flag = "OK" if compatible else f"SIGNATURE DIFFERS: has {params}, contract says {expected}"
+        ok = ok and compatible
         extra = f"  (also in: {', '.join(m for m, _ in items[1:])})" if len(items) > 1 else ""
         print(f"  {name:<22} {mod}  [{flag}]{extra}")
     print("\n== Prompts (prompt_id -> version)")

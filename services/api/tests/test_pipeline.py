@@ -236,7 +236,9 @@ def test_synthetic_report_matches_fixture_shape(tmp_path):
     env = Env(tmp_path)
     env.run()
     report = env.repo.get_report(env.case_id, 1)
-    assert {c.id for c in report.claims} == {c.id for c in synthetic.build_report(1).claims}
+    # The fixture also has a standalone user.program_summary, outside the specialist outputs.
+    expected = {c.id for role in synthetic.build_report(1).roles for c in role.claims}
+    assert {c.id for c in report.claims} == expected
 
 def test_stubs_are_refused_outside_dev_mode(tmp_path):
     env = Env(tmp_path, dev_stubs=False, llm_provider="anthropic")  # stub modules, no dev mode

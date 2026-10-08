@@ -17,7 +17,7 @@ from vic.contracts import (AuditResult, CaseInput, Claim, CommitteeDecision, Evi
                            Importance, Recommendation, Report, RoleId, RoleResult, Run, RunBudget,
                            RunContext, RunMode, RunStage, RunStatus, SupportStatus, Usage)
 from vic.failures import ProviderAuthError, RunFailure, RunTimeout, SourceOutage, ValidationFailed
-from vic.modules import STUB_ORIGIN, Modules, call_clinical
+from vic.modules import STUB_ORIGIN, Modules, call_audit, call_clinical, call_investment
 from vic.report_builder import build_report
 from vic.storage import ReportExistsError, Repository, new_id
 from vic.tracing import config_version, scrub
@@ -133,7 +133,6 @@ class Pipeline:
         else:
             update.update(status=RunStatus.FAILED, error=failure.to_error_body())
         self.run = self.run.model_copy(update=update)
-        await self._io(self.repo.update_run, self.run)
         trace = scrub({
             "run_id": self.run.id, "case_id": self.run.case_id, "trace_id": self.run.trace_id,
             "status": self.run.status.value, "error": failure.to_error_body().model_dump() if failure else None,
@@ -147,6 +146,7 @@ class Pipeline:
             "cost_usd": cost, "cost_note": None if cost is not None else "unavailable",
         }, secrets=[self.settings.llm_api_key, self.settings.api_shared_secret])
         await self._io(self.repo.save_trace, self.run.id, trace)
+        await self._io(self.repo.update_run, self.run)
         return self.run
 
     # ------------------------------------------------------------------ stages
@@ -240,6 +240,10 @@ class Pipeline:
                             retrieval_warnings=list(base.retrieval_warnings),
                             snapshot_id=f"snap-{run.id}",
                             synthetic=bool(sources) and all(x.synthetic for x in sources))
+        try:
+            integrity.assert_pack(pack)
+        except integrity.IntegrityError as exc:
+            raise ValidationFailed("Invalid evidence pack: " + "; ".join(exc.problems)) from exc
         await self._io(self.repo.save_snapshot, run.case_id, pack)
         self._snapshot_id = ctx.snapshot_id = pack.snapshot_id
         return pack
@@ -297,8 +301,8 @@ class Pipeline:
                 modules.analyze_clinical, case, pack, results[RoleId.SCIENCE],
                 results[RoleId.TRANSLATION], ctx))
         if RoleId.INVESTMENT in roles:
-            results[RoleId.INVESTMENT] = await self._agent(RoleId.INVESTMENT, lambda: modules.analyze_investment(
-                case, pack, results[RoleId.CLINICAL], results[RoleId.MARKET], ctx))
+            results[RoleId.INVESTMENT] = await self._agent(RoleId.INVESTMENT, lambda: call_investment(
+                modules.analyze_investment, case, pack, results[RoleId.CLINICAL], results[RoleId.MARKET], ctx))
 
     async def _analyze_all(self, case, pack, modules) -> dict[RoleId, RoleResult]:
         results: dict[RoleId, RoleResult] = {}
@@ -328,7 +332,7 @@ class Pipeline:
         return found & ids
 
     async def _audit(self, claims: list[Claim], pack: EvidencePack, modules: Modules) -> AuditResult:
-        audit = await self._module("claim audit", modules.audit_claims, claims, pack, self.ctx,
+        audit = await self._module("claim audit", call_audit, modules.audit_claims, claims, pack, self.ctx,
                                    code="audit_error")
         if not isinstance(audit, AuditResult):
             raise RunFailure("The claim audit returned an invalid result", code="audit_error")

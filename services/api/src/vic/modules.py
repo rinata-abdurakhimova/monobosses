@@ -6,6 +6,7 @@ not depend on which file each role put them in. `scripts/check_wiring.py` prints
 Synthetic development mode: DEV_STUBS=true stubs everything; DEV_STUBS=true together with
 STUB_MODULES=<names> stubs only those functions and runs the real ones for the rest.
 """
+import asyncio
 import importlib
 import inspect
 import pkgutil
@@ -69,6 +70,29 @@ def call_clinical(fn: Callable[..., Any], case, pack, science, translation, ctx)
     return fn(case, pack, [science, translation], ctx)
 
 
+def call_investment(fn: Callable[..., Any], case, pack, clinical, market, ctx):
+    if positional_names(fn) == ["case", "pack", "ctx"]:
+        return fn(case, pack, ctx, clinical=clinical, market=market)
+    return fn(case, pack, clinical, market, ctx)
+
+
+async def call_audit(fn: Callable[..., Any], claims, pack, ctx):
+    args = (claims, pack, ctx) if "ctx" in inspect.signature(fn).parameters else (claims, pack)
+    if inspect.iscoroutinefunction(fn):
+        return await fn(*args)
+    return await asyncio.to_thread(fn, *args)
+
+
+def compatible_signature(name: str, fn: Callable[..., Any]) -> bool:
+    params = positional_names(fn)
+    alternatives = {
+        "audit_claims": [["claims", "pack"]],
+        "analyze_investment": [["case", "pack", "ctx"]],
+        "analyze_clinical": [["case", "pack", "scientific", "ctx"]],
+    }
+    return params in [EXPECTED_PARAMS[name], *alternatives.get(name, [])]
+
+
 def _walk(root: str):
     try:
         package = importlib.import_module(root)
@@ -91,12 +115,13 @@ def _walk(root: str):
 
 def discover() -> dict[str, list[tuple[str, Callable[..., Any]]]]:
     """function name -> [(module, function)] for every candidate found (defined-in-module first)."""
+    IMPORT_ERRORS.clear()
     found: dict[str, list[tuple[str, Callable[..., Any]]]] = {n: [] for n in EXPECTED_PARAMS}
     for root in ROOTS:
         for module in _walk(root):
             for name in EXPECTED_PARAMS:
                 fn = getattr(module, name, None)
-                if callable(fn) and inspect.iscoroutinefunction(fn):
+                if callable(fn) and (inspect.iscoroutinefunction(fn) or name == "audit_claims"):
                     found[name].append((module.__name__, fn))
     for items in found.values():
         items.sort(key=lambda it: getattr(it[1], "__module__", "") != it[0])  # defined here first

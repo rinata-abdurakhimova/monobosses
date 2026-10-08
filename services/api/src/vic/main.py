@@ -26,6 +26,8 @@ def check_production_settings(settings: Settings) -> None:
         problems.append("API_SHARED_SECRET must be set")
     if settings.dev_stubs:
         problems.append("DEV_STUBS must be false")
+    if settings.run_backend != "pipeline":
+        problems.append("RUN_BACKEND must be pipeline")
     if "*" in settings.cors_list:
         problems.append("CORS_ORIGINS must list explicit origins, not '*'")
     if problems:
