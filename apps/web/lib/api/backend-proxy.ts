@@ -1,9 +1,49 @@
+async function readBoundedBody(
+  request: Request,
+  limit: number,
+  signal: AbortSignal,
+): Promise<Uint8Array<ArrayBuffer>> {
+  signal.throwIfAborted();
+  const reader = request.body?.getReader();
+  if (!reader) return new Uint8Array();
+  const cancel = () => {
+    void reader.cancel().catch(() => {});
+  };
+  signal.addEventListener("abort", cancel, { once: true });
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    while (true) {
+      const next = await reader.read();
+      signal.throwIfAborted();
+      if (next.done) break;
+      length += next.value.byteLength;
+      if (length > limit) {
+        await reader.cancel();
+        throw new RangeError("Request body exceeds limit");
+      }
+      chunks.push(next.value);
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return bytes;
+  } finally {
+    signal.removeEventListener("abort", cancel);
+    reader.releaseLock();
+  }
+}
+
 /** Server transport. Only the route handler supplies server environment values. */
 export async function proxyBackend(
   request: Request,
   segments: string[],
   options: {
     baseUrl?: string;
+    publicOrigin?: string;
     fetcher?: typeof fetch;
     timeoutMs?: number;
   } = {},
@@ -12,7 +52,8 @@ export async function proxyBackend(
   const id = "[A-Za-z0-9][A-Za-z0-9._-]{0,127}";
   const allowed =
     request.method === "POST"
-      ? path === "cases" || new RegExp(`^cases/${id}/runs$`).test(path)
+      ? path === "cases" ||
+        new RegExp(`^cases/${id}/(runs|evidence|documents)$`).test(path)
       : request.method === "GET" &&
         (new RegExp(`^runs/${id}$`).test(path) ||
           new RegExp(`^cases/${id}/reports/[1-9][0-9]*$`).test(path));
@@ -35,7 +76,28 @@ export async function proxyBackend(
   const origin = request.headers.get("origin");
   // Next can construct request.url with localhost while the browser uses 127.0.0.1.
   const requestUrl = new URL(request.url);
-  const publicOrigin = `${requestUrl.protocol}//${request.headers.get("host") ?? requestUrl.host}`;
+  let publicOrigin = `${requestUrl.protocol}//${request.headers.get("host") ?? requestUrl.host}`;
+  if (options.publicOrigin !== undefined) {
+    try {
+      const configured = new URL(options.publicOrigin);
+      if (
+        !["http:", "https:"].includes(configured.protocol) ||
+        configured.username ||
+        configured.password ||
+        configured.pathname !== "/" ||
+        configured.search ||
+        configured.hash
+      )
+        throw new Error();
+      publicOrigin = configured.origin;
+    } catch {
+      return fail(
+        503,
+        "WEB_ORIGIN_NOT_CONFIGURED",
+        "The website origin is not configured correctly on the server.",
+      );
+    }
+  }
   if (
     request.method === "POST" &&
     ((origin && origin !== publicOrigin) ||
@@ -67,34 +129,95 @@ export async function proxyBackend(
   if (request.signal.aborted) cancel();
   const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 8000);
   try {
-    let body: string | undefined;
+    let body: string | FormData | undefined;
     if (request.method === "POST") {
-      if (
-        !request.headers
-          .get("content-type")
-          ?.toLowerCase()
-          .startsWith("application/json")
-      )
-        return fail(
-          415,
-          "invalid_content_type",
-          "Send assessment input as JSON.",
+      if (path.endsWith("/documents")) {
+        const limit = 10 * 1024 * 1024 + 64 * 1024;
+        if (
+          !request.headers
+            .get("content-type")
+            ?.toLowerCase()
+            .startsWith("multipart/form-data")
+        )
+          return fail(
+            415,
+            "invalid_content_type",
+            "Send a PDF document upload.",
+          );
+        if (Number(request.headers.get("content-length")) > limit)
+          return fail(413, "payload_too_large", "The upload is too large.");
+        // Bound streamed bodies even when Content-Length is missing or incorrect.
+        const bytes = await readBoundedBody(request, limit, controller.signal);
+        try {
+          body = await new Response(bytes, {
+            headers: { "Content-Type": request.headers.get("content-type")! },
+          }).formData();
+        } catch {
+          return fail(400, "invalid_upload", "The upload could not be read.");
+        }
+        const file = body.get("file");
+        const title = body.get("title");
+        if (
+          !(file instanceof File) ||
+          typeof title !== "string" ||
+          !title.trim()
+        )
+          return fail(
+            422,
+            "invalid_upload",
+            "Choose a PDF and provide its title.",
+          );
+        if (file.size > 10 * 1024 * 1024)
+          return fail(
+            413,
+            "payload_too_large",
+            "PDF files must be 10 MiB or smaller.",
+          );
+        if (
+          !file.name.toLowerCase().endsWith(".pdf") ||
+          !["application/pdf", "application/x-pdf"].includes(file.type)
+        )
+          return fail(
+            415,
+            "unsupported_media_type",
+            "Only PDF files are supported.",
+          );
+        const synthetic = body.get("synthetic");
+        if (synthetic !== "true" && synthetic !== "false")
+          return fail(
+            422,
+            "invalid_upload",
+            "Specify whether this document is synthetic.",
+          );
+        const sanitized = new FormData();
+        sanitized.set("file", file);
+        sanitized.set("title", title);
+        sanitized.set("synthetic", synthetic);
+        body = sanitized;
+      } else {
+        if (
+          !request.headers
+            .get("content-type")
+            ?.toLowerCase()
+            .startsWith("application/json")
+        )
+          return fail(
+            415,
+            "invalid_content_type",
+            "Send assessment input as JSON.",
+          );
+        body = new TextDecoder().decode(
+          await readBoundedBody(request, 64 * 1024, controller.signal),
         );
-      body = await request.text();
-      if (new TextEncoder().encode(body).length > 64 * 1024)
-        return fail(
-          413,
-          "input_too_large",
-          "The assessment input is too large.",
-        );
-      try {
-        JSON.parse(body);
-      } catch {
-        return fail(
-          400,
-          "invalid_json",
-          "The assessment input is not valid JSON.",
-        );
+        try {
+          JSON.parse(body);
+        } catch {
+          return fail(
+            400,
+            "invalid_json",
+            "The assessment input is not valid JSON.",
+          );
+        }
       }
     }
     const upstream = await (options.fetcher ?? fetch)(
@@ -103,7 +226,9 @@ export async function proxyBackend(
         method: request.method,
         headers: {
           Accept: "application/json",
-          ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+          ...(body === undefined || body instanceof FormData
+            ? {}
+            : { "Content-Type": "application/json" }),
         },
         body,
         cache: "no-store",
@@ -126,7 +251,9 @@ export async function proxyBackend(
       status: upstream.status,
       headers: { "Cache-Control": "no-store" },
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof RangeError)
+      return fail(413, "payload_too_large", "The request is too large.");
     return fail(
       controller.signal.aborted ? 504 : 502,
       controller.signal.aborted ? "REQUEST_TIMEOUT" : "BACKEND_UNAVAILABLE",

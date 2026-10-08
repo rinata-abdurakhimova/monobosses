@@ -3,6 +3,68 @@ import test from "node:test";
 import { proxyBackend } from "../lib/api/backend-proxy.ts";
 
 const baseUrl = "http://python.internal/v1";
+test("configured HTTPS origin survives an HTTP hosting proxy without trusting forwarded headers", async () => {
+  let calls = 0;
+  const options = {
+    baseUrl,
+    publicOrigin: "https://jury.example",
+    fetcher: async () => {
+      calls++;
+      return Response.json({ case_id: "case-1" }, { status: 201 });
+    },
+  };
+  const makeRequest = (origin: string) =>
+    new Request("http://container:3000/api/backend/cases", {
+      method: "POST",
+      headers: {
+        Origin: origin,
+        Host: "container:3000",
+        "X-Forwarded-Proto": "https",
+        "X-Forwarded-Host": "jury.example",
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+    });
+  assert.equal(
+    (
+      await proxyBackend(
+        makeRequest("https://jury.example"),
+        ["cases"],
+        options,
+      )
+    ).status,
+    201,
+  );
+  assert.equal(
+    (
+      await proxyBackend(
+        makeRequest("https://evil.example"),
+        ["cases"],
+        options,
+      )
+    ).status,
+    403,
+  );
+  assert.equal(calls, 1);
+  for (const publicOrigin of [
+    "",
+    "file:///secret",
+    "https://user:password@jury.example",
+    "https://jury.example/path",
+    "https://jury.example?key=secret",
+  ]) {
+    assert.equal(
+      (
+        await proxyBackend(makeRequest("https://jury.example"), ["cases"], {
+          ...options,
+          publicOrigin,
+        })
+      ).status,
+      503,
+    );
+  }
+  assert.equal(calls, 1);
+});
 test("proxy accepts the browser host when Next uses localhost internally", async () => {
   const response = await proxyBackend(
     new Request("http://localhost:3000/api/backend/cases", {
@@ -178,4 +240,117 @@ test("proxy deadline cancels a hanging mutation after one request", async () => 
   );
   assert.equal(response.status, 504);
   assert.equal(calls, 1);
+});
+
+test("proxy forwards bounded PDF multipart uploads and backend parsing failures", async () => {
+  const form = new FormData();
+  form.set(
+    "file",
+    new File(["%PDF-1.4"], "private.pdf", { type: "application/pdf" }),
+  );
+  form.set("title", "Private PDF");
+  form.set("synthetic", "false");
+  const response = await proxyBackend(
+    request("cases/case-1/documents", { method: "POST", body: form }),
+    ["cases", "case-1", "documents"],
+    {
+      baseUrl,
+      fetcher: async (url, init) => {
+        assert.equal(url, `${baseUrl}/cases/case-1/documents`);
+        assert.ok(init?.body instanceof FormData);
+        assert.equal(new Headers(init?.headers).get("content-type"), null);
+        assert.equal((init!.body as FormData).get("title"), "Private PDF");
+        return Response.json(
+          {
+            error: {
+              code: "not_implemented",
+              message: "PDF parser not connected",
+              retryable: false,
+            },
+          },
+          { status: 501 },
+        );
+      },
+    },
+  );
+  assert.equal(response.status, 501);
+  assert.equal((await response.json()).error.code, "not_implemented");
+});
+
+test("proxy rejects oversized PDF and cross-origin evidence import without forwarding", async () => {
+  let calls = 0;
+  const options = {
+    baseUrl,
+    fetcher: async () => {
+      calls++;
+      return Response.json({});
+    },
+  };
+  const oversized = new FormData();
+  oversized.set(
+    "file",
+    new File([new Uint8Array(10 * 1024 * 1024 + 1)], "big.pdf", {
+      type: "application/pdf",
+    }),
+  );
+  oversized.set("title", "Big");
+  oversized.set("synthetic", "false");
+  assert.equal(
+    (
+      await proxyBackend(
+        request("cases/case-1/documents", { method: "POST", body: oversized }),
+        ["cases", "case-1", "documents"],
+        options,
+      )
+    ).status,
+    413,
+  );
+  assert.equal(
+    (
+      await proxyBackend(
+        request("cases/case-1/evidence", {
+          method: "POST",
+          headers: {
+            Origin: "https://evil.example",
+            "Content-Type": "application/json",
+          },
+          body: "{}",
+        }),
+        ["cases", "case-1", "evidence"],
+        options,
+      )
+    ).status,
+    403,
+  );
+  assert.equal(calls, 0);
+});
+
+test("upload body deadline cancels a stalled stream without forwarding", async () => {
+  let cancelled = false,
+    calls = 0;
+  const stream = new ReadableStream({
+    cancel() {
+      cancelled = true;
+    },
+  });
+  const req = new Request(
+    "http://localhost:3000/api/backend/cases/case-1/documents",
+    {
+      method: "POST",
+      headers: { "Content-Type": "multipart/form-data; boundary=stalled" },
+      body: stream,
+      duplex: "half",
+    } as RequestInit,
+  );
+  const result = await proxyBackend(req, ["cases", "case-1", "documents"], {
+    baseUrl,
+    timeoutMs: 5,
+    fetcher: async () => {
+      calls++;
+      return Response.json({});
+    },
+  });
+  assert.equal(result.status, 504);
+  assert.equal(cancelled, true);
+  assert.equal(calls, 0);
 });

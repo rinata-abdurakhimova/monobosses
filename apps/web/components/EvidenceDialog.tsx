@@ -57,6 +57,7 @@ export function EvidenceDialog({
                   ? "User-provided statement · unverified"
                   : "Source statement"}
             </span>
+            <span className="tag">{claim.scope} scope</span>
             {report.synthetic && <span className="tag">Synthetic report</span>}
           </div>
           {claim.assumptions.map((x) => (
@@ -99,6 +100,17 @@ export function EvidenceDialog({
                   <strong>{source.title}</strong>
                 </div>
                 <span className="source-locator">{evidence.locator}</span>
+                <div className="claim-tags">
+                  <span className="tag">{evidence.scope} scope</span>
+                  {source.type === "user_upload" && (
+                    <span className="tag">
+                      Private user upload · unverified
+                    </span>
+                  )}
+                  {source.synthetic && (
+                    <span className="tag">Synthetic source</span>
+                  )}
+                </div>
                 {!source.available && (
                   <p className="source-warning">
                     <Icon
@@ -109,7 +121,17 @@ export function EvidenceDialog({
                   </p>
                 )}
                 <blockquote>{evidence.excerpt}</blockquote>
-                <p>{source.limitation}</p>
+                {(evidence.limitations ?? []).map((limitation) => (
+                  <p
+                    className="evidence-limitation"
+                    key={limitation}
+                  >
+                    {limitation}
+                  </p>
+                ))}
+                {(!evidence.limitations?.length || !source.available) && (
+                  <p>{source.limitation}</p>
+                )}
                 <small>
                   {source.synthetic ? "Fictional source" : "Source document"} ·
                   Publication date: {source.published_at ?? "unknown"} ·
@@ -119,6 +141,7 @@ export function EvidenceDialog({
                     : ""}
                 </small>
                 {!source.synthetic &&
+                  source.type !== "user_upload" &&
                   source.url &&
                   /^https?:\/\//i.test(source.url) && (
                     <a
@@ -128,6 +151,10 @@ export function EvidenceDialog({
                     >
                       Open source
                     </a>
+                  )}
+                {!source.synthetic &&
+                  (source.type === "user_upload" || !source.url) && (
+                    <p>No public source link is available.</p>
                   )}
               </article>
             );
