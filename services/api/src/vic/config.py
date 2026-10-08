@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     max_concurrent_runs: int = 2
     run_backend: str = "pipeline"         # pipeline | mock
     dev_stubs: bool = False               # synthetic development mode (never in production)
+    stub_modules: str = ""                # comma-separated function names to stub; empty = all
     stub_delay_seconds: float = 0.0       # simulates stage duration in dev_stubs mode
     seed_synthetic: bool = True           # seed case-synthetic-01 and fixture runs
     llm_max_retries: int = 2              # provider errors: timeout, 429, 5xx
@@ -47,6 +48,10 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
     @property
+    def stub_module_set(self) -> set[str]:
+        return {n.strip() for n in self.stub_modules.split(",") if n.strip()}
+
+    @property
     def sqlite_path(self) -> str:
         prefix = "sqlite:///"
         if not self.database_url.startswith(prefix):
@@ -66,6 +71,7 @@ class Settings(BaseSettings):
             "llm_price_date": self.llm_price_date,
             "max_run_seconds": self.max_run_seconds, "max_run_cost_usd": self.max_run_cost_usd,
             "dev_stubs": self.dev_stubs,
+            "stub_modules": self.stub_modules
         }
 
 
