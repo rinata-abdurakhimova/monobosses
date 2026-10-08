@@ -231,9 +231,14 @@ def _valid_evidence_ids(ids: list[str], pack: EvidencePack) -> list[str]:
 
 def _to_claims(analysis: ClinicalPlanAnalysis, pack: EvidencePack) -> list[Claim]:
     claims: list[Claim] = []
+    known = {ev.id for ev in pack.evidence}
     for c in analysis.claims:
         valid_ids = _valid_evidence_ids(c.evidence_ids, pack)
+        dropped_ids = list(dict.fromkeys(eid for eid in c.evidence_ids if eid not in known))
         status = c.support_status
+        assumptions = list(c.assumptions)
+        if dropped_ids:
+            assumptions.append(f"claim {c.key}: dropped unknown evidence ids {dropped_ids}")
         if status in ("supported", "contradicted", "mixed") and not valid_ids:
             status = "unverified"
         claims.append(
@@ -243,7 +248,7 @@ def _to_claims(analysis: ClinicalPlanAnalysis, pack: EvidencePack) -> list[Claim
                 provenance="ai",
                 support_status=status,
                 evidence_ids=valid_ids,
-                assumptions=c.assumptions,
+                assumptions=assumptions,
                 scope=c.scope,
                 importance=c.importance,
             )
@@ -353,13 +358,22 @@ async def analyze_clinical(
         },
     )
 
+    unknowns = list(analysis.unknowns)
+    unknowns.extend(
+        assumption
+        for claim in claims
+        for assumption in claim.assumptions
+        if "dropped unknown evidence ids" in assumption
+    )
+    unknowns = list(dict.fromkeys(unknowns))
+
     return RoleResult(
         role_id="clinical",
         summary=analysis.thesis,
         position=analysis.position,
         claims=claims,
         risks=risks,
-        unknowns=analysis.unknowns,
+        unknowns=unknowns,
         change_conditions=analysis.change_conditions,
         section_content=[section],
     )

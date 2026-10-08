@@ -84,7 +84,54 @@ def test_to_claims_unsupported_status_without_evidence(status):
     )
     claims = _to_claims(analysis, pack)
     assert claims[0].support_status == "unverified"
-    assert claims[0].evidence_ids == [] 
+    assert claims[0].evidence_ids == []
+    assert any("dropped unknown evidence ids" in a for a in claims[0].assumptions)
+
+
+def test_to_claims_dropped_unknown_evidence_ids_partial():
+    pack = EvidencePack(
+        evidence=[
+            Evidence(
+                id="ev-1",
+                source_id="src-1",
+                excerpt="Excerpt",
+                scope="approach",
+                locator="results",
+            )
+        ],
+        sources=[],
+        snapshot_id="snapshot-test",
+        synthetic=True,
+    )
+    analysis = ScientificAnalysis(
+        thesis="T",
+        position="strong",
+        claims=[
+            _ClaimOutput(
+                key="science.target_validation",
+                text="Target is validated",
+                support_status="supported",
+                evidence_ids=["ev-1", "fake-id"],
+                assumptions=[],
+                scope="approach",
+                importance="major",
+                reasoning="R",
+            )
+        ],
+        supporting_arguments=[],
+        opposing_arguments=[],
+        risks=[],
+        unknowns=[],
+        change_conditions=[],
+        limitations=[],
+    )
+    claims = _to_claims(analysis, pack)
+    assert claims[0].evidence_ids == ["ev-1"]
+    assert claims[0].support_status == "supported"
+    assert (
+        "claim science.target_validation: dropped unknown evidence ids ['fake-id']"
+        in claims[0].assumptions
+    ) 
 
 
 @pytest.mark.asyncio
