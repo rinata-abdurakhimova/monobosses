@@ -1,0 +1,13 @@
+{
+  "title": "SYNTHETIC: Safety update for X-001 (28-day toxicology study)",
+  "published_at": "2025-01-20",
+  "synthetic": true,
+  "sections": [
+    {"heading": "Toxicology result", "text": "In a synthetic 28-day toxicology study, X-001 caused dose-dependent liver enzyme elevation in all treated animals at exposures within the range projected from the mouse efficacy model. The study was stopped early on the sponsor's decision."},
+    {"heading": "Interpretation", "text": "The finding is a negative safety signal for X-001 at efficacious exposures in animals. Human relevance has not been tested."}
+  ],
+  "evidence": [
+    {"excerpt": "In a synthetic 28-day toxicology study, X-001 caused dose-dependent liver enzyme elevation in all treated animals at exposures within the range projected from the mouse efficacy model.", "scope": "program", "limitations": ["Animal toxicology; human relevance not tested."]},
+    {"excerpt": "The finding is a negative safety signal for X-001 at efficacious exposures in animals.", "scope": "program", "limitations": ["Synthetic interpretation; animal data only."]}
+  ]
+}

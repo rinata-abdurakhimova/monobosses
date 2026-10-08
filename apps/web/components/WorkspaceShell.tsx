@@ -53,10 +53,10 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="sidebar-note">
           <span className="status-dot" />
-          <strong>Frontend preview</strong>
+          <strong>Committee workspace</strong>
           <p>
-            Explore the workflow with fictional evidence. Live analysis will be
-            connected later.
+            Start an API assessment or explore a clearly labelled fictional
+            report.
           </p>
         </div>
       </aside>
@@ -68,7 +68,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
           </div>
           <span className="preview-pill">
             <span className="status-dot" />
-            Synthetic preview
+            Assessment workspace
           </span>
         </header>
         <main
@@ -79,7 +79,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         </main>
         <footer className="workspace-footer">
           <span>Biology. Evidence. Better questions.</span>
-          <span>Local preview · No live analysis</span>
+          <span>Evidence and assessment workflow</span>
         </footer>
       </div>
     </div>

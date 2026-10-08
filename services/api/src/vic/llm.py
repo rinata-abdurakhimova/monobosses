@@ -185,6 +185,7 @@ class StructuredLlm:
 
 def build_llm(settings: Settings) -> StructuredLlm:
     return StructuredLlm(make_provider(settings), settings)
+PROMPT_IDS = ("science", "translation", "clinical", "market", "investment", "chair", "audit", "ip_licensing")
 
 
 async def generate_structured(prompt_id: str, payload: dict[str, Any], response_model: type[T],

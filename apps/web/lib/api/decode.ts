@@ -34,14 +34,15 @@ export function decodeRun(value: unknown): Run {
     !["queued", "running", "completed", "failed"].includes(
       String(raw.status),
     ) ||
-    ![
-      "validate",
-      "retrieve",
-      "analyze",
-      "audit",
-      "synthesize",
-      "finalize",
-    ].includes(String(raw.stage)) ||
+    (raw.stage !== null &&
+      ![
+        "validate",
+        "retrieve",
+        "analyze",
+        "audit",
+        "synthesize",
+        "finalize",
+      ].includes(String(raw.stage))) ||
     !Array.isArray(raw.warnings) ||
     raw.warnings.some((x) => typeof x !== "string")
   ) {
@@ -76,6 +77,11 @@ export function decodeRun(value: unknown): Run {
       retryable: failure.retryable,
     };
   }
+  if (raw.status === "failed" && !error)
+    throw new ApiError(
+      "INVALID_RESPONSE",
+      "A failed run has no error description.",
+    );
   return {
     id: identifier(raw.id),
     case_id: identifier(raw.case_id),

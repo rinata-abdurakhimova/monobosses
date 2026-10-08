@@ -5,11 +5,11 @@
   "stage": "audit",
   "report_version": null,
   "warnings": [
-    "Синтетичний приклад збою"
+    "Synthetic failure example"
   ],
   "error": {
     "code": "run_interrupted",
-    "message": "Run перервано перезапуском сервера; запустіть повторно.",
+    "message": "The run was interrupted by a server restart; start a new run.",
     "retryable": true
   },
   "trace_id": "trace-synthetic-failed",

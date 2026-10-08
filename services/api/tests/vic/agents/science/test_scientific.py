@@ -66,9 +66,8 @@ def test_to_claims_unsupported_status_without_evidence(status):
         position="weak",
         claims=[
             _ClaimOutput(
-                key="science.target_validation",
-                text="Claim",
-                support_status=status,
+                key="science.target_validation", text="Claim",
+                support_status=status, 
                 evidence_ids=["fake-id"],
                 assumptions=[],
                 scope="approach",
@@ -85,7 +84,7 @@ def test_to_claims_unsupported_status_without_evidence(status):
     )
     claims = _to_claims(analysis, pack)
     assert claims[0].support_status == "unverified"
-    assert claims[0].evidence_ids == []
+    assert claims[0].evidence_ids == [] 
 
 
 @pytest.mark.asyncio

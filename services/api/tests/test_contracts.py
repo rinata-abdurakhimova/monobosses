@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from vic.contracts import CaseInput, Claim, Recommendation, Report, SectionKey
+from vic.contracts import CaseInput, Claim, Recommendation, Report, RoleId, RoleResult, SectionKey
 from vic.synthetic import build_all
 
 
@@ -11,6 +11,20 @@ def _report_data(name="report-v1"):
 
 def test_recommendation_values_are_exact():
     assert {r.value for r in Recommendation} == {"Invest", "Conditional", "Do Not Invest"}
+
+
+def test_all_agreed_roles_are_supported():
+    assert {r.value for r in RoleId} == {
+        "science", "translation", "clinical", "audit", "market", "investment",
+        "chair", "failure_miner", "investment_threshold", "partnerships", "ip_licensing",
+    }
+    for role in RoleId:
+        assert RoleResult(role_id=role.value, summary="Synthetic", position="Unknown").role_id == role
+
+
+def test_backend_rejects_unregistered_roles():
+    with pytest.raises(ValidationError):
+        RoleResult(role_id="future_expert", summary="Synthetic", position="Unknown")
 
 
 def test_eleven_section_keys_in_order():
