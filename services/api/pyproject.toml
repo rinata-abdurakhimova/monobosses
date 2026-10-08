@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.4"]
+anthropic = ["anthropic>=0.40"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
