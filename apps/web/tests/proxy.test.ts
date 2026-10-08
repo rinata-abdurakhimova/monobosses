@@ -3,6 +3,68 @@ import test from "node:test";
 import { proxyBackend } from "../lib/api/backend-proxy.ts";
 
 const baseUrl = "http://python.internal/v1";
+test("configured HTTPS origin survives an HTTP hosting proxy without trusting forwarded headers", async () => {
+  let calls = 0;
+  const options = {
+    baseUrl,
+    publicOrigin: "https://jury.example",
+    fetcher: async () => {
+      calls++;
+      return Response.json({ case_id: "case-1" }, { status: 201 });
+    },
+  };
+  const makeRequest = (origin: string) =>
+    new Request("http://container:3000/api/backend/cases", {
+      method: "POST",
+      headers: {
+        Origin: origin,
+        Host: "container:3000",
+        "X-Forwarded-Proto": "https",
+        "X-Forwarded-Host": "jury.example",
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+    });
+  assert.equal(
+    (
+      await proxyBackend(
+        makeRequest("https://jury.example"),
+        ["cases"],
+        options,
+      )
+    ).status,
+    201,
+  );
+  assert.equal(
+    (
+      await proxyBackend(
+        makeRequest("https://evil.example"),
+        ["cases"],
+        options,
+      )
+    ).status,
+    403,
+  );
+  assert.equal(calls, 1);
+  for (const publicOrigin of [
+    "",
+    "file:///secret",
+    "https://user:password@jury.example",
+    "https://jury.example/path",
+    "https://jury.example?key=secret",
+  ]) {
+    assert.equal(
+      (
+        await proxyBackend(makeRequest("https://jury.example"), ["cases"], {
+          ...options,
+          publicOrigin,
+        })
+      ).status,
+      503,
+    );
+  }
+  assert.equal(calls, 1);
+});
 test("proxy accepts the browser host when Next uses localhost internally", async () => {
   const response = await proxyBackend(
     new Request("http://localhost:3000/api/backend/cases", {

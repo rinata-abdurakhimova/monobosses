@@ -43,6 +43,7 @@ export async function proxyBackend(
   segments: string[],
   options: {
     baseUrl?: string;
+    publicOrigin?: string;
     fetcher?: typeof fetch;
     timeoutMs?: number;
   } = {},
@@ -75,7 +76,28 @@ export async function proxyBackend(
   const origin = request.headers.get("origin");
   // Next can construct request.url with localhost while the browser uses 127.0.0.1.
   const requestUrl = new URL(request.url);
-  const publicOrigin = `${requestUrl.protocol}//${request.headers.get("host") ?? requestUrl.host}`;
+  let publicOrigin = `${requestUrl.protocol}//${request.headers.get("host") ?? requestUrl.host}`;
+  if (options.publicOrigin !== undefined) {
+    try {
+      const configured = new URL(options.publicOrigin);
+      if (
+        !["http:", "https:"].includes(configured.protocol) ||
+        configured.username ||
+        configured.password ||
+        configured.pathname !== "/" ||
+        configured.search ||
+        configured.hash
+      )
+        throw new Error();
+      publicOrigin = configured.origin;
+    } catch {
+      return fail(
+        503,
+        "WEB_ORIGIN_NOT_CONFIGURED",
+        "The website origin is not configured correctly on the server.",
+      );
+    }
+  }
   if (
     request.method === "POST" &&
     ((origin && origin !== publicOrigin) ||
