@@ -116,6 +116,7 @@ export function ReportSections({ report }: { report: Report }) {
                         </small>
                         <p>{source.limitation}</p>
                         {!source.synthetic &&
+                          source.type !== "user_upload" &&
                           source.url &&
                           /^https?:\/\//i.test(source.url) && (
                             <a

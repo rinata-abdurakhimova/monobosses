@@ -199,3 +199,16 @@ test("source outage is a labelled presentation simulation and leaves the shared 
   );
   assert.ok(getPreviewReport("complete").sources.every((s) => s.available));
 });
+
+test("the visible sample and source-outage preview include every agreed perspective", () => {
+  for (const mode of ["complete", "unavailable"] as const) {
+    const report = getPreviewReport(mode);
+    assert.deepEqual(
+      report.roles.map((role) => role.id),
+      reportR5.roles.map((role) => role.role_id),
+    );
+    assert.equal(report.roles.length, 11);
+    assert.equal(report.sections.length, 11);
+    assert.equal(report.synthetic, true);
+  }
+});

@@ -4,6 +4,24 @@ import type * as Contract from "../contracts/generated";
 export type RunStatus = Contract.RunStatus;
 export type RunStage = Contract.RunStage;
 export type RequestOptions = { signal?: AbortSignal };
+export type StartRunOptions = RequestOptions & {
+  parentReportId?: string;
+  mode?: Contract.RunMode;
+};
+export interface EvidenceClient {
+  addEvidence(
+    caseId: string,
+    input: Contract.EvidenceCreate,
+    options?: RequestOptions,
+  ): Promise<Contract.EvidenceCreated>;
+  uploadDocument(
+    caseId: string,
+    file: File,
+    title: string,
+    synthetic: boolean,
+    options?: RequestOptions,
+  ): Promise<Contract.EvidenceCreated>;
+}
 export type CreatedCase = { case_id: string };
 export type StartedRun = { run_id: string };
 export type Run = {
@@ -24,7 +42,7 @@ export type LoadedReport<T> = {
 };
 export interface ApiClient<T = unknown> {
   createCase(input: CaseInput, options?: RequestOptions): Promise<CreatedCase>;
-  startRun(caseId: string, options?: RequestOptions): Promise<StartedRun>;
+  startRun(caseId: string, options?: StartRunOptions): Promise<StartedRun>;
   getRun(runId: string, options?: RequestOptions): Promise<Run>;
   getReport(
     caseId: string,
