@@ -3,12 +3,18 @@ from fastapi.testclient import TestClient
 
 from vic.config import get_settings
 from vic.main import create_app
+from vic.runner import get_manager
 from vic.storage import get_repository
 
 
-def new_client() -> TestClient:
+def _clear() -> None:
     get_settings.cache_clear()
     get_repository.cache_clear()
+    get_manager.cache_clear()
+
+
+def new_client() -> TestClient:
+    _clear()
     return TestClient(create_app())
 
 
@@ -20,11 +26,10 @@ def _isolated_env(tmp_path, monkeypatch):
     monkeypatch.setenv("API_SHARED_SECRET", "")
     monkeypatch.setenv("APP_ENV", "development")
     monkeypatch.setenv("DEV_STUBS", "false")
-    get_settings.cache_clear()
-    get_repository.cache_clear()
+    monkeypatch.setenv("STUB_DELAY_SECONDS", "0")
+    _clear()
     yield
-    get_settings.cache_clear()
-    get_repository.cache_clear()
+    _clear()
 
 
 @pytest.fixture()
