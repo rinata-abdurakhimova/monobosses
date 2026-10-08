@@ -56,6 +56,7 @@ class ParsedDocument:
     published_at: date | None = None
     synthetic: bool = False
     identifier: str | None = None  # DOI/PMID/NCT... if known
+    url: str | None = None
     annotations: list[Annotation] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
@@ -300,7 +301,7 @@ def build_pack(
             Source(
                 id=doc.source_id,
                 title=doc.title,
-                url=None,
+                url=doc.url,
                 type=doc.source_type,
                 published_at=doc.published_at,
                 retrieved_at=retrieved_at,
