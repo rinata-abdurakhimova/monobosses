@@ -88,10 +88,24 @@ Use redeploy for a configuration change and rollback to a known compatible commi
 
 Release details (fill after deployment):
 
-- Website URL: pending.
-- Railway project and service names: pending.
+- Website URL: https://investment-committee-monobosses.up.railway.app/
+- Railway project and service names: `monobosses`, services `web` and `api` (confirmed in the deployment screenshots).
 - Deployed Git commit: pending.
 - Persistence/auth/PDF/live-analysis checks: pending.
+
+## Deployed preview verification — 2026-10-08
+
+Browser checks on the public Railway website confirm:
+
+- Python API form submission creates a synthetic saved v1 report for `case-1bc73baabc4a` / `run-326af31ff737`. Refresh retains report ID `rep-868569915a13` and the same run ID.
+- Synthetic text import returns source/evidence IDs; the report does not change until the explicit review action.
+- Explicit review produces v2 (`rep-df20a6975930`, `run-8586ba2f79e6`), its comparison loads the saved parent, and v1 reopens independently.
+- Changed claims open the exact excerpts, locators, dates and synthetic source labels.
+- A synthetic PDF of 10,483,902 bytes (just under 10 MiB) travels through the deployed website proxy and reaches Python's `501 not_implemented` response. Railway does not block this tested upload size. PDF parsing success remains unimplemented.
+
+The imported update was unrelated administrative text, yet the backend produced its fixed safety revision. This confirms the existing synthetic behavior, not evidence-driven analysis. Backend restart persistence, real model calls, complete authentication and successful PDF extraction remain unverified blockers. No backend restart was performed, so existing user records were not discarded. A direct browser visit to `/api/health` was blocked by the browser client; no deployed health-endpoint result is claimed from that attempt.
+
+Screenshot saved locally at `apps/web/artifacts/railway-check/deployed-revision.jpg` (ignored development artifact).
 
 ## Validation of this preparation
 
