@@ -1,35 +1,71 @@
-# R1-02 independent preparation
+# R1-02: API workflow and server authentication
 
-Branch: `codex/r1-02-client-preparation`. This work prepares issue #8 while R2's OpenAPI, server, and authoritative report format are pending.
+Related to issue #8. Branch: `codex/r1-02-proxy-auth`, based on main after PR #42.
 
 ## Implemented
 
-- Replaceable client interface: createCase, startRun, getRun, getReport.
-- Typed local mock and a future HTTP transport, kept separate from the original fixture preview.
-- Sequential GET-only polling, navigation cancellation, and bounded waiting.
-- Explicit 422 validation, 404, failed-run, network, malformed-response, and timeout states.
-- Tab-local saved mock cases/runs/reports. URL identifiers survive reload; reads never start a new run.
-- Explicit manual status recovery on the same run. No automatic POST retries or fallback from an API error to a fictional report.
-- Report version validation and separate immutable mock snapshots for explicitly started runs.
-- Unit tests using Node's built-in test runner; no new runtime/test-runner dependency.
+- Typed createCase/startRun/getRun/getReport operations through the Next.js proxy.
+- One explicit form submission creates one case/run; sequential GET-only polling
+  stops on terminal status, navigation or deadline. No automatic mutation retry.
+- Correct report version, case and run validation; reopening reads saved records.
+- Visible validation, missing-record, provider/run failure, network and timeout states.
+- Server-only `API_SHARED_SECRET` forwarded as `X-API-Key` for every allowed backend
+  operation, including status/report reads and evidence/PDF uploads. Browser keys,
+  Authorization and cookies are ignored; upstream credential headers are stripped.
+- HTTP smoke check records observed stages, verifies read-only reopening and
+  optionally checks a seeded failed run with `CHECK_SEEDED_FAILURE=true`.
 
-## Try it
+## Local verification — 2026-10-08
 
-From `apps/web`: `npm ci`, `npm run dev`. Node 22.18+ is required for the native TypeScript test command; verified with Node 24.
+40 frontend tests, TypeScript, format check, contract drift, production build and
+`git diff --check` passed. The production build's 16 browser asset files contained
+none of the synthetic server-key sentinel used for this verification.
 
-On the form, choose **Mock API workflow — local simulation**, use the fictional example, and select a scenario under **Preview states**. Start the workflow, then refresh its case page. Try connection interruption and **Check existing run again**; the URL run ID stays unchanged. Try failed, missing, invalid, and timed-out runs. The original **Fixed fictional report preview** remains available independently.
+Started an isolated SQLite API on port 8043 with `RUN_BACKEND=pipeline`,
+`DEV_STUBS=true`, `SEED_SYNTHETIC=true`, `STUB_DELAY_SECONDS=0.3` and authentication
+enabled. Next.js production server on port 3043 used the matching server key.
+No real keys, provider calls or external retrieval were used.
 
-Verification: `npm test`, `npm run typecheck`, `npm run format:check`, `npm run build`.
+`check-python-api.ts` passed through real HTTP via Next.js: case
+`case-cbb1bf571f1b`, run `run-f243f1b5d195`, saved v1 with 11 sections. Observed
+retrieve/analyze/audit/finalize; reopening did not add POSTs. Checked 422, 404 and
+the seeded terminal failure. Direct unauthenticated Python GET returned 401.
 
-Verified: 15 automated tests pass, TypeScript and production build pass, and formatting checks pass. Browser checks confirmed mock completion/reload, field-focused 422 errors, same-run connection recovery, terminal failure, 404, malformed responses, the polling deadline, disabled backend flow without fixture fallback, and preservation of the original fixture preview. The mock form has no page-wide horizontal overflow at 390px. This evidence covers the preparation layer, not integration with Python.
+Browser checks confirmed form submission, background progress, completed synthetic
+report and reload preserving run `run-e6a52b210090` / report `rep-e2aa341c92e7`.
+A second run visibly showed Retrieve evidence. Opening the seeded failed run showed
+“The assessment failed” and interruption explanation without an endless spinner.
+Screenshots are ignored local artifacts in `apps/web/artifacts/r1-auth-review/`.
 
-## R2 handoff / remaining integration
+## Configuration and repeatable checks
 
-1. Supply actual OpenAPI, input/run/error response examples, and shared fixtures.
-2. Confirm case/run/report routes, field names, run stages, report-version semantics, and validation errors.
-3. Agree on a reload-friendly way to find the relevant saved run. The mock URL currently carries both case and run IDs.
-4. Supply backend host/startup instructions and server-side auth requirements. Implement the agreed same-origin proxy; `/api/backend` in the HTTP adapter is currently a placeholder, not a functioning route.
-5. Supply and validate the wire-report-to-UI mapper. The HTTP client does not assume the frontend's provisional report model matches R2's report.
-6. Enable live flow only after real API happy-path, failure, cancellation, and reload tests. Do not close #8 on these mock checks alone.
+Set the same `API_SHARED_SECRET` in Python and the Next.js server environment.
+Never prefix it with `NEXT_PUBLIC_` or expose it in URLs. Restart services after
+configuration changes. Empty credentials are for authentication-disabled development
+only; production Python refuses them. A mismatched key returns visible 401.
 
-Mock data is browser-tab-local, synthetic, and temporary. It demonstrates lifecycle behavior, not backend persistence or analysis quality. The fixed report never changes based on submitted input. No Python/model calls are made from the enabled UI flows.
+From `apps/web`, with both services running in isolated synthetic development:
+
+```bash
+# Optional when using another port:
+export WEB_BASE_URL=http://127.0.0.1:3043
+export CHECK_SEEDED_FAILURE=true
+npm run test:api
+```
+
+PowerShell: `$env:WEB_BASE_URL='http://127.0.0.1:3043'` and
+`$env:CHECK_SEEDED_FAILURE='true'`. The script creates test records; the failed
+fixture requires `SEED_SYNTHETIC=true` in the development API.
+
+## Remaining acceptance gates
+
+#8 remains open. Its live outcome requires a real analysis, not synthetic output.
+R2 now supplies SQLite, background orchestration and authentication; the real R5
+committee chair (#13) and end-to-end verification with real model calls remain
+pending under #7. Uliana's code/prompts were not changed.
+
+After integration, configure/redeploy both Railway services, test the actual
+website happy path and failed run, inspect one case POST plus one run POST followed
+by status/report GETs, then reload. Verify saved records after API restart on the
+persistent volume. Local checks here do not verify Railway variables, deployment
+commit or volume behavior. PDF 501 remains R2-03; evidence/revisions belong to #15.

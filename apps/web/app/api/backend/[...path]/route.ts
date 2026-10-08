@@ -11,6 +11,7 @@ async function handle(
   return proxyBackend(request, path, {
     baseUrl: process.env.API_BASE_URL,
     publicOrigin: process.env.WEB_ORIGIN,
+    apiSharedSecret: process.env.API_SHARED_SECRET,
   });
 }
 
