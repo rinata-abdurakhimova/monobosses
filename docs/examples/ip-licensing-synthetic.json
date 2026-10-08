@@ -1,0 +1,774 @@
+{
+  "documented_with_unknowns": {
+    "synthetic": true,
+    "verification": "Offline mocked adapter, not a live model result",
+    "case": {
+      "indication": "Synthetic disease",
+      "mechanism": "Synthetic mechanism",
+      "scope": "approach",
+      "program_data": null,
+      "modality": null,
+      "development_stage": null,
+      "as_of_date": null
+    },
+    "pack": {
+      "sources": [
+        {
+          "id": "src-ip",
+          "title": "Synthetic patent and license record",
+          "url": null,
+          "type": "synthetic",
+          "published_at": null,
+          "retrieved_at": "2026-10-07T00:00:00Z",
+          "content_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "synthetic": true,
+          "document_id": null
+        }
+      ],
+      "evidence": [
+        {
+          "id": "ev-ip",
+          "source_id": "src-ip",
+          "excerpt": "Synthetic application SYN-001. Applicant A, owner B. Pending in synthetic territory. B licenses development to C; transfer requires consent. Production know-how is described.",
+          "locator": "synthetic record",
+          "scope": "approach",
+          "limitations": []
+        }
+      ],
+      "retrieval_warnings": [],
+      "snapshot_id": "snapshot-ip",
+      "synthetic": true
+    },
+    "result": {
+      "role_id": "ip_licensing",
+      "summary": "IP evidence incomplete; specialist review needed.",
+      "position": "potential_barriers",
+      "claims": [
+        {
+          "id": "ip_licensing.record",
+          "text": "Synthetic pending application and restricted license.",
+          "provenance": "source",
+          "support_status": "supported",
+          "evidence_ids": [
+            "ev-ip"
+          ],
+          "assumptions": [],
+          "scope": "approach",
+          "importance": "major"
+        },
+        {
+          "id": "ip_licensing.option",
+          "text": "Process license may be considered.",
+          "provenance": "ai",
+          "support_status": "unverified",
+          "evidence_ids": [
+            "ev-ip"
+          ],
+          "assumptions": [
+            "If authorized"
+          ],
+          "scope": "approach",
+          "importance": "minor"
+        }
+      ],
+      "risks": [
+        {
+          "id": "ip_licensing.transfer",
+          "description": "Consent may delay a deal",
+          "priority": "major",
+          "claim_ids": [
+            "ip_licensing.record"
+          ],
+          "impact": "Possible delay",
+          "next_check": "Review clause"
+        }
+      ],
+      "unknowns": [
+        "No complete rights review",
+        "Not supplied",
+        "Expiry not supplied",
+        "Full agreement unavailable",
+        "Confirm authority",
+        "Price unknown",
+        "FTO search not done",
+        "Missing protected_subjects",
+        "Missing territories_and_term",
+        "Missing rights_and_licenses",
+        "Missing freedom_to_operate",
+        "Missing licensable_assets",
+        "Missing licensing_options",
+        "Missing deal_data",
+        "Missing partnership_investment_implications",
+        "Claim-level territorial FTO review",
+        "Commercial terms: Terms unavailable; evidence needed: Authorized agreement or term sheet"
+      ],
+      "change_conditions": [
+        "Obtain current rights records"
+      ],
+      "section_content": [
+        {
+          "key": "critical_unknowns",
+          "summary": "IP evidence incomplete; specialist review needed.",
+          "claim_ids": [
+            "ip_licensing.record",
+            "ip_licensing.option"
+          ],
+          "limitations": [
+            "Synthetic illustration only",
+            "Evidence support requires R3 audit; legal status, scope and FTO require specialist review.",
+            "No legal clearance, deal valuation or confirmed licensing availability is provided."
+          ],
+          "structured_data": {
+            "ip_licensing": {
+              "summary": "IP evidence incomplete; specialist review needed.",
+              "position": "potential_barriers",
+              "patents": [
+                {
+                  "id": "ip_patent_one",
+                  "record_type": "application",
+                  "publication_number": {
+                    "value": "SYN-001",
+                    "basis": "documented",
+                    "claim_ids": [
+                      "ip_licensing.record"
+                    ],
+                    "assumptions": [],
+                    "unknowns": []
+                  },
+                  "title": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Not supplied"
+                    ]
+                  },
+                  "applicants": {
+                    "value": "A",
+                    "basis": "documented",
+                    "claim_ids": [
+                      "ip_licensing.record"
+                    ],
+                    "assumptions": [],
+                    "unknowns": []
+                  },
+                  "owners": {
+                    "value": "B",
+                    "basis": "documented",
+                    "claim_ids": [
+                      "ip_licensing.record"
+                    ],
+                    "assumptions": [],
+                    "unknowns": []
+                  },
+                  "legal_status": {
+                    "value": "Pending as reported",
+                    "basis": "documented",
+                    "claim_ids": [
+                      "ip_licensing.record"
+                    ],
+                    "assumptions": [],
+                    "unknowns": []
+                  },
+                  "status_as_of": "2026-10-01",
+                  "protected_subjects": [
+                    {
+                      "category": "manufacturing",
+                      "description": {
+                        "value": "Synthetic process described",
+                        "basis": "documented",
+                        "claim_ids": [
+                          "ip_licensing.record"
+                        ],
+                        "assumptions": [],
+                        "unknowns": []
+                      }
+                    }
+                  ],
+                  "territories_and_term": [
+                    {
+                      "territory": "Synthetic territory",
+                      "confirmed_expiry_date": null,
+                      "status_as_of": "2026-10-01",
+                      "protection_status": "pending",
+                      "claim_ids": [
+                        "ip_licensing.record"
+                      ],
+                      "unknowns": [
+                        "Expiry not supplied"
+                      ]
+                    }
+                  ],
+                  "relevance": {
+                    "value": "Potential production relevance",
+                    "basis": "documented",
+                    "claim_ids": [
+                      "ip_licensing.record"
+                    ],
+                    "assumptions": [],
+                    "unknowns": []
+                  },
+                  "unknowns": []
+                }
+              ],
+              "rights_and_licenses": [
+                {
+                  "id": "ip_license_one",
+                  "patent_ids": [
+                    "ip_patent_one"
+                  ],
+                  "licensors": {
+                    "value": "B",
+                    "basis": "documented",
+                    "claim_ids": [
+                      "ip_licensing.record"
+                    ],
+                    "assumptions": [],
+                    "unknowns": []
+                  },
+                  "licensees": {
+                    "value": "C",
+                    "basis": "documented",
+                    "claim_ids": [
+                      "ip_licensing.record"
+                    ],
+                    "assumptions": [],
+                    "unknowns": []
+                  },
+                  "rights_granted": {
+                    "value": "Development",
+                    "basis": "documented",
+                    "claim_ids": [
+                      "ip_licensing.record"
+                    ],
+                    "assumptions": [],
+                    "unknowns": []
+                  },
+                  "exclusivity": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Not supplied"
+                    ]
+                  },
+                  "territory": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Not supplied"
+                    ]
+                  },
+                  "term": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Not supplied"
+                    ]
+                  },
+                  "field_of_use": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Not supplied"
+                    ]
+                  },
+                  "assignment_restrictions": {
+                    "value": "Consent required",
+                    "basis": "documented",
+                    "claim_ids": [
+                      "ip_licensing.record"
+                    ],
+                    "assumptions": [],
+                    "unknowns": []
+                  },
+                  "sublicensing_restrictions": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Not supplied"
+                    ]
+                  },
+                  "other_restrictions": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Not supplied"
+                    ]
+                  },
+                  "unknowns": [
+                    "Full agreement unavailable"
+                  ]
+                }
+              ],
+              "licensable_assets": [
+                {
+                  "id": "ip_asset_one",
+                  "asset_type": "manufacturing_process",
+                  "patent_ids": [
+                    "ip_patent_one"
+                  ],
+                  "license_ids": [
+                    "ip_license_one"
+                  ],
+                  "description": {
+                    "value": "Synthetic production know-how",
+                    "basis": "documented",
+                    "claim_ids": [
+                      "ip_licensing.record"
+                    ],
+                    "assumptions": [],
+                    "unknowns": []
+                  },
+                  "control_of_rights": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Not supplied"
+                    ]
+                  },
+                  "licensing_uncertainties": [
+                    "Confirm authority"
+                  ]
+                }
+              ],
+              "licensing_options": [
+                {
+                  "id": "ip_option_one",
+                  "format": "nonexclusive",
+                  "asset_ids": [
+                    "ip_asset_one"
+                  ],
+                  "rationale": {
+                    "value": "Could consider a process license",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "ip_licensing.option"
+                    ],
+                    "assumptions": [
+                      "If owner authorizes"
+                    ],
+                    "unknowns": []
+                  },
+                  "prerequisites": [
+                    "Verify control"
+                  ],
+                  "unknown_terms": [
+                    "Price unknown"
+                  ]
+                }
+              ],
+              "freedom_to_operate": {
+                "status": "potential_barriers",
+                "assessment": {
+                  "value": null,
+                  "basis": "unknown",
+                  "claim_ids": [],
+                  "assumptions": [],
+                  "unknowns": [
+                    "FTO search not done"
+                  ]
+                },
+                "barriers": [
+                  {
+                    "id": "ip_barrier_one",
+                    "patent_ids": [
+                      "ip_patent_one"
+                    ],
+                    "license_ids": [
+                      "ip_license_one"
+                    ],
+                    "concern": {
+                      "value": "Transfer consent",
+                      "basis": "documented",
+                      "claim_ids": [
+                        "ip_licensing.record"
+                      ],
+                      "assumptions": [],
+                      "unknowns": []
+                    },
+                    "affected_activity": "transfer",
+                    "consequence": "May delay transaction",
+                    "next_check": "Review consent clause"
+                  }
+                ],
+                "missing_checks": [
+                  "Claim-level territorial FTO review"
+                ]
+              },
+              "deal_data_gaps": [
+                {
+                  "topic": "Commercial terms",
+                  "missing_data": "Terms unavailable",
+                  "evidence_needed": "Authorized agreement or term sheet",
+                  "impact_on_deal": "Cannot evaluate commitments"
+                }
+              ],
+              "specialist_questions": [
+                {
+                  "question": "Who controls the rights?",
+                  "why_it_matters": "Licensing authority",
+                  "evidence_needed": "Chain of title",
+                  "decision_if_positive": "Consider negotiation",
+                  "decision_if_negative": "Resolve title before proceeding",
+                  "claim_ids": [],
+                  "patent_ids": [],
+                  "license_ids": []
+                }
+              ],
+              "implications": [
+                {
+                  "finding": {
+                    "value": "Transfer consent",
+                    "basis": "documented",
+                    "claim_ids": [
+                      "ip_licensing.record"
+                    ],
+                    "assumptions": [],
+                    "unknowns": []
+                  },
+                  "partnership_impact": "Consent may be needed",
+                  "investment_impact": "Delay risk; amount unknown",
+                  "next_check": "Review agreement"
+                }
+              ],
+              "coverage": {
+                "patents": {
+                  "status": "documented",
+                  "claim_ids": [
+                    "ip_licensing.record"
+                  ],
+                  "unknowns": []
+                },
+                "protected_subjects": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing protected_subjects"
+                  ]
+                },
+                "territories_and_term": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing territories_and_term"
+                  ]
+                },
+                "rights_and_licenses": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing rights_and_licenses"
+                  ]
+                },
+                "freedom_to_operate": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing freedom_to_operate"
+                  ]
+                },
+                "licensable_assets": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing licensable_assets"
+                  ]
+                },
+                "licensing_options": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing licensing_options"
+                  ]
+                },
+                "deal_data": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing deal_data"
+                  ]
+                },
+                "partnership_investment_implications": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing partnership_investment_implications"
+                  ]
+                }
+              },
+              "unknowns": [
+                "No complete rights review"
+              ],
+              "change_conditions": [
+                "Obtain current rights records"
+              ],
+              "limitations": [
+                "Synthetic illustration only"
+              ],
+              "source_requests": [
+                "No complete rights review",
+                "Not supplied",
+                "Expiry not supplied",
+                "Full agreement unavailable",
+                "Confirm authority",
+                "Price unknown",
+                "FTO search not done",
+                "Missing protected_subjects",
+                "Missing territories_and_term",
+                "Missing rights_and_licenses",
+                "Missing freedom_to_operate",
+                "Missing licensable_assets",
+                "Missing licensing_options",
+                "Missing deal_data",
+                "Missing partnership_investment_implications",
+                "Claim-level territorial FTO review",
+                "Commercial terms: Terms unavailable; evidence needed: Authorized agreement or term sheet"
+              ],
+              "snapshot_id": "snapshot-ip",
+              "as_of_date": null,
+              "synthetic": true,
+              "prompt_version": "1.0.0",
+              "context_availability": {
+                "science": false,
+                "clinical": false,
+                "market": false
+              },
+              "claim_evidence_links": {
+                "ip_licensing.record": [
+                  "ev-ip"
+                ],
+                "ip_licensing.option": [
+                  "ev-ip"
+                ]
+              },
+              "evidence_source_links": {
+                "ev-ip": "src-ip"
+              },
+              "legal_review_required": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  "empty_evidence": {
+    "synthetic": true,
+    "verification": "Offline mocked adapter, not a live model result",
+    "case": {
+      "indication": "Synthetic disease",
+      "mechanism": "Synthetic mechanism",
+      "scope": "approach",
+      "program_data": null,
+      "modality": null,
+      "development_stage": null,
+      "as_of_date": null
+    },
+    "pack": {
+      "sources": [],
+      "evidence": [],
+      "retrieval_warnings": [],
+      "snapshot_id": "snapshot-ip",
+      "synthetic": true
+    },
+    "result": {
+      "role_id": "ip_licensing",
+      "summary": "IP evidence incomplete; specialist review needed.",
+      "position": "insufficient_data",
+      "claims": [],
+      "risks": [],
+      "unknowns": [
+        "No complete rights review",
+        "FTO search not done",
+        "Missing patents",
+        "Missing protected_subjects",
+        "Missing territories_and_term",
+        "Missing rights_and_licenses",
+        "Missing freedom_to_operate",
+        "Missing licensable_assets",
+        "Missing licensing_options",
+        "Missing deal_data",
+        "Missing partnership_investment_implications",
+        "Claim-level territorial FTO review",
+        "Commercial terms: Terms unavailable; evidence needed: Authorized agreement or term sheet"
+      ],
+      "change_conditions": [
+        "Obtain current rights records"
+      ],
+      "section_content": [
+        {
+          "key": "critical_unknowns",
+          "summary": "IP evidence incomplete; specialist review needed.",
+          "claim_ids": [],
+          "limitations": [
+            "Synthetic illustration only",
+            "Evidence support requires R3 audit; legal status, scope and FTO require specialist review.",
+            "No legal clearance, deal valuation or confirmed licensing availability is provided."
+          ],
+          "structured_data": {
+            "ip_licensing": {
+              "summary": "IP evidence incomplete; specialist review needed.",
+              "position": "insufficient_data",
+              "patents": [],
+              "rights_and_licenses": [],
+              "licensable_assets": [],
+              "licensing_options": [],
+              "freedom_to_operate": {
+                "status": "unresolved",
+                "assessment": {
+                  "value": null,
+                  "basis": "unknown",
+                  "claim_ids": [],
+                  "assumptions": [],
+                  "unknowns": [
+                    "FTO search not done"
+                  ]
+                },
+                "barriers": [],
+                "missing_checks": [
+                  "Claim-level territorial FTO review"
+                ]
+              },
+              "deal_data_gaps": [
+                {
+                  "topic": "Commercial terms",
+                  "missing_data": "Terms unavailable",
+                  "evidence_needed": "Authorized agreement or term sheet",
+                  "impact_on_deal": "Cannot evaluate commitments"
+                }
+              ],
+              "specialist_questions": [
+                {
+                  "question": "Who controls the rights?",
+                  "why_it_matters": "Licensing authority",
+                  "evidence_needed": "Chain of title",
+                  "decision_if_positive": "Consider negotiation",
+                  "decision_if_negative": "Resolve title before proceeding",
+                  "claim_ids": [],
+                  "patent_ids": [],
+                  "license_ids": []
+                }
+              ],
+              "implications": [],
+              "coverage": {
+                "patents": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing patents"
+                  ]
+                },
+                "protected_subjects": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing protected_subjects"
+                  ]
+                },
+                "territories_and_term": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing territories_and_term"
+                  ]
+                },
+                "rights_and_licenses": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing rights_and_licenses"
+                  ]
+                },
+                "freedom_to_operate": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing freedom_to_operate"
+                  ]
+                },
+                "licensable_assets": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing licensable_assets"
+                  ]
+                },
+                "licensing_options": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing licensing_options"
+                  ]
+                },
+                "deal_data": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing deal_data"
+                  ]
+                },
+                "partnership_investment_implications": {
+                  "status": "insufficient_data",
+                  "claim_ids": [],
+                  "unknowns": [
+                    "Missing partnership_investment_implications"
+                  ]
+                }
+              },
+              "unknowns": [
+                "No complete rights review"
+              ],
+              "change_conditions": [
+                "Obtain current rights records"
+              ],
+              "limitations": [
+                "Synthetic illustration only"
+              ],
+              "source_requests": [
+                "No complete rights review",
+                "FTO search not done",
+                "Missing patents",
+                "Missing protected_subjects",
+                "Missing territories_and_term",
+                "Missing rights_and_licenses",
+                "Missing freedom_to_operate",
+                "Missing licensable_assets",
+                "Missing licensing_options",
+                "Missing deal_data",
+                "Missing partnership_investment_implications",
+                "Claim-level territorial FTO review",
+                "Commercial terms: Terms unavailable; evidence needed: Authorized agreement or term sheet"
+              ],
+              "snapshot_id": "snapshot-ip",
+              "as_of_date": null,
+              "synthetic": true,
+              "prompt_version": "1.0.0",
+              "context_availability": {
+                "science": false,
+                "clinical": false,
+                "market": false
+              },
+              "claim_evidence_links": {},
+              "evidence_source_links": {},
+              "legal_review_required": true
+            }
+          }
+        }
+      ]
+    }
+  }
+}

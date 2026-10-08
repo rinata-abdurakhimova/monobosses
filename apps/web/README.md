@@ -40,15 +40,41 @@ Run `npm run format` to format frontend code, or `npm run format:check` to verif
 6. Expand the 11 report sections, inspect a claim in the evidence dialog, and read the seven illustrative role cards.
 7. Open an unknown `/cases/...` URL: a missing-local-preview state explains how to recover.
 
-The evidence dialog is a local fixture display for review, not an implemented backend evidence drill-down or R1-03 upload/revision flow.
+Evidence dialogs show claims and exact excerpts supplied by the report. API case pages include text/PDF import controls and explicit parented reviews; the backend still needs to connect PDF extraction and evidence-driven revisions. See [R1-03 handoff](../../docs/r1-03-handoff.md).
 
 ## Python API integration (#8)
 
 The form defaults to **Python API assessment**. One submission creates a case, starts one run with `mode: live`, then opens `/cases/{caseId}?flow=api&run={runId}`. Status reads and the final report version pass through the same-origin `/api/backend` route. Refreshing or **Check existing run again** performs reads only; no POST is automatically retried. Navigation aborts polling. Status checks pause after ten minutes and can resume against the same run.
 
-Start the Python API using `services/api/README.md`, copy `.env.example` to `.env.local`, then run Next.js. `API_BASE_URL` is read only in the server route; never give it a `NEXT_PUBLIC_` prefix. Provider secrets remain in Python. The proxy allows only the four assessment operations, rejects cross-origin mutations and redirects, strips browser credentials and upstream cookies, disables caching, and gives upstream requests an eight-second deadline. Browser requests have a ten-second deadline. Backend errors retain their status and error envelope. Missing configuration returns an explicit 503; no request falls back to a fixture.
+Start the Python API using `services/api/README.md`, copy `.env.example` to `.env.local`, then run Next.js. `API_BASE_URL` is read only in the server route; never give it a `NEXT_PUBLIC_` prefix. Provider secrets remain in Python. The proxy allows assessment operations plus text evidence/PDF imports, rejects cross-origin mutations and redirects, strips browser credentials and upstream cookies, disables caching, and gives requests an eight-second deadline. Browser requests have a ten-second deadline. Backend errors retain their status and error envelope. Missing configuration returns an explicit 503; no request falls back to a fixture.
 
-The backend on current main is still the R2-01 skeleton: real HTTP returns a fixed synthetic report, not analysis of the submitted input. The report scope and synthetic flags come from Python, even when the skeleton's fixed programme scope differs from the submitted approach. Reports and runs are stored in memory and disappear on Python restart. Real pipeline verification and durable storage remain R2 dependencies; this change does not close #8. Authentication with `API_SHARED_SECRET` is pending R2's agreed header contract; the current skeleton does not enforce it. Deployment remains a later task.
+## Evidence and revisions (#15)
+
+Open `/cases/revision-sample?version=2` for the shared synthetic v1/v2 comparison. Each version opens separately; changed claims reveal their exact excerpts. On a Python API case page, import text or a PDF, then select **Review conclusion** to start one parented run. The old report remains available while checking the review. Upload errors do not start a run. Saved versions can be opened directly with `?flow=api&version=1` or `version=2`.
+
+The PDF endpoint still returns 501. R2's pipeline now performs full reruns with
+immutable versions and new evidence snapshots; its synthetic stubs do not establish
+evidence-driven decision changes. Keep #15 open pending #7/#14, #12 and #13.
+`test:evidence-api` retains the older fixed mock-revision expectations and should
+only be used with explicit development `RUN_BACKEND=mock`, not the new pipeline.
+
+After PR #42, Python uses SQLite and background runs with stage/status polling,
+immutable report versions, stored traces and restart recovery. Reports and their
+synthetic flags come from Python. Configure a persistent volume for deployment;
+an ephemeral database path does not guarantee persistence across redeploys.
+
+Set the same server-only `API_SHARED_SECRET` in Next.js and Python. The proxy adds
+it as `X-API-Key` to every allowed backend request, including polling and uploads.
+Browser-supplied keys, Authorization and cookies are ignored. Never use a
+`NEXT_PUBLIC_` name or put the secret in a URL. An empty key is supported only for
+development with Python authentication disabled; production Python requires a
+secret. A mismatched key returns the backend's visible 401 error.
+
+For local integration checks use `APP_ENV=development`, `RUN_BACKEND=pipeline`,
+`DEV_STUBS=true`, `SEED_SYNTHETIC=true` and an isolated SQLite file in Python.
+Set `STUB_DELAY_SECONDS=0.3` to observe background stages. These runs are explicitly
+synthetic and use no provider calls. The non-stub pipeline still requires the real
+R5 committee chair (#13) and real-model verification; #8 remains open.
 
 ## Verification
 
@@ -62,7 +88,12 @@ npm run build
 npm run test:api
 ```
 
-`test:api` uses real HTTP via Next.js: creates a case/run, reads the correct report version, repeats reads to simulate reopening, verifies no additional mutation, and checks 422/404. With the current synthetic skeleton it also reads the seeded failed run. Set `WEB_BASE_URL` if Next.js uses a different local port. This command creates test records in the running Python repository.
+`test:api` uses real HTTP via Next.js: creates one case/run, observes stages, reads
+the correct report version, repeats reads to simulate reopening, verifies no
+additional mutation and checks 422/404. Set `CHECK_SEEDED_FAILURE=true` to also
+check the terminal failed fixture on a development API with `SEED_SYNTHETIC=true`.
+Set `WEB_BASE_URL` if Next.js uses another port. This command creates test records
+in the running Python repository; use an isolated development database.
 
 Browser verification: submit the fictional example in API mode; check that one POST case and one POST run are followed by GET status/report; reload the URL and verify GET-only reads; open `/cases/case-synthetic-01?flow=api&run=run-synthetic-failed` to inspect a terminal failure. Unit tests cover request deadlines, cancellation, terminal polling, backend error decoding, proxy restrictions, and report validation.
 
@@ -82,4 +113,6 @@ Browser verification: submit the fictional example in API mode; check that one P
 
 Shared fixtures and API-owned display text use English, as specified in `docs/implementation-contract.md`. Fixture translations are made in the Python generator and regenerated with their source hashes and exact evidence excerpts. Restart Python and rebuild/restart the frontend to pick up fixture changes. Previously saved report snapshots are not translated in place; create a new assessment or open the rebuilt example report.
 
-Uploads and before/after comparison belong to #15. Live analysis and persisted reload after a Python restart still require R2's pipeline/storage work.
+Uploads and before/after comparison belong to #15. SQLite/recovery are implemented
+in R2; deployed restart persistence must be verified with the configured volume.
+Live analysis remains gated on the real chair and end-to-end provider verification.

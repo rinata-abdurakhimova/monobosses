@@ -4,6 +4,7 @@ from vic.storage import Repository, get_repository
 _DESCRIPTIONS = {
     404: "Not found", 409: "Conflict", 413: "Payload too large", 415: "Unsupported media type",
     422: "Validation error", 501: "Not implemented", 503: "Service unavailable",
+    401: "Missing or invalid API key", 429: "Too many runs in progress",
 }
 
 

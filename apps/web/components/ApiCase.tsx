@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ReportRevisionTools } from "@/components/ReportRevisionTools";
 import {
   createMockApiClient,
   createHttpApiClient,
@@ -29,11 +31,16 @@ export function ApiCase({
   caseId,
   runId,
   flow = "mock-api",
+  requestedVersion = null,
+  previousVersion = null,
 }: {
   caseId: string;
   runId: string | null;
   flow?: "mock-api" | "api";
+  requestedVersion?: number | null;
+  previousVersion?: number | null;
 }) {
+  const router = useRouter();
   const client = useMemo(
     () =>
       flow === "api"
@@ -45,13 +52,18 @@ export function ApiCase({
   const [run, setRun] = useState<Run | null>(null);
   const [report, setReport] = useState<LoadedReport<Report> | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
+  const [pending, setPending] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
     setError(null);
-    setReport(null);
+    setPending(true);
+    setReport((previous) =>
+      previous?.case_id === caseId && !requestedVersion ? previous : null,
+    );
     setRun(null);
-    if (!runId) {
+    if (!runId && !requestedVersion) {
+      setPending(false);
       setError(
         new ApiError(
           "MISSING_RUN_ID",
@@ -62,6 +74,23 @@ export function ApiCase({
     }
     async function loadExistingRun() {
       try {
+        if (requestedVersion) {
+          const loaded = await client.getReport(caseId, requestedVersion, {
+            signal: controller.signal,
+          });
+          if (!controller.signal.aborted) setReport(loaded);
+          return;
+        }
+        if (previousVersion) {
+          try {
+            const previous = await client.getReport(caseId, previousVersion, {
+              signal: controller.signal,
+            });
+            if (!controller.signal.aborted) setReport(previous);
+          } catch {
+            /* The new run can still be checked if its prior snapshot is unavailable. */
+          }
+        }
         const completed = await pollRun(client, runId!, {
           signal: controller.signal,
           maxWaitMs: flow === "api" ? 600000 : 8000,
@@ -96,11 +125,13 @@ export function ApiCase({
         if (!controller.signal.aborted) setReport(loaded);
       } catch (failure) {
         if (!controller.signal.aborted) setError(asApiError(failure));
+      } finally {
+        if (!controller.signal.aborted) setPending(false);
       }
     }
     void loadExistingRun();
     return () => controller.abort();
-  }, [caseId, runId, client, attempt, flow]);
+  }, [caseId, runId, client, attempt, flow, requestedVersion, previousVersion]);
 
   const notice = (
     <div
@@ -136,8 +167,46 @@ export function ApiCase({
           <p className="mock-version">
             Saved report · version {report.version}
           </p>
+          {pending && (
+            <p role="status">
+              Checking the review run. Saved v{report.version} remains available
+              below.
+            </p>
+          )}
+          {error && (
+            <div role="alert">
+              <p>
+                Review could not finish: {error.message}. Saved v
+                {report.version} remains available.
+              </p>
+              {error.retryable && (
+                <button
+                  className="button button-secondary"
+                  type="button"
+                  onClick={() => setAttempt((value) => value + 1)}
+                >
+                  Check existing run again
+                </button>
+              )}
+            </div>
+          )}
+          {flow === "api" && (
+            <ReportRevisionTools
+              key={report.content.id}
+              report={report.content}
+              disabled={pending}
+              onRunStarted={(nextRun) => {
+                setPending(true);
+                router.push(
+                  `/cases/${encodeURIComponent(caseId)}?flow=api&run=${encodeURIComponent(nextRun)}&previous=${report.version}`,
+                  { scroll: false },
+                );
+              }}
+            />
+          )}
         </div>
         <ReportView
+          key={report.content.id}
           report={report.content}
           submitted={null}
         />
