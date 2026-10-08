@@ -1,0 +1,4613 @@
+[
+  {
+    "name": "source_bound_plan_then_financial_explanation",
+    "synthetic": true,
+    "generation": "Two hand-authored synthetic mock responses; no live model; fictional costs",
+    "case": {
+      "indication": "Synthetic disease",
+      "mechanism": "Synthetic target",
+      "scope": "approach",
+      "program_data": null,
+      "modality": null,
+      "development_stage": null,
+      "as_of_date": "2026-10-08"
+    },
+    "pack": {
+      "sources": [
+        {
+          "id": "s1",
+          "title": "Synthetic budget and schedule",
+          "url": null,
+          "type": "synthetic",
+          "published_at": null,
+          "retrieved_at": "2026-10-08T00:00:00Z",
+          "content_hash": "sha256:dfdff662717668710825bb918406fcc26fe912c8a653ab0cf10eb1d97df3a224",
+          "synthetic": true,
+          "document_id": null
+        }
+      ],
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "s1",
+          "excerpt": "SYNTHETIC ONLY. A fictional plan targets preclinical proof with preparation and a study. Preparation costs USD 100-200 thousand and takes 10-20 days. The study costs USD 300-500 thousand and takes 20-40 days after preparation. Separate diligence costs USD 5-10 thousand. USD 100-150 thousand is allocated to this asset and milestone. A synthetic delay adds 2-4 days, USD 1-2 thousand extra costs and USD 100-200/day incremental burn. Actual development, CMC, regulatory requirements, ownership, partner interest and future financing are not established by this synthetic plan.",
+          "locator": "Synthetic budget",
+          "scope": "approach",
+          "limitations": []
+        }
+      ],
+      "retrieval_warnings": [],
+      "snapshot_id": "snapshot-investment",
+      "synthetic": true
+    },
+    "context": {
+      "case_id": "case-investment",
+      "run_id": "run-investment",
+      "snapshot_id": "snapshot-investment",
+      "as_of_date": "2026-10-08",
+      "mode": "evidence_only"
+    },
+    "upstream_context": {
+      "clinical": null,
+      "market": {
+        "role_id": "market",
+        "summary": "Synthetic upstream",
+        "position": "insufficient_data",
+        "claims": [
+          {
+            "id": "market.context",
+            "text": "Synthetic context",
+            "provenance": "source",
+            "support_status": "supported",
+            "evidence_ids": [
+              "e1"
+            ],
+            "assumptions": [],
+            "scope": "approach",
+            "importance": "major"
+          }
+        ],
+        "risks": [],
+        "unknowns": [
+          "Need semantic review"
+        ],
+        "change_conditions": [],
+        "section_content": [
+          {
+            "key": "commercial_opportunity",
+            "summary": "Synthetic constraints",
+            "claim_ids": [
+              "market.context"
+            ],
+            "limitations": [],
+            "structured_data": {
+              "market": {
+                "snapshot_id": "snapshot-investment",
+                "as_of_date": "2026-10-08",
+                "candidates": [
+                  {
+                    "id": "partner_a"
+                  }
+                ],
+                "access_limitations": [
+                  "Access unknown"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "partnerships": null,
+      "ip_licensing": null
+    },
+    "scenarios": [],
+    "stresses": [],
+    "mock_plan": {
+      "claims": [
+        {
+          "id": "investment.plan",
+          "text": "A proof stage may be considered",
+          "provenance": "ai",
+          "support_status": "unverified",
+          "evidence_ids": [],
+          "assumptions": [
+            "Synthetic proposal"
+          ],
+          "scope": "approach",
+          "importance": "major"
+        }
+      ],
+      "next_milestone": {
+        "id": "proof",
+        "stage": {
+          "value": "Synthetic work proposal",
+          "basis": "hypothesis",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "assumptions": [
+            "Synthetic proposal, needs R4 review"
+          ],
+          "unknowns": []
+        },
+        "required_result": {
+          "value": "Synthetic work proposal",
+          "basis": "hypothesis",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "assumptions": [
+            "Synthetic proposal, needs R4 review"
+          ],
+          "unknowns": []
+        },
+        "success_criteria": [
+          {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        ],
+        "clinical_alignment": {
+          "value": null,
+          "basis": "unknown",
+          "claim_ids": [],
+          "assumptions": [],
+          "unknowns": [
+            "Need reviewed evidence or plan"
+          ]
+        }
+      },
+      "work_packages": [
+        {
+          "id": "prepare",
+          "milestone_id": "proof",
+          "work": {
+            "value": "Synthetic work proposal",
+            "basis": "hypothesis",
+            "claim_ids": [
+              "investment.plan"
+            ],
+            "assumptions": [
+              "Synthetic proposal, needs R4 review"
+            ],
+            "unknowns": []
+          },
+          "required_resources": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "depends_on": [],
+          "completion_criteria": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        },
+        {
+          "id": "study",
+          "milestone_id": "proof",
+          "work": {
+            "value": "Synthetic work proposal",
+            "basis": "hypothesis",
+            "claim_ids": [
+              "investment.plan"
+            ],
+            "assumptions": [
+              "Synthetic proposal, needs R4 review"
+            ],
+            "unknowns": []
+          },
+          "required_resources": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "depends_on": [
+            "prepare"
+          ],
+          "completion_criteria": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        }
+      ],
+      "future_milestones": [
+        {
+          "milestone_id": "later",
+          "stage": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        }
+      ],
+      "stress_events": [
+        {
+          "id": "delay_event",
+          "kind": "delay",
+          "trigger": {
+            "value": "Synthetic work proposal",
+            "basis": "hypothesis",
+            "claim_ids": [
+              "investment.plan"
+            ],
+            "assumptions": [
+              "Synthetic proposal, needs R4 review"
+            ],
+            "unknowns": []
+          },
+          "work_ids": [
+            "study"
+          ],
+          "already_in_baseline": false,
+          "stress_ids": [
+            "delay"
+          ]
+        },
+        {
+          "id": "additional_studies_event",
+          "kind": "additional_studies",
+          "trigger": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "work_ids": [
+            "study"
+          ],
+          "already_in_baseline": false,
+          "stress_ids": []
+        },
+        {
+          "id": "weaker_results_event",
+          "kind": "weaker_results",
+          "trigger": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "work_ids": [
+            "study"
+          ],
+          "already_in_baseline": false,
+          "stress_ids": []
+        }
+      ],
+      "scenario_blueprints": [
+        {
+          "id": "base",
+          "name": "base",
+          "milestone_id": "proof",
+          "horizon": "next_milestone",
+          "currency": "USD",
+          "geography": "Synthetic region",
+          "as_of_date": "2026-10-08",
+          "assumptions": [
+            "Scope limited to fictional preclinical proof; completeness is illustrative"
+          ],
+          "costs": [
+            {
+              "id": "prepare",
+              "category": "research",
+              "description": "prepare",
+              "scope": "development",
+              "work_ids": [
+                "prepare"
+              ],
+              "amount": {
+                "minimum": null,
+                "maximum": null,
+                "evidence_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Source binding pending"
+                ]
+              },
+              "currency": "USD",
+              "scale": "thousand"
+            },
+            {
+              "id": "study",
+              "category": "research",
+              "description": "study",
+              "scope": "development",
+              "work_ids": [
+                "study"
+              ],
+              "amount": {
+                "minimum": null,
+                "maximum": null,
+                "evidence_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Source binding pending"
+                ]
+              },
+              "currency": "USD",
+              "scale": "thousand"
+            },
+            {
+              "id": "diligence",
+              "category": "other",
+              "description": "diligence",
+              "scope": "diligence",
+              "work_ids": [],
+              "amount": {
+                "minimum": null,
+                "maximum": null,
+                "evidence_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Source binding pending"
+                ]
+              },
+              "currency": "USD",
+              "scale": "thousand"
+            }
+          ],
+          "cost_coverage": "full",
+          "cost_unknowns": [],
+          "schedule": [
+            {
+              "work_id": "prepare",
+              "duration_days": {
+                "minimum": null,
+                "maximum": null,
+                "evidence_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Source binding pending"
+                ]
+              },
+              "depends_on": []
+            },
+            {
+              "work_id": "study",
+              "duration_days": {
+                "minimum": null,
+                "maximum": null,
+                "evidence_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Source binding pending"
+                ]
+              },
+              "depends_on": [
+                "prepare"
+              ]
+            }
+          ],
+          "schedule_coverage": "full",
+          "schedule_unknowns": [],
+          "allocated_asset_cash": {
+            "minimum": null,
+            "maximum": null,
+            "evidence_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Source binding pending"
+            ]
+          }
+        }
+      ],
+      "stress_blueprints": [
+        {
+          "id": "delay",
+          "base_scenario_id": "base",
+          "kind": "delay",
+          "assumptions": [
+            "No overlap or double counting"
+          ],
+          "incremental_delay_days": {
+            "minimum": null,
+            "maximum": null,
+            "evidence_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Source binding pending"
+            ]
+          },
+          "incremental_cost": {
+            "minimum": null,
+            "maximum": null,
+            "evidence_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Source binding pending"
+            ]
+          },
+          "currency": "USD",
+          "cost_scale": "thousand",
+          "burn_per_day": {
+            "minimum": null,
+            "maximum": null,
+            "evidence_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Source binding pending"
+            ]
+          },
+          "cost_coverage": "full",
+          "unknowns": [],
+          "trigger_id": "delay_event"
+        }
+      ],
+      "numeric_bindings": [
+        {
+          "record_type": "scenario",
+          "record_id": "base",
+          "input_path": "costs.prepare.amount",
+          "operation": "copy",
+          "operands": [
+            {
+              "evidence_id": "e1",
+              "quote": "Preparation costs USD 100-200 thousand",
+              "minimum_text": "100",
+              "maximum_text": "200",
+              "unit": "thousand",
+              "unit_text": "thousand",
+              "currency": "USD"
+            }
+          ],
+          "basis": "direct",
+          "applicability": "Matches the fictional plan only",
+          "assumptions": [
+            "Synthetic source, no actual quote"
+          ],
+          "unknowns": []
+        },
+        {
+          "record_type": "scenario",
+          "record_id": "base",
+          "input_path": "costs.study.amount",
+          "operation": "copy",
+          "operands": [
+            {
+              "evidence_id": "e1",
+              "quote": "The study costs USD 300-500 thousand",
+              "minimum_text": "300",
+              "maximum_text": "500",
+              "unit": "thousand",
+              "unit_text": "thousand",
+              "currency": "USD"
+            }
+          ],
+          "basis": "direct",
+          "applicability": "Matches the fictional plan only",
+          "assumptions": [
+            "Synthetic source, no actual quote"
+          ],
+          "unknowns": []
+        },
+        {
+          "record_type": "scenario",
+          "record_id": "base",
+          "input_path": "costs.diligence.amount",
+          "operation": "copy",
+          "operands": [
+            {
+              "evidence_id": "e1",
+              "quote": "Separate diligence costs USD 5-10 thousand",
+              "minimum_text": "5",
+              "maximum_text": "10",
+              "unit": "thousand",
+              "unit_text": "thousand",
+              "currency": "USD"
+            }
+          ],
+          "basis": "direct",
+          "applicability": "Matches the fictional plan only",
+          "assumptions": [
+            "Synthetic source, no actual quote"
+          ],
+          "unknowns": []
+        },
+        {
+          "record_type": "scenario",
+          "record_id": "base",
+          "input_path": "schedule.prepare.duration_days",
+          "operation": "copy",
+          "operands": [
+            {
+              "evidence_id": "e1",
+              "quote": "takes 10-20 days",
+              "minimum_text": "10",
+              "maximum_text": "20",
+              "unit": "days",
+              "unit_text": "days",
+              "currency": null
+            }
+          ],
+          "basis": "direct",
+          "applicability": "Matches the fictional plan only",
+          "assumptions": [
+            "Synthetic source, no actual quote"
+          ],
+          "unknowns": []
+        },
+        {
+          "record_type": "scenario",
+          "record_id": "base",
+          "input_path": "schedule.study.duration_days",
+          "operation": "copy",
+          "operands": [
+            {
+              "evidence_id": "e1",
+              "quote": "takes 20-40 days after preparation",
+              "minimum_text": "20",
+              "maximum_text": "40",
+              "unit": "days",
+              "unit_text": "days",
+              "currency": null
+            }
+          ],
+          "basis": "direct",
+          "applicability": "Matches the fictional plan only",
+          "assumptions": [
+            "Synthetic source, no actual quote"
+          ],
+          "unknowns": []
+        },
+        {
+          "record_type": "scenario",
+          "record_id": "base",
+          "input_path": "allocated_asset_cash",
+          "operation": "copy",
+          "operands": [
+            {
+              "evidence_id": "e1",
+              "quote": "USD 100-150 thousand is allocated to this asset and milestone",
+              "minimum_text": "100",
+              "maximum_text": "150",
+              "unit": "thousand",
+              "unit_text": "thousand",
+              "currency": "USD"
+            }
+          ],
+          "basis": "direct",
+          "applicability": "Matches the fictional plan only",
+          "assumptions": [
+            "Synthetic source, no actual quote"
+          ],
+          "unknowns": []
+        },
+        {
+          "record_type": "stress",
+          "record_id": "delay",
+          "input_path": "incremental_delay_days",
+          "operation": "copy",
+          "operands": [
+            {
+              "evidence_id": "e1",
+              "quote": "A synthetic delay adds 2-4 days",
+              "minimum_text": "2",
+              "maximum_text": "4",
+              "unit": "days",
+              "unit_text": "days",
+              "currency": null
+            }
+          ],
+          "basis": "direct",
+          "applicability": "Matches the fictional plan only",
+          "assumptions": [
+            "Synthetic source, no actual quote"
+          ],
+          "unknowns": []
+        },
+        {
+          "record_type": "stress",
+          "record_id": "delay",
+          "input_path": "incremental_cost",
+          "operation": "copy",
+          "operands": [
+            {
+              "evidence_id": "e1",
+              "quote": "USD 1-2 thousand extra costs",
+              "minimum_text": "1",
+              "maximum_text": "2",
+              "unit": "thousand",
+              "unit_text": "thousand",
+              "currency": "USD"
+            }
+          ],
+          "basis": "direct",
+          "applicability": "Matches the fictional plan only",
+          "assumptions": [
+            "Synthetic source, no actual quote"
+          ],
+          "unknowns": []
+        },
+        {
+          "record_type": "stress",
+          "record_id": "delay",
+          "input_path": "burn_per_day",
+          "operation": "copy",
+          "operands": [
+            {
+              "evidence_id": "e1",
+              "quote": "USD 100-200/day incremental burn",
+              "minimum_text": "100",
+              "maximum_text": "200",
+              "unit": "units_per_day",
+              "unit_text": "/day",
+              "currency": "USD"
+            }
+          ],
+          "basis": "direct",
+          "applicability": "Matches the fictional plan only",
+          "assumptions": [
+            "Synthetic source, no actual quote"
+          ],
+          "unknowns": []
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "Synthetic plan; needs review"
+      ],
+      "limitations": [
+        "Synthetic preparation only"
+      ]
+    },
+    "mock_explanation": {
+      "summary": "Synthetic investment plan; no valuation or return established.",
+      "position": "insufficient_data",
+      "claims": [],
+      "capital": {
+        "budget_basis": {
+          "value": "Synthetic work proposal",
+          "basis": "hypothesis",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "assumptions": [
+            "Synthetic proposal, needs R4 review"
+          ],
+          "unknowns": []
+        },
+        "scenario_ids": [
+          "base"
+        ],
+        "missing_inputs": [],
+        "company_financials_boundary": "Company cash and diligence are separate from allocated asset funding."
+      },
+      "time": {
+        "scheduling_basis": {
+          "value": "Synthetic work proposal",
+          "basis": "hypothesis",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "assumptions": [
+            "Synthetic proposal, needs R4 review"
+          ],
+          "unknowns": []
+        },
+        "scenario_ids": [
+          "base"
+        ],
+        "dependencies": [
+          {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        ],
+        "possible_delays": [
+          {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        ],
+        "missing_inputs": []
+      },
+      "value_inflections": [
+        {
+          "id": "readout",
+          "event": {
+            "value": "Synthetic work proposal",
+            "basis": "hypothesis",
+            "claim_ids": [
+              "investment.plan"
+            ],
+            "assumptions": [
+              "Synthetic proposal, needs R4 review"
+            ],
+            "unknowns": []
+          },
+          "required_result": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "potential_value_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "conditions": [
+            "Evidence supports clinically relevant benefit"
+          ],
+          "next_check": "Review result with R4"
+        }
+      ],
+      "future_financing": [
+        {
+          "milestone_id": "later",
+          "purpose": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "funding_need": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "possible_sources": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "prerequisites": [
+            "Confirm next stage and responsibility"
+          ],
+          "scenario_ids": [],
+          "unknowns": [
+            "Future stage budget and financing terms unknown"
+          ]
+        }
+      ],
+      "financial_paths": [
+        {
+          "path": "own_development",
+          "feasibility": "insufficient_data",
+          "rationale": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financial_consequences": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "retained_costs_and_obligations": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_dependencies": [
+            {
+              "role_id": "partnerships",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            },
+            {
+              "role_id": "ip_licensing",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            }
+          ],
+          "prerequisites": [
+            "Confirm rights and funding responsibilities"
+          ],
+          "unknowns": [
+            "No transaction evidence"
+          ],
+          "next_check": "Review ownership and partner interest"
+        },
+        {
+          "path": "licensing",
+          "feasibility": "insufficient_data",
+          "rationale": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financial_consequences": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "retained_costs_and_obligations": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_dependencies": [
+            {
+              "role_id": "partnerships",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            },
+            {
+              "role_id": "ip_licensing",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            }
+          ],
+          "prerequisites": [
+            "Confirm rights and funding responsibilities"
+          ],
+          "unknowns": [
+            "No transaction evidence"
+          ],
+          "next_check": "Review ownership and partner interest"
+        },
+        {
+          "path": "acquisition",
+          "feasibility": "insufficient_data",
+          "rationale": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financial_consequences": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "retained_costs_and_obligations": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_dependencies": [
+            {
+              "role_id": "partnerships",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            },
+            {
+              "role_id": "ip_licensing",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            }
+          ],
+          "prerequisites": [
+            "Confirm rights and funding responsibilities"
+          ],
+          "unknowns": [
+            "No transaction evidence"
+          ],
+          "next_check": "Review ownership and partner interest"
+        }
+      ],
+      "commercial_constraints": [
+        {
+          "role_id": "market",
+          "assessment": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "upstream_claim_ids": [],
+          "record_ids": [],
+          "next_check": "Review upstream evidence"
+        }
+      ],
+      "risks": [
+        {
+          "id": "investment.financing",
+          "description": "Funding unavailable",
+          "priority": "major",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "impact": "May prevent next stage",
+          "next_check": "Obtain verified funding plan"
+        }
+      ],
+      "unknowns": [
+        "Synthetic case; stage and financing need review"
+      ],
+      "next_checks": [
+        {
+          "question": "What budget funds the next result?",
+          "why_it_matters": "Sets capital need",
+          "evidence_needed": "Reviewed work plan and vendor quotes",
+          "decision_if_positive": "Assess funding path",
+          "decision_if_negative": "Keep capital unknown",
+          "claim_ids": []
+        }
+      ],
+      "change_conditions": [
+        "Verified stage budget changes financing path"
+      ],
+      "limitations": [
+        "Synthetic offline fixture"
+      ],
+      "stress_explanations": [
+        {
+          "event_id": "delay_event",
+          "budget_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "time_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "unknowns": [
+            "Financing effects need review"
+          ],
+          "next_check": "Review incremental studies, delays and financing conditions"
+        },
+        {
+          "event_id": "additional_studies_event",
+          "budget_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "time_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "unknowns": [
+            "Financing effects need review"
+          ],
+          "next_check": "Review incremental studies, delays and financing conditions"
+        },
+        {
+          "event_id": "weaker_results_event",
+          "budget_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "time_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "unknowns": [
+            "Financing effects need review"
+          ],
+          "next_check": "Review incremental studies, delays and financing conditions"
+        }
+      ]
+    },
+    "result": {
+      "role_id": "investment",
+      "summary": "Synthetic investment plan; no valuation or return established.",
+      "position": "insufficient_data",
+      "claims": [
+        {
+          "id": "investment.plan",
+          "text": "A proof stage may be considered",
+          "provenance": "ai",
+          "support_status": "unverified",
+          "evidence_ids": [],
+          "assumptions": [
+            "Synthetic proposal"
+          ],
+          "scope": "approach",
+          "importance": "major"
+        }
+      ],
+      "risks": [
+        {
+          "id": "investment.financing",
+          "description": "Funding unavailable",
+          "priority": "major",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "impact": "May prevent next stage",
+          "next_check": "Obtain verified funding plan"
+        }
+      ],
+      "unknowns": [
+        "Synthetic plan; needs review",
+        "Synthetic case; stage and financing need review",
+        "Need reviewed evidence or plan",
+        "Future stage budget and financing terms unknown",
+        "No transaction evidence",
+        "Financing effects need review",
+        "Requires verification: investment.plan: A proof stage may be considered",
+        "clinical context absent; alignment remains pending.",
+        "partnerships context absent; alignment remains pending.",
+        "ip_licensing context absent; alignment remains pending.",
+        "R3 semantic review pending: base/costs.prepare.amount: Matches the fictional plan only",
+        "R3 semantic review pending: base/costs.study.amount: Matches the fictional plan only",
+        "R3 semantic review pending: base/costs.diligence.amount: Matches the fictional plan only",
+        "R3 semantic review pending: base/schedule.prepare.duration_days: Matches the fictional plan only",
+        "R3 semantic review pending: base/schedule.study.duration_days: Matches the fictional plan only",
+        "R3 semantic review pending: base/allocated_asset_cash: Matches the fictional plan only",
+        "R3 semantic review pending: delay/incremental_delay_days: Matches the fictional plan only",
+        "R3 semantic review pending: delay/incremental_cost: Matches the fictional plan only",
+        "R3 semantic review pending: delay/burn_per_day: Matches the fictional plan only"
+      ],
+      "change_conditions": [
+        "Verified stage budget changes financing path"
+      ],
+      "section_content": [
+        {
+          "key": "capital_to_milestone",
+          "summary": "Synthetic investment plan; no valuation or return established.",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "limitations": [
+            "Synthetic preparation only",
+            "Synthetic offline fixture",
+            "Source token/unit checks are not semantic evidence audit; R3 review required.",
+            "Numeric applicability and completeness require human verification; scenario bounds are not confidence intervals.",
+            "Market opportunity, partner fit and IP screening do not establish revenue, deal value or investment return.",
+            "No final committee recommendation or legal clearance; R4 milestone review and IP specialist review required."
+          ],
+          "structured_data": {
+            "investment": {
+              "summary": "Synthetic investment plan; no valuation or return established.",
+              "position": "insufficient_data",
+              "next_milestone": {
+                "id": "proof",
+                "stage": {
+                  "value": "Synthetic work proposal",
+                  "basis": "hypothesis",
+                  "claim_ids": [
+                    "investment.plan"
+                  ],
+                  "assumptions": [
+                    "Synthetic proposal, needs R4 review"
+                  ],
+                  "unknowns": []
+                },
+                "required_result": {
+                  "value": "Synthetic work proposal",
+                  "basis": "hypothesis",
+                  "claim_ids": [
+                    "investment.plan"
+                  ],
+                  "assumptions": [
+                    "Synthetic proposal, needs R4 review"
+                  ],
+                  "unknowns": []
+                },
+                "success_criteria": [
+                  {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                ],
+                "clinical_alignment": {
+                  "value": null,
+                  "basis": "unknown",
+                  "claim_ids": [],
+                  "assumptions": [],
+                  "unknowns": [
+                    "Need reviewed evidence or plan"
+                  ]
+                }
+              },
+              "work_packages": [
+                {
+                  "id": "prepare",
+                  "milestone_id": "proof",
+                  "work": {
+                    "value": "Synthetic work proposal",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "investment.plan"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal, needs R4 review"
+                    ],
+                    "unknowns": []
+                  },
+                  "required_resources": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "depends_on": [],
+                  "completion_criteria": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                },
+                {
+                  "id": "study",
+                  "milestone_id": "proof",
+                  "work": {
+                    "value": "Synthetic work proposal",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "investment.plan"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal, needs R4 review"
+                    ],
+                    "unknowns": []
+                  },
+                  "required_resources": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "depends_on": [
+                    "prepare"
+                  ],
+                  "completion_criteria": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                }
+              ],
+              "capital": {
+                "budget_basis": {
+                  "value": "Synthetic work proposal",
+                  "basis": "hypothesis",
+                  "claim_ids": [
+                    "investment.plan"
+                  ],
+                  "assumptions": [
+                    "Synthetic proposal, needs R4 review"
+                  ],
+                  "unknowns": []
+                },
+                "scenario_ids": [
+                  "base"
+                ],
+                "missing_inputs": [],
+                "company_financials_boundary": "Company cash and diligence are separate from allocated asset funding."
+              },
+              "time": {
+                "scheduling_basis": {
+                  "value": "Synthetic work proposal",
+                  "basis": "hypothesis",
+                  "claim_ids": [
+                    "investment.plan"
+                  ],
+                  "assumptions": [
+                    "Synthetic proposal, needs R4 review"
+                  ],
+                  "unknowns": []
+                },
+                "scenario_ids": [
+                  "base"
+                ],
+                "dependencies": [
+                  {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                ],
+                "possible_delays": [
+                  {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                ],
+                "missing_inputs": []
+              },
+              "value_inflections": [
+                {
+                  "id": "readout",
+                  "event": {
+                    "value": "Synthetic work proposal",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "investment.plan"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal, needs R4 review"
+                    ],
+                    "unknowns": []
+                  },
+                  "required_result": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "potential_value_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "conditions": [
+                    "Evidence supports clinically relevant benefit"
+                  ],
+                  "next_check": "Review result with R4"
+                }
+              ],
+              "future_financing": [
+                {
+                  "milestone_id": "later",
+                  "stage": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "purpose": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "funding_need": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "possible_sources": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "prerequisites": [
+                    "Confirm next stage and responsibility"
+                  ],
+                  "scenario_ids": [],
+                  "unknowns": [
+                    "Future stage budget and financing terms unknown"
+                  ]
+                }
+              ],
+              "financial_paths": [
+                {
+                  "path": "own_development",
+                  "feasibility": "insufficient_data",
+                  "rationale": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financial_consequences": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "retained_costs_and_obligations": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_dependencies": [
+                    {
+                      "role_id": "partnerships",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    },
+                    {
+                      "role_id": "ip_licensing",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    }
+                  ],
+                  "prerequisites": [
+                    "Confirm rights and funding responsibilities"
+                  ],
+                  "unknowns": [
+                    "No transaction evidence"
+                  ],
+                  "next_check": "Review ownership and partner interest"
+                },
+                {
+                  "path": "licensing",
+                  "feasibility": "insufficient_data",
+                  "rationale": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financial_consequences": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "retained_costs_and_obligations": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_dependencies": [
+                    {
+                      "role_id": "partnerships",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    },
+                    {
+                      "role_id": "ip_licensing",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    }
+                  ],
+                  "prerequisites": [
+                    "Confirm rights and funding responsibilities"
+                  ],
+                  "unknowns": [
+                    "No transaction evidence"
+                  ],
+                  "next_check": "Review ownership and partner interest"
+                },
+                {
+                  "path": "acquisition",
+                  "feasibility": "insufficient_data",
+                  "rationale": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financial_consequences": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "retained_costs_and_obligations": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_dependencies": [
+                    {
+                      "role_id": "partnerships",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    },
+                    {
+                      "role_id": "ip_licensing",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    }
+                  ],
+                  "prerequisites": [
+                    "Confirm rights and funding responsibilities"
+                  ],
+                  "unknowns": [
+                    "No transaction evidence"
+                  ],
+                  "next_check": "Review ownership and partner interest"
+                }
+              ],
+              "stress_assessments": [
+                {
+                  "kind": "delay",
+                  "trigger": {
+                    "value": "Synthetic work proposal",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "investment.plan"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal, needs R4 review"
+                    ],
+                    "unknowns": []
+                  },
+                  "budget_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "time_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "stress_ids": [
+                    "delay"
+                  ],
+                  "unknowns": [
+                    "Financing effects need review"
+                  ],
+                  "next_check": "Review incremental studies, delays and financing conditions"
+                },
+                {
+                  "kind": "additional_studies",
+                  "trigger": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "budget_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "time_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "stress_ids": [],
+                  "unknowns": [
+                    "Financing effects need review"
+                  ],
+                  "next_check": "Review incremental studies, delays and financing conditions"
+                },
+                {
+                  "kind": "weaker_results",
+                  "trigger": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "budget_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "time_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "stress_ids": [],
+                  "unknowns": [
+                    "Financing effects need review"
+                  ],
+                  "next_check": "Review incremental studies, delays and financing conditions"
+                }
+              ],
+              "commercial_constraints": [
+                {
+                  "role_id": "market",
+                  "assessment": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "upstream_claim_ids": [],
+                  "record_ids": [],
+                  "next_check": "Review upstream evidence"
+                }
+              ],
+              "unknowns": [
+                "Synthetic plan; needs review",
+                "Synthetic case; stage and financing need review"
+              ],
+              "next_checks": [
+                {
+                  "question": "What budget funds the next result?",
+                  "why_it_matters": "Sets capital need",
+                  "evidence_needed": "Reviewed work plan and vendor quotes",
+                  "decision_if_positive": "Assess funding path",
+                  "decision_if_negative": "Keep capital unknown",
+                  "claim_ids": []
+                }
+              ],
+              "change_conditions": [
+                "Verified stage budget changes financing path"
+              ],
+              "limitations": [
+                "Synthetic preparation only",
+                "Synthetic offline fixture"
+              ],
+              "calculated_financials": {
+                "scenarios": [
+                  {
+                    "id": "base",
+                    "inputs": {
+                      "id": "base",
+                      "name": "base",
+                      "milestone_id": "proof",
+                      "horizon": "next_milestone",
+                      "currency": "USD",
+                      "geography": "Synthetic region",
+                      "as_of_date": "2026-10-08",
+                      "assumptions": [
+                        "Scope limited to fictional preclinical proof; completeness is illustrative"
+                      ],
+                      "costs": [
+                        {
+                          "id": "prepare",
+                          "category": "research",
+                          "description": "prepare",
+                          "scope": "development",
+                          "work_ids": [
+                            "prepare"
+                          ],
+                          "amount": {
+                            "minimum": "100",
+                            "maximum": "200",
+                            "evidence_ids": [
+                              "e1"
+                            ],
+                            "assumptions": [
+                              "Synthetic source, no actual quote"
+                            ],
+                            "unknowns": []
+                          },
+                          "currency": "USD",
+                          "scale": "thousand"
+                        },
+                        {
+                          "id": "study",
+                          "category": "research",
+                          "description": "study",
+                          "scope": "development",
+                          "work_ids": [
+                            "study"
+                          ],
+                          "amount": {
+                            "minimum": "300",
+                            "maximum": "500",
+                            "evidence_ids": [
+                              "e1"
+                            ],
+                            "assumptions": [
+                              "Synthetic source, no actual quote"
+                            ],
+                            "unknowns": []
+                          },
+                          "currency": "USD",
+                          "scale": "thousand"
+                        },
+                        {
+                          "id": "diligence",
+                          "category": "other",
+                          "description": "diligence",
+                          "scope": "diligence",
+                          "work_ids": [],
+                          "amount": {
+                            "minimum": "5",
+                            "maximum": "10",
+                            "evidence_ids": [
+                              "e1"
+                            ],
+                            "assumptions": [
+                              "Synthetic source, no actual quote"
+                            ],
+                            "unknowns": []
+                          },
+                          "currency": "USD",
+                          "scale": "thousand"
+                        }
+                      ],
+                      "cost_coverage": "full",
+                      "cost_unknowns": [],
+                      "schedule": [
+                        {
+                          "work_id": "prepare",
+                          "duration_days": {
+                            "minimum": "10",
+                            "maximum": "20",
+                            "evidence_ids": [
+                              "e1"
+                            ],
+                            "assumptions": [
+                              "Synthetic source, no actual quote"
+                            ],
+                            "unknowns": []
+                          },
+                          "depends_on": []
+                        },
+                        {
+                          "work_id": "study",
+                          "duration_days": {
+                            "minimum": "20",
+                            "maximum": "40",
+                            "evidence_ids": [
+                              "e1"
+                            ],
+                            "assumptions": [
+                              "Synthetic source, no actual quote"
+                            ],
+                            "unknowns": []
+                          },
+                          "depends_on": [
+                            "prepare"
+                          ]
+                        }
+                      ],
+                      "schedule_coverage": "full",
+                      "schedule_unknowns": [],
+                      "allocated_asset_cash": {
+                        "minimum": "100000",
+                        "maximum": "150000",
+                        "evidence_ids": [
+                          "e1"
+                        ],
+                        "assumptions": [
+                          "Synthetic source, no actual quote"
+                        ],
+                        "unknowns": []
+                      }
+                    },
+                    "normalized_costs": [
+                      {
+                        "id": "prepare",
+                        "scope": "development",
+                        "currency": "USD",
+                        "amount_in_currency_units": {
+                          "minimum": "100000",
+                          "maximum": "200000"
+                        }
+                      },
+                      {
+                        "id": "study",
+                        "scope": "development",
+                        "currency": "USD",
+                        "amount_in_currency_units": {
+                          "minimum": "300000",
+                          "maximum": "500000"
+                        }
+                      },
+                      {
+                        "id": "diligence",
+                        "scope": "diligence",
+                        "currency": "USD",
+                        "amount_in_currency_units": {
+                          "minimum": "5000",
+                          "maximum": "10000"
+                        }
+                      }
+                    ],
+                    "known_development_subtotal": {
+                      "minimum": "400000",
+                      "maximum": "700000"
+                    },
+                    "known_diligence_subtotal": {
+                      "minimum": "5000",
+                      "maximum": "10000"
+                    },
+                    "capital_to_milestone": {
+                      "minimum": "400000",
+                      "maximum": "700000"
+                    },
+                    "time_to_milestone_days": {
+                      "minimum": "30",
+                      "maximum": "60"
+                    },
+                    "funding_gap": {
+                      "minimum": "250000",
+                      "maximum": "600000"
+                    },
+                    "formula": {
+                      "capital": "sum(development cost bounds * scale); diligence excluded",
+                      "time": "max(finish(task)); finish = max(finish(predecessors)) + duration_days",
+                      "funding_gap": "[max(capital.min - allocated_cash.max, 0), max(capital.max - allocated_cash.min, 0)]"
+                    },
+                    "limitation": "Reviewed coverage declaration, not semantic verification. Bounds of supplied assumptions; no return forecast."
+                  }
+                ],
+                "scenario_ranges": [
+                  {
+                    "milestone_id": "proof",
+                    "horizon": "next_milestone",
+                    "currency": "USD",
+                    "geography": "Synthetic region",
+                    "as_of_date": "2026-10-08",
+                    "capital_to_milestone": {
+                      "minimum": "400000",
+                      "maximum": "700000"
+                    },
+                    "capital_to_milestone_scenario_ids": [
+                      "base"
+                    ],
+                    "time_to_milestone_days": {
+                      "minimum": "30",
+                      "maximum": "60"
+                    },
+                    "time_to_milestone_days_scenario_ids": [
+                      "base"
+                    ],
+                    "funding_gap": {
+                      "minimum": "250000",
+                      "maximum": "600000"
+                    },
+                    "funding_gap_scenario_ids": [
+                      "base"
+                    ],
+                    "limitation": "Bounds of complete supplied scenarios only; missing scenarios excluded; no confidence interval."
+                  }
+                ],
+                "stress_scenarios": [
+                  {
+                    "id": "delay",
+                    "inputs": {
+                      "id": "delay",
+                      "base_scenario_id": "base",
+                      "kind": "delay",
+                      "assumptions": [
+                        "No overlap or double counting"
+                      ],
+                      "incremental_delay_days": {
+                        "minimum": "2",
+                        "maximum": "4",
+                        "evidence_ids": [
+                          "e1"
+                        ],
+                        "assumptions": [
+                          "Synthetic source, no actual quote"
+                        ],
+                        "unknowns": []
+                      },
+                      "incremental_cost": {
+                        "minimum": "1",
+                        "maximum": "2",
+                        "evidence_ids": [
+                          "e1"
+                        ],
+                        "assumptions": [
+                          "Synthetic source, no actual quote"
+                        ],
+                        "unknowns": []
+                      },
+                      "currency": "USD",
+                      "cost_scale": "thousand",
+                      "burn_per_day": {
+                        "minimum": "100",
+                        "maximum": "200",
+                        "evidence_ids": [
+                          "e1"
+                        ],
+                        "assumptions": [
+                          "Synthetic source, no actual quote"
+                        ],
+                        "unknowns": []
+                      },
+                      "cost_coverage": "full",
+                      "unknowns": []
+                    },
+                    "incremental_budget": {
+                      "minimum": "1200",
+                      "maximum": "2800"
+                    },
+                    "stressed_capital": {
+                      "minimum": "401200",
+                      "maximum": "702800"
+                    },
+                    "stressed_time_days": {
+                      "minimum": "32",
+                      "maximum": "64"
+                    },
+                    "stressed_funding_gap": {
+                      "minimum": "251200",
+                      "maximum": "602800"
+                    },
+                    "formula": "extra_cost * scale + incremental_delay_days * burn_per_day (currency units/day)",
+                    "limitation": "No double counting permitted in reviewed inputs; excludes valuation, financing terms and success probability."
+                  }
+                ]
+              },
+              "source_requests": [
+                "Synthetic plan; needs review",
+                "Synthetic case; stage and financing need review",
+                "Need reviewed evidence or plan",
+                "Future stage budget and financing terms unknown",
+                "No transaction evidence",
+                "Financing effects need review",
+                "Requires verification: investment.plan: A proof stage may be considered",
+                "clinical context absent; alignment remains pending.",
+                "partnerships context absent; alignment remains pending.",
+                "ip_licensing context absent; alignment remains pending.",
+                "R3 semantic review pending: base/costs.prepare.amount: Matches the fictional plan only",
+                "R3 semantic review pending: base/costs.study.amount: Matches the fictional plan only",
+                "R3 semantic review pending: base/costs.diligence.amount: Matches the fictional plan only",
+                "R3 semantic review pending: base/schedule.prepare.duration_days: Matches the fictional plan only",
+                "R3 semantic review pending: base/schedule.study.duration_days: Matches the fictional plan only",
+                "R3 semantic review pending: base/allocated_asset_cash: Matches the fictional plan only",
+                "R3 semantic review pending: delay/incremental_delay_days: Matches the fictional plan only",
+                "R3 semantic review pending: delay/incremental_cost: Matches the fictional plan only",
+                "R3 semantic review pending: delay/burn_per_day: Matches the fictional plan only"
+              ],
+              "prompt_version": "2.0.0",
+              "prompt_versions": {
+                "investment_plan": "1.0.0",
+                "investment": "2.0.0"
+              },
+              "prepared_plan": {
+                "claims": [
+                  {
+                    "id": "investment.plan",
+                    "text": "A proof stage may be considered",
+                    "provenance": "ai",
+                    "support_status": "unverified",
+                    "evidence_ids": [],
+                    "assumptions": [
+                      "Synthetic proposal"
+                    ],
+                    "scope": "approach",
+                    "importance": "major"
+                  }
+                ],
+                "next_milestone": {
+                  "id": "proof",
+                  "stage": {
+                    "value": "Synthetic work proposal",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "investment.plan"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal, needs R4 review"
+                    ],
+                    "unknowns": []
+                  },
+                  "required_result": {
+                    "value": "Synthetic work proposal",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "investment.plan"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal, needs R4 review"
+                    ],
+                    "unknowns": []
+                  },
+                  "success_criteria": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "clinical_alignment": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                },
+                "work_packages": [
+                  {
+                    "id": "prepare",
+                    "milestone_id": "proof",
+                    "work": {
+                      "value": "Synthetic work proposal",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "investment.plan"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal, needs R4 review"
+                      ],
+                      "unknowns": []
+                    },
+                    "required_resources": [
+                      {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      }
+                    ],
+                    "depends_on": [],
+                    "completion_criteria": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  },
+                  {
+                    "id": "study",
+                    "milestone_id": "proof",
+                    "work": {
+                      "value": "Synthetic work proposal",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "investment.plan"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal, needs R4 review"
+                      ],
+                      "unknowns": []
+                    },
+                    "required_resources": [
+                      {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      }
+                    ],
+                    "depends_on": [
+                      "prepare"
+                    ],
+                    "completion_criteria": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  }
+                ],
+                "future_milestones": [
+                  {
+                    "milestone_id": "later",
+                    "stage": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  }
+                ],
+                "stress_events": [
+                  {
+                    "id": "delay_event",
+                    "kind": "delay",
+                    "trigger": {
+                      "value": "Synthetic work proposal",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "investment.plan"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal, needs R4 review"
+                      ],
+                      "unknowns": []
+                    },
+                    "work_ids": [
+                      "study"
+                    ],
+                    "already_in_baseline": false,
+                    "stress_ids": [
+                      "delay"
+                    ]
+                  },
+                  {
+                    "id": "additional_studies_event",
+                    "kind": "additional_studies",
+                    "trigger": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    },
+                    "work_ids": [
+                      "study"
+                    ],
+                    "already_in_baseline": false,
+                    "stress_ids": []
+                  },
+                  {
+                    "id": "weaker_results_event",
+                    "kind": "weaker_results",
+                    "trigger": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    },
+                    "work_ids": [
+                      "study"
+                    ],
+                    "already_in_baseline": false,
+                    "stress_ids": []
+                  }
+                ],
+                "risks": [],
+                "unknowns": [
+                  "Synthetic plan; needs review"
+                ],
+                "limitations": [
+                  "Synthetic preparation only"
+                ]
+              },
+              "fixed_plan_hash": "191bdcd7b6022b457a739060ccf221ba8494ca73825ef248a36d49feca9f4766",
+              "numeric_provenance": [
+                {
+                  "record_type": "scenario",
+                  "record_id": "base",
+                  "input_path": "costs.prepare.amount",
+                  "operation": "copy",
+                  "operands": [
+                    {
+                      "evidence_id": "e1",
+                      "quote": "Preparation costs USD 100-200 thousand",
+                      "minimum_text": "100",
+                      "maximum_text": "200",
+                      "unit": "thousand",
+                      "unit_text": "thousand",
+                      "currency": "USD"
+                    }
+                  ],
+                  "basis": "direct",
+                  "applicability": "Matches the fictional plan only",
+                  "assumptions": [
+                    "Synthetic source, no actual quote"
+                  ],
+                  "unknowns": [],
+                  "resolved_range": {
+                    "minimum": "100",
+                    "maximum": "200",
+                    "evidence_ids": [
+                      "e1"
+                    ],
+                    "assumptions": [
+                      "Synthetic source, no actual quote"
+                    ],
+                    "unknowns": []
+                  },
+                  "review_status": "source_tokens_checked_semantic_review_pending"
+                },
+                {
+                  "record_type": "scenario",
+                  "record_id": "base",
+                  "input_path": "costs.study.amount",
+                  "operation": "copy",
+                  "operands": [
+                    {
+                      "evidence_id": "e1",
+                      "quote": "The study costs USD 300-500 thousand",
+                      "minimum_text": "300",
+                      "maximum_text": "500",
+                      "unit": "thousand",
+                      "unit_text": "thousand",
+                      "currency": "USD"
+                    }
+                  ],
+                  "basis": "direct",
+                  "applicability": "Matches the fictional plan only",
+                  "assumptions": [
+                    "Synthetic source, no actual quote"
+                  ],
+                  "unknowns": [],
+                  "resolved_range": {
+                    "minimum": "300",
+                    "maximum": "500",
+                    "evidence_ids": [
+                      "e1"
+                    ],
+                    "assumptions": [
+                      "Synthetic source, no actual quote"
+                    ],
+                    "unknowns": []
+                  },
+                  "review_status": "source_tokens_checked_semantic_review_pending"
+                },
+                {
+                  "record_type": "scenario",
+                  "record_id": "base",
+                  "input_path": "costs.diligence.amount",
+                  "operation": "copy",
+                  "operands": [
+                    {
+                      "evidence_id": "e1",
+                      "quote": "Separate diligence costs USD 5-10 thousand",
+                      "minimum_text": "5",
+                      "maximum_text": "10",
+                      "unit": "thousand",
+                      "unit_text": "thousand",
+                      "currency": "USD"
+                    }
+                  ],
+                  "basis": "direct",
+                  "applicability": "Matches the fictional plan only",
+                  "assumptions": [
+                    "Synthetic source, no actual quote"
+                  ],
+                  "unknowns": [],
+                  "resolved_range": {
+                    "minimum": "5",
+                    "maximum": "10",
+                    "evidence_ids": [
+                      "e1"
+                    ],
+                    "assumptions": [
+                      "Synthetic source, no actual quote"
+                    ],
+                    "unknowns": []
+                  },
+                  "review_status": "source_tokens_checked_semantic_review_pending"
+                },
+                {
+                  "record_type": "scenario",
+                  "record_id": "base",
+                  "input_path": "schedule.prepare.duration_days",
+                  "operation": "copy",
+                  "operands": [
+                    {
+                      "evidence_id": "e1",
+                      "quote": "takes 10-20 days",
+                      "minimum_text": "10",
+                      "maximum_text": "20",
+                      "unit": "days",
+                      "unit_text": "days",
+                      "currency": null
+                    }
+                  ],
+                  "basis": "direct",
+                  "applicability": "Matches the fictional plan only",
+                  "assumptions": [
+                    "Synthetic source, no actual quote"
+                  ],
+                  "unknowns": [],
+                  "resolved_range": {
+                    "minimum": "10",
+                    "maximum": "20",
+                    "evidence_ids": [
+                      "e1"
+                    ],
+                    "assumptions": [
+                      "Synthetic source, no actual quote"
+                    ],
+                    "unknowns": []
+                  },
+                  "review_status": "source_tokens_checked_semantic_review_pending"
+                },
+                {
+                  "record_type": "scenario",
+                  "record_id": "base",
+                  "input_path": "schedule.study.duration_days",
+                  "operation": "copy",
+                  "operands": [
+                    {
+                      "evidence_id": "e1",
+                      "quote": "takes 20-40 days after preparation",
+                      "minimum_text": "20",
+                      "maximum_text": "40",
+                      "unit": "days",
+                      "unit_text": "days",
+                      "currency": null
+                    }
+                  ],
+                  "basis": "direct",
+                  "applicability": "Matches the fictional plan only",
+                  "assumptions": [
+                    "Synthetic source, no actual quote"
+                  ],
+                  "unknowns": [],
+                  "resolved_range": {
+                    "minimum": "20",
+                    "maximum": "40",
+                    "evidence_ids": [
+                      "e1"
+                    ],
+                    "assumptions": [
+                      "Synthetic source, no actual quote"
+                    ],
+                    "unknowns": []
+                  },
+                  "review_status": "source_tokens_checked_semantic_review_pending"
+                },
+                {
+                  "record_type": "scenario",
+                  "record_id": "base",
+                  "input_path": "allocated_asset_cash",
+                  "operation": "copy",
+                  "operands": [
+                    {
+                      "evidence_id": "e1",
+                      "quote": "USD 100-150 thousand is allocated to this asset and milestone",
+                      "minimum_text": "100",
+                      "maximum_text": "150",
+                      "unit": "thousand",
+                      "unit_text": "thousand",
+                      "currency": "USD"
+                    }
+                  ],
+                  "basis": "direct",
+                  "applicability": "Matches the fictional plan only",
+                  "assumptions": [
+                    "Synthetic source, no actual quote"
+                  ],
+                  "unknowns": [],
+                  "resolved_range": {
+                    "minimum": "100000",
+                    "maximum": "150000",
+                    "evidence_ids": [
+                      "e1"
+                    ],
+                    "assumptions": [
+                      "Synthetic source, no actual quote"
+                    ],
+                    "unknowns": []
+                  },
+                  "review_status": "source_tokens_checked_semantic_review_pending"
+                },
+                {
+                  "record_type": "stress",
+                  "record_id": "delay",
+                  "input_path": "incremental_delay_days",
+                  "operation": "copy",
+                  "operands": [
+                    {
+                      "evidence_id": "e1",
+                      "quote": "A synthetic delay adds 2-4 days",
+                      "minimum_text": "2",
+                      "maximum_text": "4",
+                      "unit": "days",
+                      "unit_text": "days",
+                      "currency": null
+                    }
+                  ],
+                  "basis": "direct",
+                  "applicability": "Matches the fictional plan only",
+                  "assumptions": [
+                    "Synthetic source, no actual quote"
+                  ],
+                  "unknowns": [],
+                  "resolved_range": {
+                    "minimum": "2",
+                    "maximum": "4",
+                    "evidence_ids": [
+                      "e1"
+                    ],
+                    "assumptions": [
+                      "Synthetic source, no actual quote"
+                    ],
+                    "unknowns": []
+                  },
+                  "review_status": "source_tokens_checked_semantic_review_pending"
+                },
+                {
+                  "record_type": "stress",
+                  "record_id": "delay",
+                  "input_path": "incremental_cost",
+                  "operation": "copy",
+                  "operands": [
+                    {
+                      "evidence_id": "e1",
+                      "quote": "USD 1-2 thousand extra costs",
+                      "minimum_text": "1",
+                      "maximum_text": "2",
+                      "unit": "thousand",
+                      "unit_text": "thousand",
+                      "currency": "USD"
+                    }
+                  ],
+                  "basis": "direct",
+                  "applicability": "Matches the fictional plan only",
+                  "assumptions": [
+                    "Synthetic source, no actual quote"
+                  ],
+                  "unknowns": [],
+                  "resolved_range": {
+                    "minimum": "1",
+                    "maximum": "2",
+                    "evidence_ids": [
+                      "e1"
+                    ],
+                    "assumptions": [
+                      "Synthetic source, no actual quote"
+                    ],
+                    "unknowns": []
+                  },
+                  "review_status": "source_tokens_checked_semantic_review_pending"
+                },
+                {
+                  "record_type": "stress",
+                  "record_id": "delay",
+                  "input_path": "burn_per_day",
+                  "operation": "copy",
+                  "operands": [
+                    {
+                      "evidence_id": "e1",
+                      "quote": "USD 100-200/day incremental burn",
+                      "minimum_text": "100",
+                      "maximum_text": "200",
+                      "unit": "units_per_day",
+                      "unit_text": "/day",
+                      "currency": "USD"
+                    }
+                  ],
+                  "basis": "direct",
+                  "applicability": "Matches the fictional plan only",
+                  "assumptions": [
+                    "Synthetic source, no actual quote"
+                  ],
+                  "unknowns": [],
+                  "resolved_range": {
+                    "minimum": "100",
+                    "maximum": "200",
+                    "evidence_ids": [
+                      "e1"
+                    ],
+                    "assumptions": [
+                      "Synthetic source, no actual quote"
+                    ],
+                    "unknowns": []
+                  },
+                  "review_status": "source_tokens_checked_semantic_review_pending"
+                }
+              ],
+              "numeric_review_status": "semantic_review_pending",
+              "snapshot_id": "snapshot-investment",
+              "as_of_date": "2026-10-08",
+              "synthetic": true,
+              "context_availability": {
+                "clinical": false,
+                "market": true,
+                "partnerships": false,
+                "ip_licensing": false
+              },
+              "upstream_context": {
+                "clinical": null,
+                "market": {
+                  "role_id": "market",
+                  "summary": "Synthetic upstream",
+                  "position": "insufficient_data",
+                  "claims": [
+                    {
+                      "id": "market.context",
+                      "text": "Synthetic context",
+                      "provenance": "source",
+                      "support_status": "supported",
+                      "evidence_ids": [
+                        "e1"
+                      ],
+                      "assumptions": [],
+                      "scope": "approach",
+                      "importance": "major"
+                    }
+                  ],
+                  "risks": [],
+                  "unknowns": [
+                    "Need semantic review"
+                  ],
+                  "change_conditions": [],
+                  "section_content": [
+                    {
+                      "key": "commercial_opportunity",
+                      "summary": "Synthetic constraints",
+                      "claim_ids": [
+                        "market.context"
+                      ],
+                      "limitations": [],
+                      "structured_data": {
+                        "market": {
+                          "snapshot_id": "snapshot-investment",
+                          "as_of_date": "2026-10-08",
+                          "candidates": [
+                            {
+                              "id": "partner_a"
+                            }
+                          ],
+                          "access_limitations": [
+                            "Access unknown"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                },
+                "partnerships": null,
+                "ip_licensing": null
+              },
+              "claim_evidence_links": {
+                "investment.plan": []
+              },
+              "evidence_source_links": {
+                "e1": "s1"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "empty_evidence",
+    "synthetic": true,
+    "generation": "Two hand-authored synthetic mock responses; no live model; fictional costs",
+    "case": {
+      "indication": "Synthetic disease",
+      "mechanism": "Synthetic target",
+      "scope": "approach",
+      "program_data": null,
+      "modality": null,
+      "development_stage": null,
+      "as_of_date": "2026-10-08"
+    },
+    "pack": {
+      "sources": [],
+      "evidence": [],
+      "retrieval_warnings": [],
+      "snapshot_id": "snapshot-investment",
+      "synthetic": true
+    },
+    "context": {
+      "case_id": "case-investment",
+      "run_id": "run-investment",
+      "snapshot_id": "snapshot-investment",
+      "as_of_date": "2026-10-08",
+      "mode": "evidence_only"
+    },
+    "upstream_context": {
+      "clinical": null,
+      "market": null,
+      "partnerships": null,
+      "ip_licensing": null
+    },
+    "scenarios": [],
+    "stresses": [],
+    "mock_plan": {
+      "claims": [
+        {
+          "id": "investment.plan",
+          "text": "A proof stage may be considered",
+          "provenance": "ai",
+          "support_status": "unverified",
+          "evidence_ids": [],
+          "assumptions": [
+            "Synthetic proposal"
+          ],
+          "scope": "approach",
+          "importance": "major"
+        }
+      ],
+      "next_milestone": {
+        "id": "proof",
+        "stage": {
+          "value": "Synthetic work proposal",
+          "basis": "hypothesis",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "assumptions": [
+            "Synthetic proposal, needs R4 review"
+          ],
+          "unknowns": []
+        },
+        "required_result": {
+          "value": "Synthetic work proposal",
+          "basis": "hypothesis",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "assumptions": [
+            "Synthetic proposal, needs R4 review"
+          ],
+          "unknowns": []
+        },
+        "success_criteria": [
+          {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        ],
+        "clinical_alignment": {
+          "value": null,
+          "basis": "unknown",
+          "claim_ids": [],
+          "assumptions": [],
+          "unknowns": [
+            "Need reviewed evidence or plan"
+          ]
+        }
+      },
+      "work_packages": [
+        {
+          "id": "prepare",
+          "milestone_id": "proof",
+          "work": {
+            "value": "Synthetic work proposal",
+            "basis": "hypothesis",
+            "claim_ids": [
+              "investment.plan"
+            ],
+            "assumptions": [
+              "Synthetic proposal, needs R4 review"
+            ],
+            "unknowns": []
+          },
+          "required_resources": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "depends_on": [],
+          "completion_criteria": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        },
+        {
+          "id": "study",
+          "milestone_id": "proof",
+          "work": {
+            "value": "Synthetic work proposal",
+            "basis": "hypothesis",
+            "claim_ids": [
+              "investment.plan"
+            ],
+            "assumptions": [
+              "Synthetic proposal, needs R4 review"
+            ],
+            "unknowns": []
+          },
+          "required_resources": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "depends_on": [
+            "prepare"
+          ],
+          "completion_criteria": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        }
+      ],
+      "future_milestones": [
+        {
+          "milestone_id": "later",
+          "stage": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        }
+      ],
+      "stress_events": [
+        {
+          "id": "delay_event",
+          "kind": "delay",
+          "trigger": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "work_ids": [
+            "study"
+          ],
+          "already_in_baseline": false,
+          "stress_ids": []
+        },
+        {
+          "id": "additional_studies_event",
+          "kind": "additional_studies",
+          "trigger": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "work_ids": [
+            "study"
+          ],
+          "already_in_baseline": false,
+          "stress_ids": []
+        },
+        {
+          "id": "weaker_results_event",
+          "kind": "weaker_results",
+          "trigger": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "work_ids": [
+            "study"
+          ],
+          "already_in_baseline": false,
+          "stress_ids": []
+        }
+      ],
+      "scenario_blueprints": [],
+      "stress_blueprints": [],
+      "numeric_bindings": [],
+      "risks": [],
+      "unknowns": [
+        "Synthetic plan; needs review"
+      ],
+      "limitations": [
+        "Synthetic preparation only"
+      ]
+    },
+    "mock_explanation": {
+      "summary": "Synthetic investment plan; no valuation or return established.",
+      "position": "insufficient_data",
+      "claims": [],
+      "capital": {
+        "budget_basis": {
+          "value": "Synthetic work proposal",
+          "basis": "hypothesis",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "assumptions": [
+            "Synthetic proposal, needs R4 review"
+          ],
+          "unknowns": []
+        },
+        "scenario_ids": [],
+        "missing_inputs": [
+          "Reviewed CRO/CMC asset budget needed"
+        ],
+        "company_financials_boundary": "Company cash and diligence are separate from allocated asset funding."
+      },
+      "time": {
+        "scheduling_basis": {
+          "value": "Synthetic work proposal",
+          "basis": "hypothesis",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "assumptions": [
+            "Synthetic proposal, needs R4 review"
+          ],
+          "unknowns": []
+        },
+        "scenario_ids": [],
+        "dependencies": [
+          {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        ],
+        "possible_delays": [
+          {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          }
+        ],
+        "missing_inputs": [
+          "Reviewed work durations needed"
+        ]
+      },
+      "value_inflections": [
+        {
+          "id": "readout",
+          "event": {
+            "value": "Synthetic work proposal",
+            "basis": "hypothesis",
+            "claim_ids": [
+              "investment.plan"
+            ],
+            "assumptions": [
+              "Synthetic proposal, needs R4 review"
+            ],
+            "unknowns": []
+          },
+          "required_result": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "potential_value_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "conditions": [
+            "Evidence supports clinically relevant benefit"
+          ],
+          "next_check": "Review result with R4"
+        }
+      ],
+      "future_financing": [
+        {
+          "milestone_id": "later",
+          "purpose": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "funding_need": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "possible_sources": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "prerequisites": [
+            "Confirm next stage and responsibility"
+          ],
+          "scenario_ids": [],
+          "unknowns": [
+            "Future stage budget and financing terms unknown"
+          ]
+        }
+      ],
+      "financial_paths": [
+        {
+          "path": "own_development",
+          "feasibility": "insufficient_data",
+          "rationale": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financial_consequences": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "retained_costs_and_obligations": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_dependencies": [
+            {
+              "role_id": "partnerships",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            },
+            {
+              "role_id": "ip_licensing",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            }
+          ],
+          "prerequisites": [
+            "Confirm rights and funding responsibilities"
+          ],
+          "unknowns": [
+            "No transaction evidence"
+          ],
+          "next_check": "Review ownership and partner interest"
+        },
+        {
+          "path": "licensing",
+          "feasibility": "insufficient_data",
+          "rationale": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financial_consequences": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "retained_costs_and_obligations": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_dependencies": [
+            {
+              "role_id": "partnerships",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            },
+            {
+              "role_id": "ip_licensing",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            }
+          ],
+          "prerequisites": [
+            "Confirm rights and funding responsibilities"
+          ],
+          "unknowns": [
+            "No transaction evidence"
+          ],
+          "next_check": "Review ownership and partner interest"
+        },
+        {
+          "path": "acquisition",
+          "feasibility": "insufficient_data",
+          "rationale": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financial_consequences": [
+            {
+              "value": null,
+              "basis": "unknown",
+              "claim_ids": [],
+              "assumptions": [],
+              "unknowns": [
+                "Need reviewed evidence or plan"
+              ]
+            }
+          ],
+          "retained_costs_and_obligations": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_dependencies": [
+            {
+              "role_id": "partnerships",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            },
+            {
+              "role_id": "ip_licensing",
+              "assessment": {
+                "value": null,
+                "basis": "unknown",
+                "claim_ids": [],
+                "assumptions": [],
+                "unknowns": [
+                  "Need reviewed evidence or plan"
+                ]
+              },
+              "upstream_claim_ids": [],
+              "record_ids": [],
+              "next_check": "Review upstream evidence"
+            }
+          ],
+          "prerequisites": [
+            "Confirm rights and funding responsibilities"
+          ],
+          "unknowns": [
+            "No transaction evidence"
+          ],
+          "next_check": "Review ownership and partner interest"
+        }
+      ],
+      "commercial_constraints": [
+        {
+          "role_id": "market",
+          "assessment": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "upstream_claim_ids": [],
+          "record_ids": [],
+          "next_check": "Review upstream evidence"
+        }
+      ],
+      "risks": [
+        {
+          "id": "investment.financing",
+          "description": "Funding unavailable",
+          "priority": "major",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "impact": "May prevent next stage",
+          "next_check": "Obtain verified funding plan"
+        }
+      ],
+      "unknowns": [
+        "Synthetic case; stage and financing need review"
+      ],
+      "next_checks": [
+        {
+          "question": "What budget funds the next result?",
+          "why_it_matters": "Sets capital need",
+          "evidence_needed": "Reviewed work plan and vendor quotes",
+          "decision_if_positive": "Assess funding path",
+          "decision_if_negative": "Keep capital unknown",
+          "claim_ids": []
+        }
+      ],
+      "change_conditions": [
+        "Verified stage budget changes financing path"
+      ],
+      "limitations": [
+        "Synthetic offline fixture"
+      ],
+      "stress_explanations": [
+        {
+          "event_id": "delay_event",
+          "budget_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "time_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "unknowns": [
+            "Financing effects need review"
+          ],
+          "next_check": "Review incremental studies, delays and financing conditions"
+        },
+        {
+          "event_id": "additional_studies_event",
+          "budget_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "time_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "unknowns": [
+            "Financing effects need review"
+          ],
+          "next_check": "Review incremental studies, delays and financing conditions"
+        },
+        {
+          "event_id": "weaker_results_event",
+          "budget_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "financing_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "time_effect": {
+            "value": null,
+            "basis": "unknown",
+            "claim_ids": [],
+            "assumptions": [],
+            "unknowns": [
+              "Need reviewed evidence or plan"
+            ]
+          },
+          "unknowns": [
+            "Financing effects need review"
+          ],
+          "next_check": "Review incremental studies, delays and financing conditions"
+        }
+      ]
+    },
+    "result": {
+      "role_id": "investment",
+      "summary": "Synthetic investment plan; no valuation or return established.",
+      "position": "insufficient_data",
+      "claims": [
+        {
+          "id": "investment.plan",
+          "text": "A proof stage may be considered",
+          "provenance": "ai",
+          "support_status": "unverified",
+          "evidence_ids": [],
+          "assumptions": [
+            "Synthetic proposal"
+          ],
+          "scope": "approach",
+          "importance": "major"
+        }
+      ],
+      "risks": [
+        {
+          "id": "investment.financing",
+          "description": "Funding unavailable",
+          "priority": "major",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "impact": "May prevent next stage",
+          "next_check": "Obtain verified funding plan"
+        }
+      ],
+      "unknowns": [
+        "Synthetic plan; needs review",
+        "Synthetic case; stage and financing need review",
+        "Need reviewed evidence or plan",
+        "Reviewed CRO/CMC asset budget needed",
+        "Reviewed work durations needed",
+        "Future stage budget and financing terms unknown",
+        "No transaction evidence",
+        "Financing effects need review",
+        "Requires verification: investment.plan: A proof stage may be considered",
+        "clinical context absent; alignment remains pending.",
+        "market context absent; alignment remains pending.",
+        "partnerships context absent; alignment remains pending.",
+        "ip_licensing context absent; alignment remains pending."
+      ],
+      "change_conditions": [
+        "Verified stage budget changes financing path"
+      ],
+      "section_content": [
+        {
+          "key": "capital_to_milestone",
+          "summary": "Synthetic investment plan; no valuation or return established.",
+          "claim_ids": [
+            "investment.plan"
+          ],
+          "limitations": [
+            "Synthetic preparation only",
+            "Synthetic offline fixture",
+            "Source token/unit checks are not semantic evidence audit; R3 review required.",
+            "Numeric applicability and completeness require human verification; scenario bounds are not confidence intervals.",
+            "Market opportunity, partner fit and IP screening do not establish revenue, deal value or investment return.",
+            "No final committee recommendation or legal clearance; R4 milestone review and IP specialist review required."
+          ],
+          "structured_data": {
+            "investment": {
+              "summary": "Synthetic investment plan; no valuation or return established.",
+              "position": "insufficient_data",
+              "next_milestone": {
+                "id": "proof",
+                "stage": {
+                  "value": "Synthetic work proposal",
+                  "basis": "hypothesis",
+                  "claim_ids": [
+                    "investment.plan"
+                  ],
+                  "assumptions": [
+                    "Synthetic proposal, needs R4 review"
+                  ],
+                  "unknowns": []
+                },
+                "required_result": {
+                  "value": "Synthetic work proposal",
+                  "basis": "hypothesis",
+                  "claim_ids": [
+                    "investment.plan"
+                  ],
+                  "assumptions": [
+                    "Synthetic proposal, needs R4 review"
+                  ],
+                  "unknowns": []
+                },
+                "success_criteria": [
+                  {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                ],
+                "clinical_alignment": {
+                  "value": null,
+                  "basis": "unknown",
+                  "claim_ids": [],
+                  "assumptions": [],
+                  "unknowns": [
+                    "Need reviewed evidence or plan"
+                  ]
+                }
+              },
+              "work_packages": [
+                {
+                  "id": "prepare",
+                  "milestone_id": "proof",
+                  "work": {
+                    "value": "Synthetic work proposal",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "investment.plan"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal, needs R4 review"
+                    ],
+                    "unknowns": []
+                  },
+                  "required_resources": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "depends_on": [],
+                  "completion_criteria": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                },
+                {
+                  "id": "study",
+                  "milestone_id": "proof",
+                  "work": {
+                    "value": "Synthetic work proposal",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "investment.plan"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal, needs R4 review"
+                    ],
+                    "unknowns": []
+                  },
+                  "required_resources": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "depends_on": [
+                    "prepare"
+                  ],
+                  "completion_criteria": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                }
+              ],
+              "capital": {
+                "budget_basis": {
+                  "value": "Synthetic work proposal",
+                  "basis": "hypothesis",
+                  "claim_ids": [
+                    "investment.plan"
+                  ],
+                  "assumptions": [
+                    "Synthetic proposal, needs R4 review"
+                  ],
+                  "unknowns": []
+                },
+                "scenario_ids": [],
+                "missing_inputs": [
+                  "Reviewed CRO/CMC asset budget needed"
+                ],
+                "company_financials_boundary": "Company cash and diligence are separate from allocated asset funding."
+              },
+              "time": {
+                "scheduling_basis": {
+                  "value": "Synthetic work proposal",
+                  "basis": "hypothesis",
+                  "claim_ids": [
+                    "investment.plan"
+                  ],
+                  "assumptions": [
+                    "Synthetic proposal, needs R4 review"
+                  ],
+                  "unknowns": []
+                },
+                "scenario_ids": [],
+                "dependencies": [
+                  {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                ],
+                "possible_delays": [
+                  {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                ],
+                "missing_inputs": [
+                  "Reviewed work durations needed"
+                ]
+              },
+              "value_inflections": [
+                {
+                  "id": "readout",
+                  "event": {
+                    "value": "Synthetic work proposal",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "investment.plan"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal, needs R4 review"
+                    ],
+                    "unknowns": []
+                  },
+                  "required_result": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "potential_value_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "conditions": [
+                    "Evidence supports clinically relevant benefit"
+                  ],
+                  "next_check": "Review result with R4"
+                }
+              ],
+              "future_financing": [
+                {
+                  "milestone_id": "later",
+                  "stage": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "purpose": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "funding_need": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "possible_sources": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "prerequisites": [
+                    "Confirm next stage and responsibility"
+                  ],
+                  "scenario_ids": [],
+                  "unknowns": [
+                    "Future stage budget and financing terms unknown"
+                  ]
+                }
+              ],
+              "financial_paths": [
+                {
+                  "path": "own_development",
+                  "feasibility": "insufficient_data",
+                  "rationale": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financial_consequences": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "retained_costs_and_obligations": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_dependencies": [
+                    {
+                      "role_id": "partnerships",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    },
+                    {
+                      "role_id": "ip_licensing",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    }
+                  ],
+                  "prerequisites": [
+                    "Confirm rights and funding responsibilities"
+                  ],
+                  "unknowns": [
+                    "No transaction evidence"
+                  ],
+                  "next_check": "Review ownership and partner interest"
+                },
+                {
+                  "path": "licensing",
+                  "feasibility": "insufficient_data",
+                  "rationale": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financial_consequences": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "retained_costs_and_obligations": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_dependencies": [
+                    {
+                      "role_id": "partnerships",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    },
+                    {
+                      "role_id": "ip_licensing",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    }
+                  ],
+                  "prerequisites": [
+                    "Confirm rights and funding responsibilities"
+                  ],
+                  "unknowns": [
+                    "No transaction evidence"
+                  ],
+                  "next_check": "Review ownership and partner interest"
+                },
+                {
+                  "path": "acquisition",
+                  "feasibility": "insufficient_data",
+                  "rationale": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financial_consequences": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "retained_costs_and_obligations": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_dependencies": [
+                    {
+                      "role_id": "partnerships",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    },
+                    {
+                      "role_id": "ip_licensing",
+                      "assessment": {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      },
+                      "upstream_claim_ids": [],
+                      "record_ids": [],
+                      "next_check": "Review upstream evidence"
+                    }
+                  ],
+                  "prerequisites": [
+                    "Confirm rights and funding responsibilities"
+                  ],
+                  "unknowns": [
+                    "No transaction evidence"
+                  ],
+                  "next_check": "Review ownership and partner interest"
+                }
+              ],
+              "stress_assessments": [
+                {
+                  "kind": "delay",
+                  "trigger": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "budget_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "time_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "stress_ids": [],
+                  "unknowns": [
+                    "Financing effects need review"
+                  ],
+                  "next_check": "Review incremental studies, delays and financing conditions"
+                },
+                {
+                  "kind": "additional_studies",
+                  "trigger": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "budget_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "time_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "stress_ids": [],
+                  "unknowns": [
+                    "Financing effects need review"
+                  ],
+                  "next_check": "Review incremental studies, delays and financing conditions"
+                },
+                {
+                  "kind": "weaker_results",
+                  "trigger": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "budget_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "financing_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "time_effect": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "stress_ids": [],
+                  "unknowns": [
+                    "Financing effects need review"
+                  ],
+                  "next_check": "Review incremental studies, delays and financing conditions"
+                }
+              ],
+              "commercial_constraints": [
+                {
+                  "role_id": "market",
+                  "assessment": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  },
+                  "upstream_claim_ids": [],
+                  "record_ids": [],
+                  "next_check": "Review upstream evidence"
+                }
+              ],
+              "unknowns": [
+                "Synthetic plan; needs review",
+                "Synthetic case; stage and financing need review"
+              ],
+              "next_checks": [
+                {
+                  "question": "What budget funds the next result?",
+                  "why_it_matters": "Sets capital need",
+                  "evidence_needed": "Reviewed work plan and vendor quotes",
+                  "decision_if_positive": "Assess funding path",
+                  "decision_if_negative": "Keep capital unknown",
+                  "claim_ids": []
+                }
+              ],
+              "change_conditions": [
+                "Verified stage budget changes financing path"
+              ],
+              "limitations": [
+                "Synthetic preparation only",
+                "Synthetic offline fixture"
+              ],
+              "calculated_financials": {
+                "scenarios": [],
+                "scenario_ranges": [],
+                "stress_scenarios": []
+              },
+              "source_requests": [
+                "Synthetic plan; needs review",
+                "Synthetic case; stage and financing need review",
+                "Need reviewed evidence or plan",
+                "Reviewed CRO/CMC asset budget needed",
+                "Reviewed work durations needed",
+                "Future stage budget and financing terms unknown",
+                "No transaction evidence",
+                "Financing effects need review",
+                "Requires verification: investment.plan: A proof stage may be considered",
+                "clinical context absent; alignment remains pending.",
+                "market context absent; alignment remains pending.",
+                "partnerships context absent; alignment remains pending.",
+                "ip_licensing context absent; alignment remains pending."
+              ],
+              "prompt_version": "2.0.0",
+              "prompt_versions": {
+                "investment_plan": "1.0.0",
+                "investment": "2.0.0"
+              },
+              "prepared_plan": {
+                "claims": [
+                  {
+                    "id": "investment.plan",
+                    "text": "A proof stage may be considered",
+                    "provenance": "ai",
+                    "support_status": "unverified",
+                    "evidence_ids": [],
+                    "assumptions": [
+                      "Synthetic proposal"
+                    ],
+                    "scope": "approach",
+                    "importance": "major"
+                  }
+                ],
+                "next_milestone": {
+                  "id": "proof",
+                  "stage": {
+                    "value": "Synthetic work proposal",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "investment.plan"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal, needs R4 review"
+                    ],
+                    "unknowns": []
+                  },
+                  "required_result": {
+                    "value": "Synthetic work proposal",
+                    "basis": "hypothesis",
+                    "claim_ids": [
+                      "investment.plan"
+                    ],
+                    "assumptions": [
+                      "Synthetic proposal, needs R4 review"
+                    ],
+                    "unknowns": []
+                  },
+                  "success_criteria": [
+                    {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  ],
+                  "clinical_alignment": {
+                    "value": null,
+                    "basis": "unknown",
+                    "claim_ids": [],
+                    "assumptions": [],
+                    "unknowns": [
+                      "Need reviewed evidence or plan"
+                    ]
+                  }
+                },
+                "work_packages": [
+                  {
+                    "id": "prepare",
+                    "milestone_id": "proof",
+                    "work": {
+                      "value": "Synthetic work proposal",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "investment.plan"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal, needs R4 review"
+                      ],
+                      "unknowns": []
+                    },
+                    "required_resources": [
+                      {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      }
+                    ],
+                    "depends_on": [],
+                    "completion_criteria": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  },
+                  {
+                    "id": "study",
+                    "milestone_id": "proof",
+                    "work": {
+                      "value": "Synthetic work proposal",
+                      "basis": "hypothesis",
+                      "claim_ids": [
+                        "investment.plan"
+                      ],
+                      "assumptions": [
+                        "Synthetic proposal, needs R4 review"
+                      ],
+                      "unknowns": []
+                    },
+                    "required_resources": [
+                      {
+                        "value": null,
+                        "basis": "unknown",
+                        "claim_ids": [],
+                        "assumptions": [],
+                        "unknowns": [
+                          "Need reviewed evidence or plan"
+                        ]
+                      }
+                    ],
+                    "depends_on": [
+                      "prepare"
+                    ],
+                    "completion_criteria": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  }
+                ],
+                "future_milestones": [
+                  {
+                    "milestone_id": "later",
+                    "stage": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    }
+                  }
+                ],
+                "stress_events": [
+                  {
+                    "id": "delay_event",
+                    "kind": "delay",
+                    "trigger": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    },
+                    "work_ids": [
+                      "study"
+                    ],
+                    "already_in_baseline": false,
+                    "stress_ids": []
+                  },
+                  {
+                    "id": "additional_studies_event",
+                    "kind": "additional_studies",
+                    "trigger": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    },
+                    "work_ids": [
+                      "study"
+                    ],
+                    "already_in_baseline": false,
+                    "stress_ids": []
+                  },
+                  {
+                    "id": "weaker_results_event",
+                    "kind": "weaker_results",
+                    "trigger": {
+                      "value": null,
+                      "basis": "unknown",
+                      "claim_ids": [],
+                      "assumptions": [],
+                      "unknowns": [
+                        "Need reviewed evidence or plan"
+                      ]
+                    },
+                    "work_ids": [
+                      "study"
+                    ],
+                    "already_in_baseline": false,
+                    "stress_ids": []
+                  }
+                ],
+                "risks": [],
+                "unknowns": [
+                  "Synthetic plan; needs review"
+                ],
+                "limitations": [
+                  "Synthetic preparation only"
+                ]
+              },
+              "fixed_plan_hash": "b1213b132593df391b069a40fd636f57fef45a9f0f348267101e37bcbb3760e0",
+              "numeric_provenance": [],
+              "numeric_review_status": "semantic_review_pending",
+              "snapshot_id": "snapshot-investment",
+              "as_of_date": "2026-10-08",
+              "synthetic": true,
+              "context_availability": {
+                "clinical": false,
+                "market": false,
+                "partnerships": false,
+                "ip_licensing": false
+              },
+              "upstream_context": {
+                "clinical": null,
+                "market": null,
+                "partnerships": null,
+                "ip_licensing": null
+              },
+              "claim_evidence_links": {
+                "investment.plan": []
+              },
+              "evidence_source_links": {}
+            }
+          }
+        }
+      ]
+    }
+  }
+]
