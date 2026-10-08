@@ -355,10 +355,16 @@ def _normalise_translation(
     summaries: dict[str, dict[str, object]] = {}
     missing_data: list[str] = []
 
+    known = {ev.id for ev in pack.evidence}
     for link in analysis.links:
         valid_ids = _valid_evidence_ids(link.evidence_ids, pack)
+        dropped_ids = list(dict.fromkeys(eid for eid in link.evidence_ids if eid not in known))
         gaps = list(link.gaps)
         assumptions = list(link.assumptions)
+        if dropped_ids:
+            warning = f"claim {link.key}: dropped unknown evidence ids {dropped_ids}"
+            assumptions.append(warning)
+            missing_data.append(warning)
         text = link.text
         effective_link_status = link.status
         support_status: ClaimStatus
@@ -425,8 +431,13 @@ def _normalise_translation(
     for output in analysis.additional_claims:
         additional_keys.add(output.key)
         valid_ids = _valid_evidence_ids(output.evidence_ids, pack)
+        dropped_ids = list(dict.fromkeys(eid for eid in output.evidence_ids if eid not in known))
         status = output.support_status
         assumptions = list(output.assumptions)
+        if dropped_ids:
+            warning = f"claim {output.key}: dropped unknown evidence ids {dropped_ids}"
+            assumptions.append(warning)
+            missing_data.append(warning)
         text = output.text
 
         if not valid_ids and status in {"supported", "contradicted", "mixed"}:

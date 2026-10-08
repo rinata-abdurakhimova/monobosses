@@ -140,11 +140,15 @@ def _missing_evidence_message(claim_key: str) -> str:
 def _to_claims(analysis: ScientificAnalysis, pack: EvidencePack) -> list[Claim]:
     claims: list[Claim] = []
     evidence_dependent_statuses = {"supported", "contradicted", "mixed"}
+    known = {ev.id for ev in pack.evidence}
     for output in analysis.claims:
         valid_ids = _valid_evidence_ids(output.evidence_ids, pack)
+        dropped_ids = list(dict.fromkeys(eid for eid in output.evidence_ids if eid not in known))
         status = output.support_status
         assumptions = list(output.assumptions)
         text = output.text
+        if dropped_ids:
+            assumptions.append(f"claim {output.key}: dropped unknown evidence ids {dropped_ids}")
         if status in evidence_dependent_statuses and not valid_ids:
             status = "unverified"
             message = _missing_evidence_message(output.key)
@@ -206,6 +210,7 @@ async def analyze_science(
         for claim in claims
         for assumption in claim.assumptions
         if "no valid evidence references remain" in assumption
+        or "dropped unknown evidence ids" in assumption
     )
     if not claims:
         unknowns.append("No scientific claims were returned; the scientific thesis remains unverified.")
@@ -230,5 +235,5 @@ async def analyze_science(
         risks=risks,
         unknowns=unknowns,
         change_conditions=analysis.change_conditions,
-        section_content= [section],
+        section_content=[section],
     )
