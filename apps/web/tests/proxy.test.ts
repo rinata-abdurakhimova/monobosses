@@ -97,6 +97,7 @@ test("proxy forwards JSON and status without browser secrets or upstream cookies
         "Content-Type": "application/json",
         Cookie: "private=1",
         Authorization: "browser-secret",
+        "X-API-Key": "browser-key",
         Origin: "http://localhost:3000",
       },
       body: JSON.stringify({ indication: "Disease" }),
@@ -112,6 +113,7 @@ test("proxy forwards JSON and status without browser secrets or upstream cookies
         const headers = new Headers(init?.headers);
         assert.equal(headers.get("cookie"), null);
         assert.equal(headers.get("authorization"), null);
+        assert.equal(headers.get("x-api-key"), null);
         assert.deepEqual(JSON.parse(String(init?.body)), {
           indication: "Disease",
         });
@@ -127,8 +129,8 @@ test("proxy forwards JSON and status without browser secrets or upstream cookies
   assert.equal(response.headers.get("cache-control"), "no-store");
 });
 
-test("proxy preserves backend error envelopes for 422/404/500", async () => {
-  for (const status of [422, 404, 500]) {
+test("proxy preserves backend error envelopes for 401/422/404/500", async () => {
+  for (const status of [401, 422, 404, 500]) {
     const error = {
       error: {
         code: "backend_error",
@@ -147,6 +149,71 @@ test("proxy preserves backend error envelopes for 422/404/500", async () => {
     assert.equal(response.status, status);
     assert.deepEqual(await response.json(), error);
   }
+});
+
+test("server key authenticates JSON, polling, reports and uploads without exposing it", async () => {
+  const apiSharedSecret = "synthetic-server-key-for-proxy-test";
+  for (const path of [
+    "cases",
+    "cases/case-1/runs",
+    "cases/case-1/evidence",
+    "cases/case-1/documents",
+    "runs/run-1",
+    "cases/case-1/reports/1",
+  ]) {
+    const isGet = path.startsWith("runs/") || path.includes("/reports/");
+    const isUpload = path.endsWith("/documents");
+    const form = new FormData();
+    form.set(
+      "file",
+      new File(["%PDF-1.4"], "synthetic.pdf", { type: "application/pdf" }),
+    );
+    form.set("title", "Synthetic test");
+    form.set("synthetic", "true");
+    const response = await proxyBackend(
+      request(path, {
+        method: isGet ? "GET" : "POST",
+        headers: {
+          "X-API-Key": "untrusted-browser-key",
+          Cookie: "browser-cookie",
+          Authorization: "browser-authorization",
+          ...(!isGet && !isUpload
+            ? { "Content-Type": "application/json" }
+            : {}),
+        },
+        ...(!isGet ? { body: isUpload ? form : "{}" } : {}),
+      }),
+      path.split("/"),
+      {
+        baseUrl,
+        apiSharedSecret,
+        fetcher: async (url, init) => {
+          assert.equal(url, `${baseUrl}/${path}`);
+          const headers = new Headers(init?.headers);
+          assert.equal(headers.get("x-api-key"), apiSharedSecret);
+          assert.equal(headers.get("cookie"), null);
+          assert.equal(headers.get("authorization"), null);
+          if (isUpload) assert.equal(headers.get("content-type"), null);
+          return Response.json(
+            { ok: true },
+            { headers: { "X-API-Key": apiSharedSecret } },
+          );
+        },
+      },
+    );
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("x-api-key"), null);
+    assert.ok(!(await response.text()).includes(apiSharedSecret));
+  }
+  const failed = await proxyBackend(request("runs/run-1"), ["runs", "run-1"], {
+    baseUrl,
+    apiSharedSecret,
+    fetcher: async () => {
+      throw new Error(apiSharedSecret);
+    },
+  });
+  assert.equal(failed.status, 502);
+  assert.ok(!(await failed.text()).includes(apiSharedSecret));
 });
 
 test("proxy rejects unsupported routes, origins, query strings and malformed input before forwarding", async () => {

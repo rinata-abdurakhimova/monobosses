@@ -24,7 +24,13 @@ const input = {
 };
 const created = await client.createCase(input);
 const started = await client.startRun(created.case_id);
-const completed = await pollRun(client, started.run_id, { maxWaitMs: 600000 });
+const observedStages = new Set<string>();
+const completed = await pollRun(client, started.run_id, {
+  maxWaitMs: 600000,
+  onUpdate(run) {
+    if (run.stage) observedStages.add(run.stage);
+  },
+});
 assert.equal(completed.status, "completed");
 const report = await client.getReport(
   created.case_id,
@@ -48,8 +54,9 @@ for (const status of [422, 404]) {
     (error) => error instanceof ApiError && error.status === status,
   );
 }
-// The current skeleton provides a failed run for a real HTTP failure check.
-if (completed.warnings.some((warning) => warning.startsWith("MOCK:"))) {
+// Opt in only on a development API configured with SEED_SYNTHETIC=true.
+const checkedSeededFailure = process.env.CHECK_SEEDED_FAILURE === "true";
+if (checkedSeededFailure) {
   const failed = await pollRun(client, "run-synthetic-failed");
   assert.equal(failed.status, "failed");
   assert.ok(failed.error?.message);
@@ -63,6 +70,8 @@ console.log(
       synthetic: report.content.synthetic,
       refresh_created_new_run: false,
       errors_checked: [422, 404],
+      seeded_failed_run_checked: checkedSeededFailure,
+      observed_stages: [...observedStages],
     },
     null,
     2,

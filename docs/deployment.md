@@ -2,7 +2,11 @@
 
 Deploy both applications in one Railway project. The jury receives one HTTPS website URL. The website proxies requests to the private Python service; the browser never needs its internal address or model credentials. The PDF flow and 10 MiB file limit are retained.
 
-This is deployment preparation. It does not complete #18: the backend still has in-memory storage, synthetic runs/revisions, PDF 501 and unfinished authentication. A volume and environment variable alone do not make the in-memory repository persistent.
+This is deployment preparation. After PR #42 the backend has SQLite persistence,
+background runs and server authentication. This frontend branch forwards the
+server API credential. It does not complete #18: deployed volume/restart checks,
+the real committee chair, live model verification and successful PDF extraction
+remain pending. The historical preview verification below predates these changes.
 
 ## What Rinata does now
 
@@ -27,22 +31,37 @@ The Docker command runs `python scripts/serve.py`. It creates an explicitly dual
 
 Deploy and check Railway's API logs for startup and a successful `/health` check. That check confirms the service runs, not that a complete analysis is implemented.
 
-For the final persistent deployment, attach a volume to **api** at `/data` and set `DATABASE_URL=sqlite:////data/vic.sqlite3`, after confirming this path with R2's repository implementation. Persistent disk uses resources/credits. Do not use multiple API replicas with this SQLite arrangement. R2 must configure storage of imported documents/snapshots on durable storage as well. Currently these settings have no effect on the in-memory repository.
+For persistent deployment, attach a volume to **api** at `/data` and set
+`DATABASE_URL=sqlite:////data/vic.sqlite3`. SQLite stores cases, runs, evidence,
+snapshots, reports and traces. Persistent disk uses resources/credits. Use one
+API replica and one worker: background jobs run in process. Restart fails
+interrupted runs; previously saved reports remain readable when the database
+is on the persistent volume. PDF extraction/storage remains R2-03 work.
 
-Backend environment variables, once R2's implementation is ready:
+Backend environment variables:
 
 | Variable | Where the value comes from |
 | --- | --- |
 | `LLM_PROVIDER`, `LLM_MODEL` | Provider/model agreed with R2 |
 | `LLM_API_KEY` | Provider dashboard; enter only in Railway API variables |
 | `DATABASE_URL` | Durable database path/connection agreed with R2 |
-| `API_SHARED_SECRET` | Generated secret after the backend/header contract is implemented |
+| `API_SHARED_SECRET` | Same server-only secret on **api** and **web**; sent as `X-API-Key` |
+| `APP_ENV` | `production` for live deployment |
+| `RUN_BACKEND` | `pipeline`; mock backend is refused in production |
+| `DEV_STUBS` | `false` for production; `true` only in explicit synthetic development |
+| `SEED_SYNTHETIC` | `false` for production; `true` for development fixture checks |
+| `MAX_CONCURRENT_RUNS` | `2` unless R2 documents another positive limit |
 | `MAX_UPLOAD_BYTES` | `10485760` (10 MiB) |
 | `MAX_RUN_SECONDS` | `600` unless R2 documents a different budget |
 | `MAX_RUN_COST_USD` | Verified model-call spending budget; not a placeholder zero |
 | `CORS_ORIGINS` | Public website origin if required by the backend; browsers use the website proxy |
 
-Do not enter model keys yet for the synthetic preview: the current adapter does not use them. Setting `API_SHARED_SECRET` currently does not enforce authentication. Keep the API private, and finish the agreed authentication implementation before claiming #18's security criterion is satisfied.
+All-stub synthetic development needs no model key. The real pipeline uses the
+shared adapter and requires provider configuration plus all real modules,
+including the missing R5 chair. Python enforces `API_SHARED_SECRET` whenever set;
+production refuses an empty secret, mock runs and development stubs. Keep the
+API private and verify both rejected unauthenticated requests and successful
+website requests before claiming deployed authentication is complete.
 
 ## Configure the website service
 
@@ -60,23 +79,35 @@ The website Dockerfile installs the pinned npm lockfile with Node 24, copies sha
 
 After generating the public website domain, set **web** `WEB_ORIGIN` to exactly that HTTPS origin, e.g. `https://your-project.up.railway.app`, without a path or query, and redeploy the website. This allows same-origin writes when Railway forwards HTTPS traffic internally over HTTP. Cross-origin writes still fail; browser-supplied forwarding headers are not trusted. Update `WEB_ORIGIN` when adding a custom domain.
 
-No provider key is needed on **web**. It needs `API_BASE_URL`, `WEB_ORIGIN` and eventually the agreed server API credential. Never use `NEXT_PUBLIC_` for those credentials. `/api/health` checks the website process only; it does not call the model or confirm Python readiness.
+No provider key is needed on **web**. Set `API_BASE_URL`, `WEB_ORIGIN` and the
+same `API_SHARED_SECRET` as **api**, then redeploy/restart the website. The secret
+is read by the server route at runtime and sent only upstream as `X-API-Key`.
+Never use `NEXT_PUBLIC_` for credentials. `/api/health` checks the website process
+only; it does not call the model or confirm Python readiness.
 
 ## Verify the deployed preview
 
 1. Open the public website's `/api/health`: expect `{"status":"ok"}`.
 2. Open `/cases/revision-sample?version=1` and `?version=2`; inspect an exact excerpt.
 3. Create one synthetic assessment through the Python API flow. Confirm the report is labelled synthetic. Check that reloading uses GET requests and does not create a new run.
-4. Import synthetic text. Confirm an explicit success message and no automatic review. Run one review, then independently open the parent version. The current backend allows one fixed v1 → v2 review per fresh case and ignores the imported evidence.
+4. Import synthetic text. Confirm an explicit success message and no automatic
+   review. Run one review, then independently open the immutable parent version.
+   R2 now creates snapshots and full reruns. Synthetic stub conclusions do not
+   demonstrate that new evidence changes the real committee decision.
 5. Submit a test PDF: currently expect readable 501. Reject oversized files. Verify a valid PDF near 10 MiB reaches the backend through Railway's proxy; do not infer this from localhost alone.
-6. With Node 22.18+ on your laptop, from `apps/web` run `npm run test:api` and `npm run test:evidence-api` with `WEB_BASE_URL` set to the deployed website. Both checks make synthetic test records; they do not establish real analysis quality. The evidence smoke check deliberately expects the current mock/501 behavior and needs updating after R2 integrates the pipeline.
+6. With Node 22.18+ on your laptop, from `apps/web` run `npm run test:api` with
+   `WEB_BASE_URL` set to the target development website. For a seeded development
+   API, set `CHECK_SEEDED_FAILURE=true`. This creates synthetic test records, not
+   real analysis evidence. The older `test:evidence-api` script expects R2-01's
+   fixed mock revision and is not a verification command for the new pipeline.
 
 ## Checks required before closing #18
 
 - Real input → completed saved report, plus a failed run and a source outage.
 - Readable PDF import; unreadable/unsupported/oversized PDF errors; private sources without fabricated public URLs.
 - Safety and unrelated updates use actual imported evidence, with honest v1/v2 comparisons.
-- Restart API, then reopen the previously created case/report and evidence. Current in-memory storage fails this check; attaching a volume is insufficient until R2 implements persistence.
+- Restart API, then reopen the previously created case/report and evidence.
+  SQLite persistence is implemented; verify the actual deployed volume/path.
 - Confirm server authentication is enforced and secrets never appear in the browser bundle, URLs or logs.
 - Jury can reach the public website while both services are running and hosting/model budgets remain available.
 

@@ -44,6 +44,7 @@ export async function proxyBackend(
   options: {
     baseUrl?: string;
     publicOrigin?: string;
+    apiSharedSecret?: string;
     fetcher?: typeof fetch;
     timeoutMs?: number;
   } = {},
@@ -226,6 +227,9 @@ export async function proxyBackend(
         method: request.method,
         headers: {
           Accept: "application/json",
+          ...(options.apiSharedSecret
+            ? { "X-API-Key": options.apiSharedSecret }
+            : {}),
           ...(body === undefined || body instanceof FormData
             ? {}
             : { "Content-Type": "application/json" }),

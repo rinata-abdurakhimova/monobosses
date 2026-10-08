@@ -16,13 +16,20 @@ Related to [issue #15](https://github.com/rinata-abdurakhimova/monobosses/issues
 
 From `apps/web`: `npm test`, `npm run typecheck`, `npm run contracts:check`, `npm run format:check`, `npm run build`.
 
-With Python and Next.js running: `npm run test:evidence-api` (optional `WEB_BASE_URL`). It targets the current synthetic R2-01 skeleton and verifies HTTP text import, no implicit run on import/failure, PDF 501 propagation, one parented review, immutable v1, v1/v2 reads, and the lack of evidence-driven revisions. Update its expectations when R2 connects the real pipeline.
+`npm run test:evidence-api` (optional `WEB_BASE_URL`) retains the historical
+R2-01 fixed-revision expectations. Use it only with explicit development
+`RUN_BACKEND=mock`; it is not a verification command for the post-#42 pipeline.
+The updated `test:api` verifies background runs through the authenticated proxy;
+see [R1-02 verification](r1-02-handoff.md).
 
 All 38 frontend tests pass, along with TypeScript, contract drift, formatting, production build and `git diff --check`. The real HTTP smoke check also passes. The unit suite covers unchanged categories, wrong parents/cases, incorrect/omitted changes, import errors, multipart handling, limits, origins and stalled upload deadlines. Browser checks cover fixture versions, exact excerpts, API text import and explicit review, parent reopening, a visible review failure, PDF 501, and oversized PDF rejection. Layout checks at 390px and 1280px show no horizontal overflow.
 
 ## Remaining dependencies
 
-- **R2 #7/#14:** persistent storage, pipeline/report assembly, connection of R3's importer to the endpoints, and evidence-driven revisions. PDF currently returns 501. Runs copy fixed synthetic reports and ignore uploaded evidence; unrelated evidence also produces the fixed safety revision.
+- **R2 #7/#14:** SQLite, background orchestration, snapshots and immutable report
+  assembly are implemented after #42. PDF still returns 501. Connecting the
+  importer and verifying evidence-driven live revisions remain pending; stub
+  conclusions cannot demonstrate the effect of decisive or unrelated evidence.
 - **R3 #12:** complete semantic/leakage audit and final-chair claim auditing.
 - **R5 #13:** final decision/claim links and explanation from chair synthesis.
 - **R1:** verify safety/unrelated updates, readable/unreadable PDFs, private provenance, wrong parents, failures, persistence and reload against the integrated pipeline before closing #15.
