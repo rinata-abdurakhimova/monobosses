@@ -56,9 +56,10 @@ Required deployment settings:
   Relative development default: `sqlite:///./data/vic.sqlite3`.
 - `SEED_SYNTHETIC=false`: avoid fixture cases on production.
 - `CORS_ORIGINS`: explicit frontend origins; production refuses `*`.
-- `LLM_PROVIDER=anthropic`, `LLM_MODEL` and `LLM_API_KEY`: configure a supported
-  model and install the `anthropic` extra. R2 owns retry/repair limits;
-  the SDK's internal retries are disabled.
+- `LLM_PROVIDER=openai`, `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`: configure the
+  mentor gateway as described below. HTTPX is already a runtime dependency.
+  Alternatively use `LLM_PROVIDER=anthropic` and install the `anthropic` extra.
+  R2 owns retry/repair limits; provider transports have no internal retries.
 - `MAX_RUN_SECONDS`, `MAX_CONCURRENT_RUNS`: positive limits. One case may have
   only one active run (409); the global concurrency limit returns 429.
 
@@ -72,6 +73,47 @@ pricing. Without usable prices/token usage, cost is `null`/unavailable, not zero
 and the cost limit cannot be enforced. This is an approximate limit checked
 before calls, not a guaranteed spending cap for concurrent/in-flight requests.
 Wall-clock time and bounded retries still apply.
+
+## Mentor API connection
+
+The team wallet's supplied instructions specify an OpenAI-compatible **Chat
+Completions** gateway, bearer team key and `max_completion_tokens`. This adapter
+does not use Responses, embeddings, images, audio, web search or multiple choices.
+It makes non-streaming requests; the website continues polling background runs.
+
+Set these on the Railway **api** service, or in `services/api/.env` for local work:
+
+```dotenv
+LLM_PROVIDER=openai
+LLM_BASE_URL=https://secrethon-gateway.nicewave-ab4e0867.swedencentral.azurecontainerapps.io/v1
+LLM_MODEL=gpt-6-luna
+LLM_API_KEY=replace-with-your-team-key
+```
+
+`LLM_BASE_URL` is the base ending in `/v1`, not the `/chat/completions` URL.
+The adapter appends that route, sends `Authorization: Bearer`, and uses the
+existing JSON schema validation, bounded repairs/retries and token tracing.
+Missing token usage stays unavailable; configure prices only from verified
+wallet/provider information. Errors never expose raw provider bodies or keys.
+HTTPS is required outside localhost, and redirects are refused.
+
+The team key is separate from `API_SHARED_SECRET` (web-to-Python authentication).
+Do not add the team key to the **web** service, browser code or Git. No changes
+to R3/R4/R5 agents are needed; they use the shared adapter.
+
+From `services/api`, run `python scripts/check_llm.py` for **one paid request**,
+with at most 256 completion tokens, a 30-second timeout and no automatic retry.
+It reports connectivity and token usage without printing the key or response
+text. This check does not create a case/report or require the committee chair.
+It does not verify analysis quality or close #7. Redeploy the API after merging
+the provider code and setting its variables; a key alone cannot update code.
+
+For a real committee run, use `DEV_STUBS=false` and integrate every required
+module, including `synthesize_committee`. Until then, a successful connectivity
+check is still only an isolated model call.
+
+Request format reference: [OpenAI Chat Completions](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create).
+The gateway URL/model above come from the team's wallet connection instructions.
 
 ## Pipeline and validation
 

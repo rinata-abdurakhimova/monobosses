@@ -1,6 +1,7 @@
 """Runtime settings. Names from the contract (section 5) plus additive R2-02 settings."""
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -13,6 +14,9 @@ class Settings(BaseSettings):
     llm_provider: str = "placeholder"
     llm_model: str = "placeholder-model"
     llm_api_key: str = ""
+    # OpenAI-compatible base URL from the provider's connection instructions.
+    # No default: never send a mentor key to a guessed host.
+    llm_base_url: str = ""
     database_url: str = "sqlite:///./data/vic.sqlite3"
     cors_origins: str = "http://localhost:3000"
     max_upload_bytes: int = 10 * 1024 * 1024
@@ -37,6 +41,21 @@ class Settings(BaseSettings):
     llm_price_input_per_mtok: float | None = None    # USD per 1M input tokens
     llm_price_output_per_mtok: float | None = None   # USD per 1M output tokens
     llm_price_date: str | None = None                # date the prices were checked
+
+    @field_validator("llm_base_url")
+    @classmethod
+    def _validate_api_url(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            return value
+        parts = urlsplit(value)
+        if (parts.scheme not in {"https", "http"} or not parts.hostname
+                or parts.username is not None or parts.password is not None
+                or parts.fragment or parts.query):
+            raise ValueError("LLM_BASE_URL must be an HTTP(S) URL without credentials, query or fragment")
+        if parts.scheme == "http" and parts.hostname not in {"localhost", "127.0.0.1", "::1"}:
+            raise ValueError("LLM_BASE_URL must use HTTPS outside localhost")
+        return value.rstrip("/")
 
     @field_validator("max_run_cost_usd", "llm_price_input_per_mtok", "llm_price_output_per_mtok",
                      "llm_price_date", mode="before")
@@ -64,6 +83,7 @@ class Settings(BaseSettings):
         """Non-secret configuration that goes into the trace and the config version."""
         return {
             "llm_provider": self.llm_provider, "llm_model": self.llm_model,
+            "llm_base_url": self.llm_base_url,
             "llm_max_retries": self.llm_max_retries, "llm_max_repairs": self.llm_max_repairs,
             "llm_request_timeout_seconds": self.llm_request_timeout_seconds,
             "llm_max_output_tokens": self.llm_max_output_tokens,

@@ -3,15 +3,24 @@ generate_structured(prompt_id, payload, response_model, ctx)."""
 import asyncio
 import json
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 
+import httpx
 from pydantic import BaseModel
 
 from vic.config import Settings
 from vic.contracts import RunContext
-from vic.failures import (BudgetExceeded, MalformedModelOutput, ModuleNotReady, ProviderAuthError,
-                          ProviderError, ProviderTimeout, RunTimeout)
+from vic.failures import (
+    BudgetExceeded,
+    MalformedModelOutput,
+    ModuleNotReady,
+    ProviderAuthError,
+    ProviderError,
+    ProviderTimeout,
+    RunTimeout,
+)
 from vic.prompts import load_prompt
 
 T = TypeVar("T", bound=BaseModel)
@@ -71,12 +80,74 @@ class AnthropicProvider:
         return ProviderResponse(text, resp.usage.input_tokens, resp.usage.output_tokens)
 
 
+class OpenAICompatibleProvider:
+    """Chat Completions transport for the mentor's OpenAI-compatible gateway.
+
+    Base URL comes from the team's wallet instructions, not from the key prefix.
+    The shared StructuredLlm owns retries, schema repairs, budget and tracing.
+    """
+    name = "openai"
+
+    def __init__(self, settings: Settings, *, transport: httpx.AsyncBaseTransport | None = None):
+        self._api_key = settings.llm_api_key
+        self._base_url = settings.llm_base_url
+        self._transport = transport
+
+    async def complete(self, *, system, messages, model, max_tokens, timeout) -> ProviderResponse:
+        if not self._api_key.strip():
+            raise ProviderAuthError("LLM_API_KEY is empty")
+        if not self._base_url:
+            raise ProviderAuthError("Set LLM_BASE_URL to the base URL from the provider")
+        if not model.strip() or model == "placeholder-model":
+            raise ProviderAuthError("Set LLM_MODEL to the provider's model/deployment name")
+        headers = {"Authorization": f"Bearer {self._api_key}"}
+        body = {"model": model, "messages": [{"role": "system", "content": system}, *messages],
+                "max_completion_tokens": max_tokens, "stream": False}
+        try:
+            # HTTPX has no implicit retries; redirects must not forward credentials.
+            async with httpx.AsyncClient(transport=self._transport, follow_redirects=False) as client:
+                response = await client.post(f"{self._base_url}/chat/completions",
+                                             headers=headers, json=body, timeout=timeout)
+        except httpx.TimeoutException:
+            raise ProviderTimeout("The model provider timed out") from None
+        except httpx.RequestError:
+            raise ProviderError("The model provider is temporarily unavailable") from None
+        status = response.status_code
+        if status in {401, 403}:
+            raise ProviderAuthError("The model provider rejected the API credentials")
+        if status == 429 or status >= 500:
+            raise ProviderError(f"The model provider returned HTTP {status}")
+        if not 200 <= status < 300:
+            raise ProviderError(f"The model provider returned HTTP {status}",
+                                code="provider_rejected", retryable=False)
+        try:
+            data = response.json()
+            content = data["choices"][0]["message"]["content"]
+            if not isinstance(content, str) or not content.strip():
+                raise ValueError("Missing text")
+            usage = data.get("usage") or {}
+            if not isinstance(usage, dict):
+                raise TypeError("Invalid usage")
+        except (ValueError, KeyError, IndexError, TypeError):
+            # Never expose provider response bodies (they may echo secrets or user input).
+            raise ProviderError("The model provider returned an invalid Chat Completions response",
+                                code="provider_rejected", retryable=False) from None
+
+        def token_count(field: str) -> int | None:
+            value = usage.get(field)
+            return value if type(value) is int and value >= 0 else None
+
+        return ProviderResponse(content, token_count("prompt_tokens"), token_count("completion_tokens"))
+
+
 def make_provider(settings: Settings) -> Provider:
     name = settings.llm_provider.lower()
     if name == "placeholder":
         return PlaceholderProvider()
     if name == "anthropic":
         return AnthropicProvider(settings.llm_api_key)
+    if name == "openai":
+        return OpenAICompatibleProvider(settings)
     raise ValueError(f"Unknown LLM_PROVIDER '{settings.llm_provider}'")
 
 
@@ -142,7 +213,7 @@ class StructuredLlm:
                     self._provider.complete(system=system, messages=messages, model=self._s.llm_model,
                                             max_tokens=self._s.llm_max_output_tokens, timeout=timeout),
                     timeout=timeout + 5)
-            except (asyncio.TimeoutError, TimeoutError):
+            except TimeoutError:
                 error: ProviderError = ProviderTimeout("The model provider timed out")
             except ProviderError as exc:
                 error = exc
