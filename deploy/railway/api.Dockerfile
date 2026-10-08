@@ -6,5 +6,5 @@ COPY services/api /app/services/api
 RUN pip install --no-cache-dir -e . && mkdir -p /data
 EXPOSE 8000
 # One process until R2 supplies persistent storage and coordinated workers.
-# IPv6 wildcard supports Railway's private network; verify its health check on deploy.
-CMD ["sh", "-c", "exec python -m uvicorn vic.main:app --host :: --port ${PORT:-8000} --workers 1"]
+# Accept IPv4 health checks and IPv6 private-network traffic on the same port.
+CMD ["python", "scripts/serve.py"]

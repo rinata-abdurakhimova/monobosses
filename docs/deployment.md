@@ -23,7 +23,7 @@ This is deployment preparation. It does not complete #18: the backend still has 
 | Replicas | One |
 | Serverless/sleep | Disabled for the jury test session |
 
-The Docker command starts `uvicorn vic.main:app`, binds to the IPv6 wildcard for Railway's private network, uses `PORT`, and runs one worker without development reload. The package is installed from the copied source so prompt files remain beside their agent modules. The base image is Python 3.12.
+The Docker command runs `python scripts/serve.py`. It creates an explicitly dual-stack socket so IPv4 health checks and IPv6 private-network traffic reach the same `PORT`, then runs Uvicorn with one worker without development reload. A plain `uvicorn --host ::` listener can be IPv6-only and prevent the hosting health check from reaching it. The package is installed from the copied source so prompt files remain beside their agent modules. The base image is Python 3.12.
 
 Deploy and check Railway's API logs for startup and a successful `/health` check. That check confirms the service runs, not that a complete analysis is implemented.
 
