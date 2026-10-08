@@ -1221,12 +1221,19 @@
         "title": "Usage",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "APIKeyHeader": {
+        "in": "header",
+        "name": "X-API-Key",
+        "type": "apiKey"
+      }
     }
   },
   "info": {
-    "description": "Contract v1. R2-01: mock handlers only.",
+    "description": "Contract v1.",
     "title": "Virtual Investment Committee API",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -1265,6 +1272,11 @@
             "description": "Validation error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Create Case",
         "tags": [
           "cases"
@@ -1358,6 +1370,11 @@
             "description": "Not implemented"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Upload Document",
         "tags": [
           "evidence"
@@ -1420,6 +1437,11 @@
             "description": "Validation error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Add Evidence",
         "tags": [
           "evidence"
@@ -1481,6 +1503,11 @@
             "description": "Validation error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Report",
         "tags": [
           "reports"
@@ -1554,6 +1581,11 @@
             "description": "Validation error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Create Run",
         "tags": [
           "cases"
@@ -1638,6 +1670,11 @@
             "description": "Validation error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Run",
         "tags": [
           "runs"
