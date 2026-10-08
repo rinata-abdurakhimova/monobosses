@@ -83,8 +83,18 @@ export function EvidenceUpload({
         report remains available. Private uploads do not need a public URL.
       </p>
       <form
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
+          const invalid = event.currentTarget.querySelector<
+            HTMLInputElement | HTMLTextAreaElement
+          >("input:invalid, textarea:invalid, select:invalid");
+          if (invalid) {
+            const label = invalid.labels?.[0]?.textContent ?? "Document input";
+            setError(`${label}: ${invalid.validationMessage}`);
+            invalid.focus();
+            return;
+          }
           void act(false);
         }}
       >
@@ -133,6 +143,8 @@ export function EvidenceUpload({
                 onChange={(event) => {
                   const next = event.target.files?.[0] ?? null;
                   setFile(next);
+                  if (next && !title.trim())
+                    setTitle(next.name.replace(/\.pdf$/i, ""));
                   setImported(null);
                   setError(
                     next && next.size > 10 * 1024 * 1024
