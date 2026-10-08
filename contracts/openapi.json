@@ -1225,12 +1225,19 @@
         "title": "Usage",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "APIKeyHeader": {
+        "in": "header",
+        "name": "X-API-Key",
+        "type": "apiKey"
+      }
     }
   },
   "info": {
-    "description": "Contract v1. R2-01: mock handlers only.",
+    "description": "Contract v1.",
     "title": "Virtual Investment Committee API",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -1258,6 +1265,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing or invalid API key"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1269,6 +1286,11 @@
             "description": "Validation error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Create Case",
         "tags": [
           "cases"
@@ -1362,6 +1384,11 @@
             "description": "Not implemented"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Upload Document",
         "tags": [
           "evidence"
@@ -1424,6 +1451,11 @@
             "description": "Validation error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Add Evidence",
         "tags": [
           "evidence"
@@ -1485,6 +1517,11 @@
             "description": "Validation error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Report",
         "tags": [
           "reports"
@@ -1493,7 +1530,7 @@
     },
     "/cases/{case_id}/runs": {
       "post": {
-        "description": "MOCK in R2-01: returns a run that is already completed with a synthetic report.",
+        "description": "Returns 202 at once; the pipeline runs in the background. Poll GET /runs/{run_id}.",
         "operationId": "create_run_cases__case_id__runs_post",
         "parameters": [
           {
@@ -1527,6 +1564,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing or invalid API key"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -1556,8 +1603,23 @@
               }
             },
             "description": "Validation error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Too many runs in progress"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Create Run",
         "tags": [
           "cases"
@@ -1621,6 +1683,16 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing or invalid API key"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -1642,6 +1714,11 @@
             "description": "Validation error"
           }
         },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
         "summary": "Get Run",
         "tags": [
           "runs"

@@ -172,3 +172,21 @@ def test_document_too_large_413(monkeypatch):
         _assert_envelope(r.json(), "payload_too_large")
     get_settings.cache_clear()
     get_repository.cache_clear()
+
+
+def test_api_key_is_required_when_a_secret_is_configured(monkeypatch):
+    monkeypatch.setenv("API_SHARED_SECRET", "s3cret-value")
+    with new_client() as c:
+        assert c.get("/health").status_code == 200          # health stays open
+        r = c.post("/cases", json=VALID)
+        assert r.status_code == 401
+        _assert_envelope(r.json(), "unauthorized")
+        assert c.post("/cases", json=VALID, headers={"X-API-Key": "wrong"}).status_code == 401
+        assert c.post("/cases", json=VALID, headers={"X-API-Key": "s3cret-value"}).status_code == 201
+
+
+def test_production_refuses_an_unsafe_configuration(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")   # secret is empty
+    with pytest.raises(RuntimeError):
+        with new_client():
+            pass
