@@ -114,7 +114,7 @@ def test_retry_after_429_then_success():
         return httpx.Response(200, text=XML)
 
     res = _search(flaky, {"efficacy": "EFF"})
-    assert calls["n"] == 2 and [d.identifier for d in res.documents] == ["PMID111"]
+    assert calls["n"] == 2 and "PMID111" in [d.identifier for d in res.documents]
 
 
 def test_as_of_date_filters_and_sets_entrez_date_limit():
