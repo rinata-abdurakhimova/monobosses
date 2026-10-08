@@ -70,13 +70,15 @@ async def get_with_retries(
     backoff: float = 1.0,
     sleep: Sleep = asyncio.sleep,
     timeout: float = 20.0,
+    method: str = "GET",
+    json: dict | None = None,
 ) -> httpx.Response:
     last = "no attempt made"
     for attempt in range(1, max_attempts + 1):
         if limiter:
             await limiter.wait()
         try:
-            resp = await client.get(url, params=params, timeout=timeout)
+            resp = await client.request(method, url, params=params, json=json, timeout=timeout)
         except (httpx.TimeoutException, httpx.TransportError) as exc:
             last = type(exc).__name__  # class name only: exception text may contain the URL/key
         else:
