@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -181,48 +182,174 @@ def _missing_evidence_message(claim_key: str) -> str:
     return f"{claim_key}: no valid evidence references remain after evidence-pack filtering."
 
 
+# ---------------------------------------------------------------------------
+# Animal-only evidence detection (English + Ukrainian, negation-aware)
+# ---------------------------------------------------------------------------
+
+# All patterns are matched against casefolded text. Each pattern is anchored at
+# a word start so that e.g. "preclinical" / "доклінічн" never match human
+# markers such as "clinical data" / "клінічн...".
+_ANIMAL_PATTERNS = (
+    # English
+    r"animal\w*",
+    r"mouse",
+    r"mice",
+    r"murine",
+    r"rats?(?!\w)",
+    r"rodent\w*",
+    r"monkey\w*",
+    r"non-human primate\w*",
+    r"preclinical",
+    r"in vivo model\w*",
+    # Ukrainian
+    r"миш(?:і|ах|ей|ам|ами|а|ка|ки)(?!\w)",
+    r"тварин\w*",
+    r"дослідженн\w*\s+на\s+тварин\w*",
+    r"щур\w*",
+    r"гризун\w*",
+    r"мавп\w*",
+    r"доклінічн\w*",
+)
+
+_HUMAN_BENEFIT_PATTERNS = (
+    # English
+    r"patient\w*",
+    r"participant\w*",
+    r"clinical\s+trial\w*",
+    r"clinical\s+data",
+    r"human\s+data",
+    r"randomi[sz]ed",
+    r"placebo",
+    r"phase\s*(?:1|2|3|iii|ii|i)(?!\w)",
+    r"quality\s+of\s+life",
+    r"hospitali[sz]\w*",
+    r"mortality",
+    # Ukrainian
+    r"пацієнт\w*",
+    r"учасник\w*",
+    r"клінічн\w*\s+(?:випробуван|досліджен|дан)\w*",
+    r"рандомізован\w*",
+    r"плацебо",
+    r"фаз\w*\s*(?:1|2|3|iii|ii|i)(?!\w)",
+    r"якост\w*\s+життя",
+    r"госпіталізац\w*",
+    r"смертн\w*",
+)
+
+
+def _compile_markers(patterns: tuple[str, ...]) -> re.Pattern[str]:
+    return re.compile("|".join(f"(?<!\\w)(?:{pattern})" for pattern in patterns))
+
+
+_ANIMAL_RE = _compile_markers(_ANIMAL_PATTERNS)
+_HUMAN_BENEFIT_RE = _compile_markers(_HUMAN_BENEFIT_PATTERNS)
+
+_CLAUSE_BREAKS = ".;:!?\n"
+_NEGATION_WINDOW = 5
+_TRAILING_WINDOW = 3
+_WORD_RE = re.compile(r"[\w'’-]+")
+# A contrastive conjunction ends the scope of any earlier negation:
+# "No animal data, but patients responded" -> "patients" is not negated.
+_CONTRAST_RE = re.compile(
+    r"\b(?:but|however|whereas|although|though|while|але|проте|однак|хоча)\b"
+)
+
+_NEGATION_TOKENS = frozenset(
+    {
+        # English
+        "no",
+        "not",
+        "none",
+        "without",
+        "never",
+        "zero",
+        "lack",
+        "lacks",
+        "lacking",
+        "absence",
+        "absent",
+        "neither",
+        "nor",
+        "cannot",
+        # Ukrainian
+        "не",
+        "немає",
+        "нема",
+        "без",
+        "ніколи",
+        "брак",
+    }
+)
+_NEGATION_PREFIXES = ("відсутн", "жодн")
+_TRAILING_NEGATION_TOKENS = frozenset({"не", "немає", "нема"})
+# "patients were not enrolled", "no trial has not been conducted", etc.
+_TRAILING_EN_NEGATION_RE = re.compile(
+    r"^(?:\W+\w+){0,2}?\W+(?:not|never)\W+(?:yet\W+)?(?:been\W+)?"
+    r"(?:enrolled|recruited|conducted|performed|available|reported|included|"
+    r"studied|tested|completed|done)(?!\w)"
+)
+
+
+def _is_negation_token(token: str) -> bool:
+    return (
+        token in _NEGATION_TOKENS
+        or token.endswith(("n't", "n’t"))
+        or token.startswith(_NEGATION_PREFIXES)
+    )
+
+
+def _is_negated_match(text: str, start: int, end: int) -> bool:
+    """Return True when the marker at text[start:end] sits in a negated context."""
+    clause_start = max(text.rfind(ch, 0, start) for ch in _CLAUSE_BREAKS) + 1
+    following_breaks = [
+        idx for idx in (text.find(ch, end) for ch in _CLAUSE_BREAKS) if idx != -1
+    ]
+    clause_end = min(following_breaks) if following_breaks else len(text)
+
+    before = text[clause_start:start]
+    contrasts = list(_CONTRAST_RE.finditer(before))
+    if contrasts:
+        before = before[contrasts[-1].end():]
+    if any(_is_negation_token(t) for t in _WORD_RE.findall(before)[-_NEGATION_WINDOW:]):
+        return True
+
+    # Complete the (possibly prefix-matched) word, then inspect what follows.
+    after = text[end:clause_end]
+    word_tail = re.match(r"\w*", after)
+    after = after[word_tail.end():] if word_tail else after
+    after_contrast = _CONTRAST_RE.search(after)
+    if after_contrast:
+        after = after[: after_contrast.start()]
+    trailing_tokens = _WORD_RE.findall(after)[:_TRAILING_WINDOW]
+    if any(
+        t in _TRAILING_NEGATION_TOKENS or t.startswith(_NEGATION_PREFIXES)
+        for t in trailing_tokens
+    ):
+        return True
+    return bool(_TRAILING_EN_NEGATION_RE.match(after))
+
+
+def _has_affirmed_marker(text: str, marker_re: re.Pattern[str]) -> bool:
+    return any(
+        not _is_negated_match(text, match.start(), match.end())
+        for match in marker_re.finditer(text)
+    )
+
+
 def _is_animal_only_evidence(evidence_id: str, pack: EvidencePack) -> bool:
     evidence = next((item for item in pack.evidence if item.id == evidence_id), None)
     if evidence is None:
         return False
     text = evidence.excerpt.casefold()
-    animal_markers = (
-        "animal",
-        "mouse",
-        "mice",
-        "murine",
-        "rat ",
-        "rats",
-        "rodent",
-        "monkey",
-        "non-human primate",
-        "preclinical",
-        "in vivo model",
-    )
-    human_benefit_markers = (
-        "patient",
-        "participants",
-        "clinical trial",
-        "randomized",
-        "placebo",
-        "phase 1",
-        "phase i",
-        "phase 2",
-        "phase ii",
-        "phase 3",
-        "phase iii",
-        "quality of life",
-        "hospitalization",
-        "mortality",
-    )
-    return any(marker in text for marker in animal_markers) and not any(
-        marker in text for marker in human_benefit_markers
+    return _has_affirmed_marker(text, _ANIMAL_RE) and not _has_affirmed_marker(
+        text, _HUMAN_BENEFIT_RE
     )
 
 
 def _normalise_translation(
     analysis: TranslationAnalysis,
     pack: EvidencePack,
+    case_scope: str,
 ) -> tuple[list[Claim], dict[str, dict[str, object]], list[str]]:
     claims: list[Claim] = []
     summaries: dict[str, dict[str, object]] = {}
@@ -343,7 +470,7 @@ def _normalise_translation(
                 support_status="unknown",
                 evidence_ids=[],
                 assumptions=[message],
-                scope="program",
+                scope=case_scope,
                 importance="critical",
             )
         )
@@ -352,8 +479,12 @@ def _normalise_translation(
     return claims, summaries, list(dict.fromkeys(missing_data))
 
 
-def _to_claims(analysis: TranslationAnalysis, pack: EvidencePack) -> list[Claim]:
-    claims, _, _ = _normalise_translation(analysis, pack)
+def _to_claims(
+    analysis: TranslationAnalysis,
+    pack: EvidencePack,
+    case_scope: str = "program",
+) -> list[Claim]:
+    claims, _, _ = _normalise_translation(analysis, pack, case_scope)
     return claims
 
 
@@ -387,7 +518,9 @@ async def analyze_translation(
         PROMPT_ID, payload, TranslationAnalysis, ctx
     )
     analysis = _validate_analysis(raw_analysis)
-    claims, link_summary, missing_data = _normalise_translation(analysis, pack)
+    claims, link_summary, missing_data = _normalise_translation(
+        analysis, pack, case.scope
+    )
     risks = _to_risks(analysis)
     unknowns = list(dict.fromkeys([*analysis.unknowns, *missing_data]))
     data_needed = list(dict.fromkeys([*analysis.data_needed, *missing_data]))
