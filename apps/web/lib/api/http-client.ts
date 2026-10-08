@@ -1,6 +1,6 @@
 import { ApiError, throwIfAborted } from "./errors.ts";
 import { decodeRun, identifier, object, version } from "./decode.ts";
-import type { ApiClient, RequestOptions } from "./types";
+import type { ApiClient, EvidenceClient, RequestOptions } from "./types";
 
 /** Same-origin proxy client.
  * mapReport converts the authoritative wire report into a UI model when supplied.
@@ -15,11 +15,13 @@ export function createHttpApiClient<T>(
   options: HttpOptions & {
     mapReport: (wire: unknown) => T;
   },
-): ApiClient<T>;
-export function createHttpApiClient(options?: HttpOptions): ApiClient<unknown>;
+): ApiClient<T> & EvidenceClient;
+export function createHttpApiClient(
+  options?: HttpOptions,
+): ApiClient<unknown> & EvidenceClient;
 export function createHttpApiClient(
   options: HttpOptions & { mapReport?: (wire: unknown) => unknown } = {},
-): ApiClient<unknown> {
+): ApiClient<unknown> & EvidenceClient {
   const base = options.basePath ?? "/api/backend";
   if (!base.startsWith("/") || base.startsWith("//") || /[?#\\]/.test(base)) {
     throw new Error("Use a same-origin server proxy path, not a backend URL.");
@@ -40,9 +42,16 @@ export function createHttpApiClient(
         cache: "no-store",
         headers: {
           Accept: "application/json",
-          ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+          ...(body === undefined || body instanceof FormData
+            ? {}
+            : { "Content-Type": "application/json" }),
         },
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body:
+          body instanceof FormData
+            ? body
+            : body === undefined
+              ? undefined
+              : JSON.stringify(body),
       });
     } catch {
       throwIfAborted(requestOptions?.signal);
@@ -128,7 +137,43 @@ export function createHttpApiClient(
       requestOptions?.signal?.removeEventListener("abort", cancel);
     }
   }
+  function evidenceCreated(data: unknown) {
+    const raw = object(data);
+    if (!Array.isArray(raw.evidence_ids) || !raw.evidence_ids.length)
+      throw new ApiError(
+        "INVALID_RESPONSE",
+        "The import response has no evidence identifiers.",
+      );
+    return {
+      source_id: identifier(raw.source_id),
+      evidence_ids: raw.evidence_ids.map(identifier),
+    };
+  }
   return {
+    async addEvidence(caseId, input, requestOptions) {
+      return evidenceCreated(
+        await request(
+          `/cases/${encodeURIComponent(caseId)}/evidence`,
+          "POST",
+          input,
+          requestOptions,
+        ),
+      );
+    },
+    async uploadDocument(caseId, file, title, synthetic, requestOptions) {
+      const form = new FormData();
+      form.set("file", file);
+      form.set("title", title);
+      form.set("synthetic", String(synthetic));
+      return evidenceCreated(
+        await request(
+          `/cases/${encodeURIComponent(caseId)}/documents`,
+          "POST",
+          form,
+          requestOptions,
+        ),
+      );
+    },
     async createCase(input, requestOptions) {
       const raw = object(
         await request("/cases", "POST", input, requestOptions),
@@ -140,7 +185,10 @@ export function createHttpApiClient(
         await request(
           `/cases/${encodeURIComponent(caseId)}/runs`,
           "POST",
-          { mode: "live", parent_report_id: null },
+          {
+            mode: requestOptions?.mode ?? "live",
+            parent_report_id: requestOptions?.parentReportId ?? null,
+          },
           requestOptions,
         ),
       );

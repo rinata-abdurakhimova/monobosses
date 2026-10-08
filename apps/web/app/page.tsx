@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CaseForm } from "@/components/CaseForm";
 import { Icon } from "@/components/Icon";
-import { reportV1 } from "@/lib/fixtures/report-v1";
+import { reportR5 } from "@/lib/fixtures/report-r5";
 
 export default function HomePage() {
   return (
@@ -85,7 +85,7 @@ export default function HomePage() {
               <span className="eyebrow">TAKE A LOOK FIRST</span>
               <strong>Explore a fictional report</strong>
               <small>
-                {reportV1.sections.length} sections · {reportV1.roles.length}{" "}
+                {reportR5.sections.length} sections · {reportR5.roles.length}{" "}
                 perspectives
               </small>
             </div>

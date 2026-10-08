@@ -57,6 +57,26 @@ export function ReportView({
           <span className="tiny-tag">Sample v{report.version}</span>
         </div>
       )}
+      <div className="panel report-metadata">
+        <span className="eyebrow">SAVED REPORT · VERSION {report.version}</span>
+        <dl>
+          <div>
+            <dt>Report</dt>
+            <dd>{report.id}</dd>
+          </div>
+          <div>
+            <dt>Run</dt>
+            <dd>{report.contract.run_id}</dd>
+          </div>
+          <div>
+            <dt>Snapshot</dt>
+            <dd>{report.contract.snapshot_id}</dd>
+          </div>
+        </dl>
+        <Link href="/cases/revision-sample?version=2">
+          Explore the synthetic v1 → v2 comparison
+        </Link>
+      </div>
       {submitted && (
         <details className="submitted-input">
           <summary>

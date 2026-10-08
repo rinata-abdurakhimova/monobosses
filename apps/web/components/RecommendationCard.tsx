@@ -1,7 +1,16 @@
+"use client";
+
 import { Icon } from "@/components/Icon";
 import type { Report } from "@/lib/types";
+import { useState } from "react";
+import { EvidenceDialog } from "@/components/EvidenceDialog";
+import type { Claim } from "@/lib/types";
 
 export function RecommendationCard({ report }: { report: Report }) {
+  const [claim, setClaim] = useState<Claim | null>(null);
+  const decisiveIds =
+    report.sections.find((section) => section.key === "recommendation")
+      ?.claim_ids ?? [];
   return (
     <section
       className="recommendation-card"
@@ -15,9 +24,13 @@ export function RecommendationCard({ report }: { report: Report }) {
         </span>
       </div>
       <h2 id="recommendation-heading">
-        A promising hypothesis.
+        {report.recommendation === "Do Not Invest"
+          ? "The thesis is not supported."
+          : report.recommendation === "Invest"
+            ? "The report supports investment."
+            : "Important conditions remain."}
         <br />
-        Important conditions remain.
+        Review the evidence and conditions.
       </h2>
       <p className="recommendation-rationale">{report.rationale}</p>
       <div className="conditions">
@@ -31,16 +44,46 @@ export function RecommendationCard({ report }: { report: Report }) {
           ))}
         </ol>
       </div>
-      <a
-        className="recommendation-link"
-        href="#section-human_translation_thesis"
-      >
-        Inspect the decisive evidence
-        <Icon
-          name="arrow"
-          size={17}
-        />
-      </a>
+      <div className="decisive-claims">
+        <span className="eyebrow">CLAIMS LINKED TO THIS DECISION</span>
+        {decisiveIds.length === 0 && (
+          <p>No decisive claims were linked by the report provider.</p>
+        )}
+        {decisiveIds.map((id) => {
+          const item = report.claims.find((c) => c.id === id);
+          return (
+            item && (
+              <button
+                className="claim-button"
+                type="button"
+                key={id}
+                onClick={() => setClaim(item)}
+              >
+                <span>
+                  {item.text}
+                  <small>
+                    {item.provenance === "ai"
+                      ? "AI inference"
+                      : item.provenance === "user"
+                        ? "User-provided · unverified"
+                        : "Source statement"}{" "}
+                    · {item.support_status}
+                  </small>
+                </span>
+                <Icon
+                  name="arrow"
+                  size={17}
+                />
+              </button>
+            )
+          );
+        })}
+      </div>
+      <EvidenceDialog
+        claim={claim}
+        report={report}
+        onClose={() => setClaim(null)}
+      />
     </section>
   );
 }

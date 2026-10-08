@@ -2378,3 +2378,122 @@ summary::-webkit-details-marker {
     --header-offset: 144px;
   }
 }
+/* Evidence and immutable report revisions */
+.revision-tools,
+.revision-preview {
+  display: grid;
+  gap: 24px;
+}
+.revision-panel,
+.evidence-upload,
+.parent-picker,
+.report-metadata {
+  padding: 28px;
+}
+.revision-panel h2,
+.evidence-upload h2 {
+  margin: 8px 0 18px;
+}
+.revision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.revision-grid article {
+  min-width: 0;
+  padding: 18px;
+  background: #f3f7f4;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.claim-change {
+  margin: 16px 0;
+}
+.revision-panel p,
+.evidence-upload p,
+.parent-picker p {
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.evidence-upload fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+.evidence-upload input:not([type="checkbox"]),
+.evidence-upload select,
+.evidence-upload textarea,
+.parent-picker input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #b8c9bf;
+  border-radius: 8px;
+  background: white;
+  color: #193e32;
+  font: inherit;
+}
+.evidence-upload textarea {
+  resize: vertical;
+}
+.evidence-upload label,
+.parent-picker label {
+  font-weight: 650;
+}
+.evidence-upload .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.evidence-upload button {
+  justify-self: start;
+}
+.evidence-upload fieldset:disabled {
+  opacity: 0.65;
+}
+.parent-picker input {
+  max-width: 110px;
+  display: block;
+  margin-top: 12px;
+}
+.report-metadata {
+  margin: 24px 0;
+}
+.report-metadata dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 36px;
+}
+.report-metadata dd {
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.report-metadata dt {
+  font-weight: 650;
+}
+.decisive-claims {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+.decisive-claims .claim-button {
+  color: #193e32;
+  background: #f3f7f4;
+  border-radius: 10px;
+  padding: 14px;
+}
+.revision-preview {
+  padding-top: 28px;
+}
+@media (max-width: 640px) {
+  .revision-grid {
+    grid-template-columns: 1fr;
+  }
+  .revision-panel,
+  .evidence-upload,
+  .parent-picker,
+  .report-metadata {
+    padding: 18px;
+  }
+}

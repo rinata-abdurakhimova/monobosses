@@ -8,10 +8,11 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write app components lib tests scripts/check-python-api.ts next.config.ts package.json tsconfig.json .prettierrc.json",
-    "format:check": "prettier --check app components lib tests scripts/check-python-api.ts next.config.ts package.json tsconfig.json .prettierrc.json",
+    "format": "prettier --write app components lib tests scripts/check-python-api.ts scripts/check-evidence-api.ts next.config.ts package.json tsconfig.json .prettierrc.json",
+    "format:check": "prettier --check app components lib tests scripts/check-python-api.ts scripts/check-evidence-api.ts next.config.ts package.json tsconfig.json .prettierrc.json",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "test:api": "node --experimental-strip-types scripts/check-python-api.ts",
+    "test:evidence-api": "node --experimental-strip-types scripts/check-evidence-api.ts",
     "contracts:generate": "node scripts/generate-contracts.mjs",
     "contracts:check": "node scripts/generate-contracts.mjs --check"
   },

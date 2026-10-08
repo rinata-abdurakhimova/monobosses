@@ -40,13 +40,19 @@ Run `npm run format` to format frontend code, or `npm run format:check` to verif
 6. Expand the 11 report sections, inspect a claim in the evidence dialog, and read the seven illustrative role cards.
 7. Open an unknown `/cases/...` URL: a missing-local-preview state explains how to recover.
 
-The evidence dialog is a local fixture display for review, not an implemented backend evidence drill-down or R1-03 upload/revision flow.
+Evidence dialogs show claims and exact excerpts supplied by the report. API case pages include text/PDF import controls and explicit parented reviews; the backend still needs to connect PDF extraction and evidence-driven revisions. See [R1-03 handoff](../../docs/r1-03-handoff.md).
 
 ## Python API integration (#8)
 
 The form defaults to **Python API assessment**. One submission creates a case, starts one run with `mode: live`, then opens `/cases/{caseId}?flow=api&run={runId}`. Status reads and the final report version pass through the same-origin `/api/backend` route. Refreshing or **Check existing run again** performs reads only; no POST is automatically retried. Navigation aborts polling. Status checks pause after ten minutes and can resume against the same run.
 
-Start the Python API using `services/api/README.md`, copy `.env.example` to `.env.local`, then run Next.js. `API_BASE_URL` is read only in the server route; never give it a `NEXT_PUBLIC_` prefix. Provider secrets remain in Python. The proxy allows only the four assessment operations, rejects cross-origin mutations and redirects, strips browser credentials and upstream cookies, disables caching, and gives upstream requests an eight-second deadline. Browser requests have a ten-second deadline. Backend errors retain their status and error envelope. Missing configuration returns an explicit 503; no request falls back to a fixture.
+Start the Python API using `services/api/README.md`, copy `.env.example` to `.env.local`, then run Next.js. `API_BASE_URL` is read only in the server route; never give it a `NEXT_PUBLIC_` prefix. Provider secrets remain in Python. The proxy allows assessment operations plus text evidence/PDF imports, rejects cross-origin mutations and redirects, strips browser credentials and upstream cookies, disables caching, and gives requests an eight-second deadline. Browser requests have a ten-second deadline. Backend errors retain their status and error envelope. Missing configuration returns an explicit 503; no request falls back to a fixture.
+
+## Evidence and revisions (#15)
+
+Open `/cases/revision-sample?version=2` for the shared synthetic v1/v2 comparison. Each version opens separately; changed claims reveal their exact excerpts. On a Python API case page, import text or a PDF, then select **Review conclusion** to start one parented run. The old report remains available while checking the review. Upload errors do not start a run. Saved versions can be opened directly with `?flow=api&version=1` or `version=2`.
+
+The current PDF endpoint returns 501, and the mock backend produces a fixed v2 even for unrelated evidence. These are backend blockers, not evidence-driven analysis. Keep #15 open pending #7/#14, #12 and #13. With both servers running, `npm run test:evidence-api` checks the current HTTP behavior and its limitations.
 
 The backend on current main is still the R2-01 skeleton: real HTTP returns a fixed synthetic report, not analysis of the submitted input. The report scope and synthetic flags come from Python, even when the skeleton's fixed programme scope differs from the submitted approach. Reports and runs are stored in memory and disappear on Python restart. Real pipeline verification and durable storage remain R2 dependencies; this change does not close #8. Authentication with `API_SHARED_SECRET` is pending R2's agreed header contract; the current skeleton does not enforce it. Deployment remains a later task.
 
