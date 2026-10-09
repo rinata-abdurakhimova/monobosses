@@ -1,5 +1,11 @@
 # R5-01: local market node
 
+**Current split implementation (2026-10-09):** see
+[Market request-budget handoff](r5-market-request-budget.md). Market now uses
+parallel competitive/commercial calls, bounded evidence batches and Python merge.
+The single-call descriptions below are historical; public output stays compatible.
+
+
 Current state (2026-10-09): market is in main and connected by R2 in `a060c26`.
 Original implementation branch: `codex/r5-01-market`; scope remains market only.
 See [R2 workflow handoff](r2-full-workflow-handoff.md) for offline wiring and live blockers.

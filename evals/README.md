@@ -148,3 +148,15 @@ R4 — science/clinical достатність та before/after критері�
 рішення й фіксує версію контенту. Для цього не потрібно отримувати model outputs.
 Результат предметного погодження записуємо у [review tracker](expectations-review.md).
 Задачу для R3/R4 користувачка може створити на GitHub окремо.
+
+
+## Market v2 code baseline (2026-10-09)
+
+Market now uses competitive/commercial structured calls and Python merge; see
+[handoff](../docs/r5-market-request-budget.md). Dataset content and expectations
+remain version 1.0.0 and unchanged. dataset-lock.json refreshes only the code
+baseline hashes, records the branch/base commit and uncommitted state, and retains
+the previous baseline in code_baseline_history. This records code identity and
+offline compatibility, not semantic label approval or a frozen live model/config.
+All R3/R4/R5 expectation-review statuses remain pending. No holdout model outcomes
+were generated or used for this change.

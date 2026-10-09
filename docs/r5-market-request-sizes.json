@@ -1,0 +1,92 @@
+{
+  "baseline_ref": "68ece19479130862cc4ceeb957af3c5326c880f8",
+  "unit": "UTF-8 bytes, NOT tokens",
+  "model_for_serialization": "gpt-5-mini (no calls)",
+  "configured_budget_bytes": 18000,
+  "initial_budget_bytes": 13500,
+  "live_verified": false,
+  "fixtures": [
+    {
+      "fixture": "small_1_evidence",
+      "baseline": {
+        "request_bytes": 15733,
+        "request_chars": 15729,
+        "prompt_bytes": 5584,
+        "schema_bytes": 7295,
+        "payload_bytes": 1167,
+        "feedback_repair_bytes": 0,
+        "system_bytes": 12983,
+        "messages_bytes": 1347
+      },
+      "split": {
+        "market_competitive": {
+          "batches": 1,
+          "max_request_bytes": 7377,
+          "prompt_bytes": 1386,
+          "schema_bytes": 4243,
+          "first_payload_bytes": 700,
+          "first_parts_bytes": {
+            "clinical_input": 4,
+            "evidence": 132,
+            "sources": 98,
+            "calculated_scenarios": 2
+          }
+        },
+        "market_commercial": {
+          "batches": 1,
+          "max_request_bytes": 9274,
+          "prompt_bytes": 1416,
+          "schema_bytes": 5240,
+          "first_payload_bytes": 1323,
+          "first_parts_bytes": {
+            "clinical_input": 4,
+            "evidence": 132,
+            "sources": 98,
+            "calculated_scenarios": 625
+          }
+        }
+      }
+    },
+    {
+      "fixture": "large_32_evidence_plus_clinical",
+      "baseline": {
+        "request_bytes": 57697,
+        "request_chars": 57693,
+        "prompt_bytes": 5584,
+        "schema_bytes": 7295,
+        "payload_bytes": 41937,
+        "feedback_repair_bytes": 0,
+        "system_bytes": 12983,
+        "messages_bytes": 43311
+      },
+      "split": {
+        "market_competitive": {
+          "batches": 8,
+          "max_request_bytes": 12586,
+          "prompt_bytes": 1386,
+          "schema_bytes": 4243,
+          "first_payload_bytes": 5761,
+          "first_parts_bytes": {
+            "clinical_input": 446,
+            "evidence": 4728,
+            "sources": 98,
+            "calculated_scenarios": 2
+          }
+        },
+        "market_commercial": {
+          "batches": 10,
+          "max_request_bytes": 13377,
+          "prompt_bytes": 1416,
+          "schema_bytes": 5240,
+          "first_payload_bytes": 5235,
+          "first_parts_bytes": {
+            "clinical_input": 446,
+            "evidence": 3579,
+            "sources": 98,
+            "calculated_scenarios": 625
+          }
+        }
+      }
+    }
+  ]
+}

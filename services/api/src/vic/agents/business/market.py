@@ -1,4 +1,9 @@
-"""R5-01 market node. One structured LLM call through the shared R2 adapter."""
+"""R5-01 market node. Parallel task-specific calls through the shared R2 adapter."""
+import asyncio
+import hashlib
+import json
+import re
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 from typing import Literal
@@ -12,13 +17,17 @@ from vic.contracts import (
     Risk,
     RoleResult,
     RunContext,
+    RunStage,
     SectionContent,
 )
+
+from vic.failures import RunFailure
+from vic.llm import request_sizes, structured_request
 
 from .calculations import MarketScenario, estimate_market_scenarios, summarize_market_ranges
 
 PROMPT_ID = "market"
-PROMPT_VERSION = "1.2.0"
+PROMPT_VERSION = "2.0.0"
 PROMPT_PATH = Path(__file__).parent / "prompts" / "market.md"
 Category = Literal["standard_of_care", "approved", "clinical_stage", "same_target", "alternative_mechanism", "discontinued"]
 
@@ -28,7 +37,7 @@ class StrictOutput(BaseModel):
 
 
 class MarketClaim(StrictOutput):
-    id: str = Field(pattern=r"^market\.[a-z0-9_.]+$")
+    id: str = Field(pattern=r"^market\.[a-z][a-z0-9_]*$")
     text: str = Field(min_length=1)
     support_status: Literal["supported", "contradicted", "mixed", "unverified", "unknown"]
     evidence_ids: list[str]
@@ -142,6 +151,363 @@ class MarketAnalysis(StrictOutput):
     limitations: list[str]
 
 
+
+class PassAnalysis(StrictOutput):
+    summary: str = Field(min_length=1)
+    position: Literal["favorable", "mixed", "unfavorable", "insufficient_data"]
+    claims: list[MarketClaim]
+    risks: list[MarketRisk]
+    unknowns: list[str]
+    change_conditions: list[str]
+    limitations: list[str]
+    diligence_questions: list[MarketQuestion] = Field(min_length=1)
+
+
+class CompetitiveAnalysis(PassAnalysis):
+    competitors: list[Competitor]
+    competitive_coverage: dict[Category, CoverageFinding]
+    differentiation: list[Differentiation]
+
+
+class CommercialAnalysis(PassAnalysis):
+    target_population: TargetPopulation
+    pricing_analogues: list[PricingAnalogue]
+    pricing_unknowns: list[str]
+    access: AccessAssessment
+    commercial_value: CommercialValue
+
+
+PASS_MODELS = {"market_competitive": CompetitiveAnalysis, "market_commercial": CommercialAnalysis}
+DEFAULT_REQUEST_MAX_BYTES = 18000
+# Initial requests use 75% of the configured cap to leave space for repairs.
+INITIAL_BUDGET_FRACTION = 0.75
+
+
+def project_clinical_context(clinical: RoleResult | None, task: str) -> dict | None:
+    """Use R4's stable claim keys; never copy nested role results/report sections.
+
+    Unknown/custom critical claims are retained in both passes conservatively.
+    All clinical risks/unknowns survive, since their relevance cannot be inferred
+    safely from free text alone. R4 context is not independently verified evidence.
+    """
+    if clinical is None:
+        return None
+    common = {"clinical.target_population", "clinical.unmet_need",
+              "clinical.safety_requirements", "clinical.standard_of_care",
+              "clinical.comparator_choice", "clinical.biomarker_strategy",
+              "clinical.regulatory_precedent"}
+    competitive = common | {"clinical.primary_endpoint", "clinical.secondary_endpoints"}
+    wanted = competitive if task == "market_competitive" else common
+    known_other = {"clinical.biomarker_strategy", "clinical.trial_size_basis",
+                   "clinical.study_sequence", "clinical.regulatory_precedent",
+                   "clinical.next_milestone", "clinical.primary_endpoint",
+                   "clinical.secondary_endpoints"}
+    risk_claims = {cid for risk in clinical.risks for cid in risk.claim_ids}
+    selected = [c for c in clinical.claims if c.id in risk_claims or c.id in wanted
+                or c.importance == "critical" or c.id not in known_other]
+    fields = {"target_population": "clinical.target_population",
+              "comparator": "clinical.comparator_choice", "standard_of_care": "clinical.standard_of_care",
+              "unmet_need": "clinical.unmet_need", "biomarker_strategy": "clinical.biomarker_strategy",
+              "regulatory_context": "clinical.regulatory_precedent",
+              "science_gaps_carried_forward": "clinical.science_gaps_carried_forward"}
+    # Carry unclaimed section facts as explicitly unverified context, not new evidence.
+    unclaimed = []
+    ids = {c.id for c in selected}
+    for section in clinical.section_content:
+        data = section.structured_data or {}
+        for field, cid in fields.items():
+            if field in data and cid not in ids:
+                unclaimed.append({"field": field, "value": data[field],
+                                  "claim_ids": [cid for cid in section.claim_ids if cid in ids],
+                                  "support_status": "unverified"})
+    return {"claims": [c.model_dump(mode="json") for c in selected],
+            "unclaimed_context": unclaimed,
+            "risks": [r.model_dump(mode="json") for r in clinical.risks],
+            "unknowns": clinical.unknowns, "change_conditions": clinical.change_conditions,
+            "limitations": list(dict.fromkeys(x for section in clinical.section_content
+                                               for x in section.limitations)),
+            "excluded_claim_ids": [c.id for c in clinical.claims if c not in selected],
+            "exclusion_reason": "Clinical development planning; not needed by this Market task"}
+
+
+def _unique(items):
+    seen = set()
+    result = []
+    for item in items:
+        key = json.dumps(item.model_dump(mode="json") if isinstance(item, BaseModel) else item,
+                         sort_keys=True, default=str)
+        if key not in seen:
+            seen.add(key)
+            result.append(item)
+    return result
+
+
+def _join(values):
+    return "\n".join(_unique([v for v in values if v])) or None
+
+
+def _position(values):
+    """Unknown coverage wins over positivity; unanimous negatives remain negative."""
+    values = set(values)
+    if values == {"unfavorable"}:
+        return "unfavorable"
+    if "insufficient_data" in values:
+        return "insufficient_data"
+    return "favorable" if values == {"favorable"} else "mixed"
+
+
+def _pass_context(ctx, task):
+    # Independent containers avoid concurrent changes to shared audit feedback.
+    feedback = dict(ctx.feedback)
+    # A canonical deduplicated claim may support both sections. Forward every
+    # market finding to both passes conservatively instead of dropping feedback
+    # based on the namespace of the first producer. Normalize merged IDs to local
+    # semantic keys so a repair does not namespace them twice.
+    findings = []
+    for finding in ctx.feedback.get("market", []):
+        cid = getattr(finding, "claim_id", None)
+        if cid:
+            for prefix in ("market.competitive_", "market.commercial_"):
+                if cid.startswith(prefix):
+                    local = re.sub(r"_[0-9a-f]{12}$", "", cid.removeprefix(prefix))
+                    finding = finding.model_copy(update={"claim_id": "market." + local})
+                    break
+        findings.append(finding)
+    feedback["market"] = findings
+    return replace(ctx, feedback=feedback)
+
+
+def prepare_pass_inputs(payload, clinical, task, evidence):
+    """Preserve exact excerpts, deduplicating source metadata by original source ID.
+
+    Free-text evidence has no reliable task labels. Both tasks review all supplied
+    records in bounded batches; no lexical filter can silently drop contradictions.
+    Only task-specific R4 context and numeric scenarios are projected.
+    """
+    source_keys = ("source_title", "source_type", "published_at", "synthetic")
+    sources = {e["source_id"]: {k: e[k] for k in source_keys} for e in evidence}
+    records = [{k: v for k, v in e.items() if k not in source_keys} for e in evidence]
+    return {"prompt_version": PROMPT_VERSION, "case": payload["case"],
+            "sources": sources, "evidence": records,
+            "retrieval_warnings": payload["retrieval_warnings"],
+            "clinical_input": project_clinical_context(clinical, task),
+            "clinical_alignment": payload["clinical_alignment"],
+            "calculated_scenarios": payload["calculated_scenarios"] if task == "market_commercial" else [],
+            "coverage": {"policy": "All supplied evidence reviewed; no free-text relevance exclusions",
+                         "partial_batch": True, "total_evidence_count": len(payload["evidence"])}}
+
+
+def plan_market_batches(payload, clinical, task, ctx):
+    model = PASS_MODELS[task]
+    cap = getattr(ctx.model, "market_request_budget", DEFAULT_REQUEST_MAX_BYTES)
+    initial_cap = int(cap * INITIAL_BUDGET_FRACTION)
+    def make(records):
+        return prepare_pass_inputs(payload, clinical, task, records)
+    def measure(data):
+        measure_adapter = getattr(ctx.model, "structured_request_size", None)
+        if callable(measure_adapter):
+            return measure_adapter(task, data, model, ctx)
+        _, system, messages = structured_request(task, data, model, ctx)
+        return request_sizes(system, messages)
+    if measure(make([]))["request_bytes"] > initial_cap:
+        raise RunFailure("Market schema/case/clinical/audit context exceeds the initial byte budget; "
+                         "reduce the context before calling the model", code="market_request_budget")
+    batches, current = [], []
+    for evidence in payload["evidence"]:
+        if measure(make([*current, evidence]))["request_bytes"] > initial_cap:
+            if current:
+                batches.append(make(current))
+                current = []
+            if measure(make([evidence]))["request_bytes"] > initial_cap:
+                raise RunFailure("One exact Market excerpt exceeds the initial byte budget; "
+                                 "request a smaller provenance-preserving evidence unit from R3",
+                                 code="market_request_budget")
+        current.append(evidence)
+    if current or not batches:
+        batches.append(make(current))
+    for batch in batches:
+        batch["coverage"]["partial_batch"] = len(batches) > 1
+        sizes = measure(batch)
+        if sizes["request_bytes"] > initial_cap:
+            raise RunFailure("Market batch exceeds initial byte budget", code="market_request_budget")
+        parts = {f"{key}_bytes": len(json.dumps(batch[key], ensure_ascii=False, default=str,
+                    separators=(",", ":")).encode("utf-8"))
+                 for key in ("case", "evidence", "sources", "clinical_input", "calculated_scenarios")}
+        ctx.trace.log(RunStage.ANALYZE, f"{task} planned {sizes}; parts={parts}; initial_budget_bytes={initial_cap}; "
+                      f"evidence_ids={[e['id'] for e in batch['evidence']]}")
+    return batches
+
+
+def namespace_pass(result, task):
+    """Stable task/key/evidence IDs, independent of batch number and model text.
+
+    Same key and evidence with different contents is a collision, never overwrite.
+    Distinct evidence supporting contradictory facts retains separate claims.
+    """
+    data = result.model_dump(mode="json")
+    prefix = "competitive" if task == "market_competitive" else "commercial"
+    mapping, claims = {}, {}
+    for claim in data["claims"]:
+        old = claim["id"]
+        if old in claims and claims[old] != claim:
+            raise ValueError("Conflicting claim ID within Market pass")
+        claims[old] = claim
+        digest = hashlib.sha256(json.dumps(sorted(set(claim["evidence_ids"]))).encode()).hexdigest()[:12]
+        mapping[old] = f"market.{prefix}_{old.removeprefix('market.')}_{digest}"
+    def walk(value):
+        if isinstance(value, dict):
+            for k, v in value.items():
+                if k in ("claim_ids", "discontinuation_reason_claim_ids"):
+                    if not set(v) <= mapping.keys():
+                        raise ValueError("Unknown claim reference in Market pass")
+                    value[k] = list(dict.fromkeys(mapping[cid] for cid in v))
+                else:
+                    walk(v)
+        elif isinstance(value, list):
+            for item in value:
+                walk(item)
+    walk(data)
+    for claim in data["claims"]:
+        claim["id"] = mapping[claim["id"]]
+    for risk in data["risks"]:
+        digest = hashlib.sha256(json.dumps(sorted(risk["claim_ids"])).encode()).hexdigest()[:12]
+        risk["id"] = f"market.risk.{prefix}_{risk['id'].removeprefix('market.risk.')}_{digest}"
+    data["claims"] = _unique(data["claims"])
+    return type(result).model_validate(data)
+
+
+def _merge_identified(items):
+    out = {}
+    for item in items:
+        if item.id in out and out[item.id] != item:
+            raise ValueError(f"Conflicting Market ID: {item.id}")
+        out[item.id] = item
+    return list(out.values())
+
+
+def merge_market_results(competitive, commercial):
+    """Deterministic union; preserve conflicting descriptions and flag review.
+
+    No model synthesis, majority vote, invented numbers or unquoted conclusions.
+    Missing batch data cannot erase known facts, nor prove global absence.
+    """
+    passes = [*competitive, *commercial]
+    canonical, aliases = {}, {}
+    for part in passes:
+        for claim in part.claims:
+            fact = claim.model_dump(mode="json", exclude={"id"})
+            key = json.dumps(fact, sort_keys=True)
+            aliases[claim.id] = canonical.setdefault(key, claim.id)
+    def remap(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if key in ("claim_ids", "discontinuation_reason_claim_ids"):
+                    value[key] = _unique([aliases[cid] for cid in child])
+                else:
+                    remap(child)
+        elif isinstance(value, list):
+            for child in value:
+                remap(child)
+    normalized = []
+    for part in passes:
+        data = part.model_dump(mode="json")
+        remap(data)
+        for claim in data["claims"]:
+            claim["id"] = aliases[claim["id"]]
+        normalized.append(type(part).model_validate(data))
+    competitive, commercial = normalized[:len(competitive)], normalized[len(competitive):]
+    passes = normalized
+    common = {k: _unique([v for part in passes for v in getattr(part, k)])
+              for k in ("unknowns", "change_conditions", "limitations", "diligence_questions")}
+    claims = _merge_identified([c for part in passes for c in part.claims])
+    identified_risks = _merge_identified([r for part in passes for r in part.risks])
+    seen_risks, risks = set(), []
+    for risk in identified_risks:
+        key = json.dumps(risk.model_dump(mode="json", exclude={"id"}), sort_keys=True)
+        if key not in seen_risks:
+            seen_risks.add(key)
+            risks.append(risk)
+    coverage = {}
+    for category in Category.__args__:
+        findings = [p.competitive_coverage[category] for p in competitive]
+        coverage[category] = CoverageFinding(
+            status="documented" if any(f.status == "documented" for f in findings) else "insufficient_data",
+            claim_ids=_unique([cid for f in findings for cid in f.claim_ids]),
+            unknowns=_unique([u for f in findings for u in f.unknowns]))
+    population = {}
+    conflicts = []
+    for field in TargetPopulation.model_fields:
+        values = [getattr(p.target_population, field) for p in commercial]
+        if field in ("description", "indication", "geography"):
+            unique = _unique([v for v in values if v is not None])
+            population[field] = _join(unique)
+            if len(unique) > 1:
+                conflicts.append(f"Target population {field} differs across batches; reconcile original claims.")
+        else:
+            population[field] = _unique([item for value in values for item in value])
+    access = AccessAssessment(**{k: _unique([item for p in commercial for item in getattr(p.access, k)])
+                                for k in AccessAssessment.model_fields})
+    values = [p.commercial_value for p in commercial]
+    assessments = {v.assessment for v in values}
+    value_data = {"assessment": next(iter(assessments)) if len(assessments) == 1 else "mixed",
+                  "rationale": _join([v.rationale for v in values])}
+    for field in ("unmet_need", "willingness_to_pay"):
+        distinct = _unique([getattr(v, field) for v in values if getattr(v, field) is not None])
+        value_data[field] = _join(distinct)
+        if len(distinct) > 1:
+            conflicts.append(f"Commercial {field} differs across batches; reconcile original claims.")
+    for field in ("claim_ids", "unknowns"):
+        value_data[field] = _unique([item for v in values for item in getattr(v, field)])
+    competitors = _unique([c for p in competitive for c in p.competitors])
+    for name in {c.name for c in competitors}:
+        if len({c.development_status for c in competitors if c.name == name}) > 1:
+            conflicts.append(f"Conflicting development statuses for {name}; resolve dated evidence.")
+    position = _position(p.position for p in passes)
+    missing_coverage = any(f.status == "insufficient_data" for f in coverage.values())
+    uncertain_claim = any(c.support_status in ("mixed", "contradicted", "unknown", "unverified")
+                          and c.importance != "minor" for c in claims)
+    if position == "favorable" and (missing_coverage or conflicts or uncertain_claim
+            or value_data["assessment"] != "potential_value" or population["unknowns"]
+            or access.unknowns or value_data["unknowns"] or common["unknowns"]
+            or any(p.pricing_unknowns for p in commercial)):
+        position = "insufficient_data" if missing_coverage else "mixed"
+    common["unknowns"] = _unique([*common["unknowns"], *conflicts])
+    return MarketAnalysis(summary=_join([p.summary for p in competitive]),
+        commercial_summary=_join([p.summary for p in commercial]), position=position,
+        claims=claims, risks=risks, competitors=competitors, competitive_coverage=coverage,
+        differentiation=_unique([d for p in competitive for d in p.differentiation]),
+        target_population=TargetPopulation(**population), access=access,
+        commercial_value=CommercialValue(**value_data),
+        pricing_analogues=_unique([a for p in commercial for a in p.pricing_analogues]),
+        pricing_unknowns=_unique([u for p in commercial for u in p.pricing_unknowns]), **common)
+
+
+async def run_market_pass(task, batches, ctx):
+    results = []
+    for batch in batches:
+        raw = await ctx.model.generate_structured(task, batch, PASS_MODELS[task], ctx)
+        result = raw if isinstance(raw, PASS_MODELS[task]) else PASS_MODELS[task].model_validate(raw)
+        visible_ids = {e["id"] for e in batch["evidence"]}
+        if any(not set(c.evidence_ids) <= visible_ids for c in result.claims):
+            raise ValueError("Market pass cited evidence outside its batch")
+        if isinstance(result, CompetitiveAnalysis):
+            if set(result.competitive_coverage) != set(Category.__args__):
+                raise ValueError("Market pass must cover all six competitor categories")
+        results.append(namespace_pass(result, task))
+    return results
+
+
+async def run_market_passes(tasks):
+    """Cancel/await the sibling on failure; never leave paid calls running orphaned."""
+    pending = [asyncio.create_task(task) for task in tasks]
+    try:
+        return await asyncio.gather(*pending)
+    except BaseException:
+        for task in pending:
+            task.cancel()
+        await asyncio.gather(*pending, return_exceptions=True)
+        raise
+
 def prepare_market_inputs(case: CaseInput, pack: EvidencePack,
                           scenarios: list[MarketScenario] | None = None,
                           clinical: RoleResult | None = None) -> dict:
@@ -187,7 +553,7 @@ def prepare_market_inputs(case: CaseInput, pack: EvidencePack,
             "case": {k: getattr(case, k, None) for k in
                      ("indication", "mechanism", "scope", "modality", "development_stage", "program_data", "as_of_date")},
             "evidence": evidence, "retrieval_warnings": pack.retrieval_warnings,
-            "clinical_input": clinical.model_dump(mode="json") if clinical is not None else None,
+            "clinical_input": project_clinical_context(clinical, "market_commercial"),
             "clinical_alignment": "R4 input supplied; reconcile eligibility" if clinical else "R4 review pending",
             "calculated_scenarios": estimate_market_scenarios(scenarios or [])}
 
@@ -330,12 +696,16 @@ def validate_market_result(analysis: MarketAnalysis, case: CaseInput, pack: Evid
 async def analyze_market(case: CaseInput, pack: EvidencePack, ctx: RunContext,
                          *, scenarios: list[MarketScenario] | None = None,
                          clinical: RoleResult | None = None) -> RoleResult:
-    """One model call; deterministic validation, calculations and assembly."""
+    """Two concurrent task streams; bounded batches and Python-only assembly."""
     payload = prepare_market_inputs(case, pack, scenarios, clinical)
     if ctx.model is None or not callable(getattr(ctx.model, "generate_structured", None)):
         raise RuntimeError("R2 model adapter with generate_structured is required")
-    raw = await ctx.model.generate_structured(PROMPT_ID, payload, MarketAnalysis, ctx)
-    analysis = raw if isinstance(raw, MarketAnalysis) else MarketAnalysis.model_validate(raw)
+    contexts = {task: _pass_context(ctx, task) for task in PASS_MODELS}
+    # Plan both streams before sending anything, so a planning failure costs nothing.
+    batches = {task: plan_market_batches(payload, clinical, task, contexts[task]) for task in PASS_MODELS}
+    competitive, commercial = await run_market_passes([
+        run_market_pass(task, batches[task], contexts[task]) for task in PASS_MODELS])
+    analysis = merge_market_results(competitive, commercial)
     validate_market_result(analysis, case, pack)
     calculations = payload["calculated_scenarios"]
     claims = [Claim(**c.model_dump(), provenance="ai") for c in analysis.claims]

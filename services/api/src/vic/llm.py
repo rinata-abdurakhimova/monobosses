@@ -11,13 +11,14 @@ import httpx
 from pydantic import BaseModel
 
 from vic.config import Settings
-from vic.contracts import RunContext
+from vic.contracts import RunContext, RunStage
 from vic.failures import (
     BudgetExceeded,
     MalformedModelOutput,
     ModuleNotReady,
     ProviderAuthError,
     ProviderError,
+    RunFailure,
     ProviderTimeout,
     RunTimeout,
 )
@@ -178,6 +179,44 @@ def _compact_schema(value, *, mapping=False):
     return value
 
 
+MARKET_PROMPTS = ("market_competitive", "market_commercial")
+
+
+def structured_request(prompt_id, payload, response_model, ctx):
+    """Single serializer used by the planner and runtime, including audit feedback."""
+    prompt = load_prompt(prompt_id)
+    schema = json.dumps(_compact_schema(response_model.model_json_schema()),
+                        ensure_ascii=False, separators=(",", ":"))
+    system = (f"{prompt.text}\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
+              f"that validates against this JSON Schema:\n{schema}")
+    messages = [{"role": "user", "content": json.dumps(payload, ensure_ascii=False,
+                                  default=str, separators=(",", ":"))}]
+    owner = "investment" if prompt_id == "investment_plan" else (
+        "market" if prompt_id in MARKET_PROMPTS else prompt_id)
+    feedback = ctx.feedback.get(owner)
+    if feedback:
+        messages.append({"role": "user", "content": "Correct the audit/completeness findings: "
+            + json.dumps([item.model_dump(mode="json") if isinstance(item, BaseModel) else item
+                          for item in feedback], ensure_ascii=False, default=str)})
+    return prompt, system, messages
+
+
+def request_sizes(system, messages, *, model="placeholder-model", max_tokens=4096):
+    """UTF-8 bytes/characters, not token estimates; includes message envelopes."""
+    wire = json.dumps({"model": model, "messages": [{"role": "system", "content": system}, *messages],
+                       "max_completion_tokens": max_tokens, "stream": False},
+                      ensure_ascii=False, separators=(",", ":"))
+    prompt, _, schema = system.partition("\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
+                                        "that validates against this JSON Schema:\n")
+    return {"request_bytes": len(wire.encode("utf-8")), "request_chars": len(wire),
+            "prompt_bytes": len(prompt.encode("utf-8")), "schema_bytes": len(schema.encode("utf-8")),
+            "payload_bytes": len(messages[0]["content"].encode("utf-8")),
+            "feedback_repair_bytes": sum(len(m["content"].encode("utf-8")) for m in messages[1:]),
+            "system_bytes": len(system.encode("utf-8")),
+            "messages_bytes": len(json.dumps(messages, ensure_ascii=False,
+                separators=(",", ":")).encode("utf-8"))}
+
+
 class StructuredLlm:
     """Implements the LlmAdapter protocol from vic.contracts."""
 
@@ -187,24 +226,22 @@ class StructuredLlm:
         self._s = settings
         self._sleep = sleep
 
+    @property
+    def market_request_budget(self) -> int:
+        return self._s.market_request_max_bytes
+
+    def structured_request_size(self, prompt_id, payload, response_model, ctx):
+        _, system, messages = structured_request(prompt_id, payload, response_model, ctx)
+        return request_sizes(system, messages, model=self._s.llm_model,
+                             max_tokens=self._s.llm_max_output_tokens)
+
     def cost_limit_enforceable(self) -> bool:
         return (self._s.llm_price_input_per_mtok is not None
                 and self._s.llm_price_output_per_mtok is not None)
 
     async def generate_structured(self, prompt_id: str, payload: dict[str, Any],
                                   response_model: type[T], ctx: RunContext) -> T:
-        prompt = load_prompt(prompt_id)
-        schema = json.dumps(_compact_schema(response_model.model_json_schema()),
-                            ensure_ascii=False, separators=(",", ":"))
-        system = (f"{prompt.text}\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
-                  f"that validates against this JSON Schema:\n{schema}")
-        messages = [{"role": "user", "content": json.dumps(payload, ensure_ascii=False,
-                                                              default=str, separators=(",", ":"))}]
-        feedback = ctx.feedback.get("investment" if prompt_id == "investment_plan" else prompt_id)
-        if feedback:
-            messages.append({"role": "user", "content": "Correct the audit/completeness findings: "
-                + json.dumps([item.model_dump(mode="json") if isinstance(item, BaseModel) else item
-                              for item in feedback], ensure_ascii=False, default=str)})
+        prompt, system, messages = structured_request(prompt_id, payload, response_model, ctx)
         repairs = 0
         while True:
             response = await self._call(prompt.prompt_id, prompt.version, system, messages, ctx)
@@ -223,6 +260,15 @@ class StructuredLlm:
 
     async def _call(self, prompt_id: str, version: str, system: str,
                     messages: list[dict[str, str]], ctx: RunContext) -> ProviderResponse:
+        if prompt_id in MARKET_PROMPTS:
+            sizes = request_sizes(system, messages, model=self._s.llm_model,
+                                  max_tokens=self._s.llm_max_output_tokens)
+            ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} request sizes {sizes}; "
+                          f"budget_bytes={self.market_request_budget}")
+            if sizes["request_bytes"] > self.market_request_budget:
+                raise RunFailure("Market request exceeds the configured byte budget; "
+                                 "reduce/batch context or audit/schema repair messages",
+                                 code="market_request_budget")
         attempt = 0
         while True:
             self._check_budget(ctx)
@@ -281,7 +327,7 @@ class StructuredLlm:
 
 def build_llm(settings: Settings) -> StructuredLlm:
     return StructuredLlm(make_provider(settings), settings)
-PROMPT_IDS = ("science", "translation", "clinical", "market", "investment_plan", "investment",
+PROMPT_IDS = ("science", "translation", "clinical", "market", "market_competitive", "market_commercial", "investment_plan", "investment",
               "chair", "audit", "ip_licensing", "partnerships", "investment_threshold", "failure_miner")
 
 

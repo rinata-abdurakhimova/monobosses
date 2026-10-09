@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     llm_max_repairs: int = Field(default=1, ge=0)
     llm_request_timeout_seconds: float = Field(default=120.0, gt=0)
     llm_max_output_tokens: int = Field(default=4096, gt=0)
+    # Provisional application cap, NOT a measured mentor gateway limit.
+    market_request_max_bytes: int = Field(default=18000, gt=0)
     llm_price_input_per_mtok: float | None = None    # USD per 1M input tokens
     llm_price_output_per_mtok: float | None = None   # USD per 1M output tokens
     llm_price_date: str | None = None                # date the prices were checked
@@ -87,6 +89,7 @@ class Settings(BaseSettings):
             "llm_max_retries": self.llm_max_retries, "llm_max_repairs": self.llm_max_repairs,
             "llm_request_timeout_seconds": self.llm_request_timeout_seconds,
             "llm_max_output_tokens": self.llm_max_output_tokens,
+            "market_request_max_bytes": self.market_request_max_bytes,
             "llm_price_input_per_mtok": self.llm_price_input_per_mtok,
             "llm_price_output_per_mtok": self.llm_price_output_per_mtok,
             "llm_price_date": self.llm_price_date,
