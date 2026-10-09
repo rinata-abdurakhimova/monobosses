@@ -1,58 +1,54 @@
-# Експертні ролі та Required Output: покриття R5
+# Покриття R5: сім вузлів і 11 секцій
 
-Підстава: `virtual-investment-committee.md`, розділи 4–6, та
-`team-work-instructions.md`, розділи 3–4, 11. Це карта командного плану.
-Оригінальні PDF/таблиці організаторів у цій локальній папці відсутні;
-пряме зіставлення з первинними умовами ще не виконано. Експертні ролі —
-AI-перспективи, не реальні незалежні експерти; назви й додаткові ролі є
-продуктовими пропозиціями, а не вимогою мати окрему LLM для кожної.
+Стан 2026-10-09. Усі сім вузлів R5 реалізовані; main `a060c26` містить
+підключення R2 до pipeline. На гілці `codex/r5-evaluation` додано checklist і cases.
+Offline integration підтверджена; повний успішний live LLM-report та semantic
+якість на цьому dataset ще не підтверджені.
 
-## Основні перспективи
+Це карта реалізації за командним планом, не пряме підтвердження первинних вимог
+організаторів або наявності незалежних реальних експертів. AI-ролі — перспективи
+аналізу, не джерела незалежних доказів.
 
-| Експертна перспектива | Власник | Очікуваний зміст | Стан нашої R5-частини |
-| --- | --- | --- | --- |
-| Науковий експерт | R4 | Біологічне обґрунтування | Поза реалізацією R5 |
-| Перенесення результатів на людину | R4 | Ланцюг до користі пацієнту, безпека й прогалини | Поза реалізацією R5 |
-| Клінічна розробка | R4 | Популяція випробування, endpoints, comparator, план і регуляторний контекст | Поза реалізацією R5; дає inputs для market/investment |
-| Ринок і доступ до лікування | R5 | Конкуренти, переваги, сегменти пацієнтів, доступ і комерційні сценарії | Локальний market node; live adapter/audit ще потрібні |
-| Інвестиційний і фінансовий аналітик | R5 | Капітал/час до milestone та сценарії фінансування | Майбутня R5-02 |
-| Аудитор якості доказів | R3 | Перевірка claim → evidence → source | R5 надає claims і перевіряє структуру; не замінює аудит |
-| Голова комітету | R5; runtime/Report R2 | Рекомендація, аргументи, умови й суперечності | Майбутня R5-03 |
+## Вузли R5
 
-## Додаткові перспективи
+| Вузол | Що реалізує | Де повний результат у RoleResult |
+| --- | --- | --- |
+| market | Конкуренти, популяція, ціни, доступ і комерційна оцінка | section_content секцій competitive_landscape та commercial_opportunity |
+| investment | План/капітал/час, funding gaps, три шляхи, future financing і стреси | section_content[0].structured_data["investment"] |
+| failure_miner | Ланцюги й взаємодії ризиків, пріоритети та перевірки | section_content[0].structured_data["failure_miner"] |
+| investment_threshold | Критерії now/next_stage, докази, прогалини й правила outcomes | section_content[0].structured_data["investment_threshold"] |
+| partnerships | Partner fit, чотири формати, readiness, dependencies і gaps | section_content[0].structured_data["partnerships"] |
+| ip_licensing | Права, патенти/ліцензії, території, бар'єри та legal questions | section_content[0].structured_data["ip_licensing"] |
+| chair | Recommendation, аргументи, умови, conflicts і питання | ChairResult.role_result.section_content[0].structured_data["chair"] |
 
-| Перспектива | Власник за планом | Output | Стан |
-| --- | --- | --- | --- |
-| Критичний опонент / Failure Miner | R5 із даними R3/R4 | Проблема → вплив → наслідок → вплив на інвестицію → перевірка; зв’язки ризиків | Погоджений вузол failure_miner; ще не реалізований, без другого дублюючого опонента |
-| Поріг інвестиційної привабливості | R5 із R4/R3 | Необхідний результат → докази → прогалина → вплив | Входить у погоджений обсяг; ще не реалізовано |
-| Партнерства і розвиток | R5 із R3 | Кандидати, обґрунтування, формат співпраці та перевірки | Входить у погоджений обсяг; ще не реалізовано |
-| IP і ліцензування | R5 із R3/R4 | Патентні/ліцензійні питання та перевірки фахівцем | Локальний ip_licensing v1.0.0; офлайн-тести, потрібні інтеграція й review |
+Claims, risks і unknowns зберігаються також у RoleResult; evidence/source — у pack
+та Report. Chair канонічні ризики — decision.risks; порожній chair role_result.risks
+є навмисним. Докладний chair role_result R2 зберігає серед report.roles.
 
-## 11 обов'язкових секцій
+## 11 секцій спільного Report
 
-| № | Required Output | Власник змісту | Поточний market node |
-| --- | --- | --- | --- |
-| 1 | Recommendation: Invest / Conditional / Do Not Invest | R5 chair | Не реалізовано; market не видає це рішення |
-| 2 | Scientific thesis | R4 | Не реалізує |
-| 3 | Human translation thesis | R4 | Не реалізує |
-| 4 | Clinical development plan | R4 | Не реалізує; target_population не замінює clinical plan |
-| 5 | Competitive landscape | R5 market | Конкуренти, статуси, порівняння, claim IDs |
-| 6 | Commercial opportunity | R5 market | Популяція, pricing_analogues, access, commercial_value, Python-сценарії та діапазони |
-| 7 | Capital required to next major milestone | R5 investment | Не реалізовано; розмір ринку не є бюджетом розробки |
-| 8 | Key risks and failure modes | R5 узагальнює | Лише ринкові risks, не загальна карта |
-| 9 | Critical unknowns | R5 узагальнює | Лише ринкові/популяційні unknowns |
-| 10 | 5–10 highest-value diligence questions | R5 chair/risks | Market надає структуровані питання; фінальні 5–10 формує майбутній chair |
-| 11 | Sources supporting major claims | R3, кожна роль надає зв'язки | Посилання claim → evidence з перевіркою ID; семантичний аудит і фінальна секція ще потрібні |
+| Секція | Хто надає зміст |
+| --- | --- |
+| recommendation | Chair / CommitteeDecision |
+| scientific_thesis | R4 science |
+| human_translation_thesis | R4 translation |
+| clinical_development_plan | R4 clinical |
+| competitive_landscape | R5 market |
+| commercial_opportunity | R5 market і partnerships |
+| capital_to_milestone | R5 investment |
+| key_risks | Рольові risks, failure_miner і Chair decision |
+| critical_unknowns | Рольові unknowns, ip_licensing і Chair |
+| diligence_questions | Питання ролей, investment_threshold і фінальні Chair questions |
+| sources | R3 provenance та claim/evidence/source links усіх ролей |
 
-Фінансовий вузол також має включити час до milestone, події зміни вартості,
-подальше фінансування й licensing/acquisition/development scenarios. R5-04
-покриває evaluation — це перевірка якості всього продукту, не восьма основна
-експертна перспектива. R2 збирає всі секції, R1 їх відображає.
+R2 збирає Report, R1 відображає його. Семантичну підтримку перевіряє R3,
+науку/clinical — R4. Не додаємо нову секцію для кожної додаткової ролі.
 
-## Новий блок target_population
+## Market target_population
 
-Обов'язковий у MarketAnalysis; зберігається у секції commercial_opportunity:
-`result.section_content.structured_data["sections"][1]["structured_data"]["target_population"]`.
+Market повертає список `section_content`, а не старий вкладений `sections`.
+Поточний шлях: `result.section_content[1].structured_data["target_population"]`
+(commercial_opportunity; також можна знайти секцію за key).
 
 | Поле | Значення |
 | --- | --- |
@@ -73,61 +69,23 @@ AI-перспективи, не реальні незалежні експерт
 За відсутності даних блок залишається присутнім з null/[] і поясненнями.
 Повнота структури не дорівнює доведеній якості: live evaluation не проведено.
 
+## Evaluation і межі підтвердження
 
-## Повне структурне покриття market, v1.2.0
+[Rubric](../evals/rubric.md): 55 пунктів. [Dataset](../evals/cases/manifest.json):
+21 synthetic case, expectations для всіх семи вузлів, 13 development / 8 holdout,
+18 сімейств; before/after variants не перетинають splits.
 
-Це покриття вимог локальним кодом і mock-тестами, не підтвердження готовності
-всього продукту. Реальну генерацію, інтеграцію й аудит ще не перевірено.
+За [офлайн-результатами](../evals/validation-results.json): 970 backend-тестів,
+11 validator-тестів, 8 numeric probes (24 exact values і 3 expected rejections).
+Це не оцінки реальних LLM-відповідей. Market numeric scenarios потребують
+caller-reviewed inputs; pipeline зараз не передає `scenarios=` автоматично.
 
-| Вимога користувачки | Де виводиться |
-| --- | --- |
-| Захворювання, популяція, критерії, географія, доступ | commercial_opportunity.target_population; clinical_alignment |
-| Схвалені методи лікування | competitive_landscape.competitors.approved |
-| Клінічні конкуренти | competitors.clinical_stage |
-| Та сама мішень | competitors.same_target |
-| Альтернативні механізми | competitors.alternative_mechanism |
-| Припинені програми та причини / невідомість | competitors.discontinued: discontinuation_reason, discontinuation_reason_claim_ids, discontinuation_unknowns |
-| Потрібна додаткова користь | differentiation: comparator, dimension, assessment, claim_ids, evidence_ids, support_statuses |
-| Кількість придатних / доступних пацієнтів або прогалина | addressable_patients: eligible_patients та accessible_patients; source_requests за браку inputs |
-| Цінові аналоги та придатність порівняння | pricing_analogues: price_description, geography, as_of_date, comparability, limitations, claims, unknowns |
-| Відшкодування, призначення, інший доступ | access: reimbursement, prescribing, other_access, claim_ids, unknowns |
-| Сценарії, припущення та діапазони | scenarios та scenario_ranges; виключно розрахунки Python |
-| Комерційна цінність та готовність платити | commercial_value: assessment, rationale, unmet_need, willingness_to_pay, claim_ids, unknowns |
-| Ризики, невідомості, питання й докази | RoleResult.risks/unknowns/claims; diligence_questions в секціях |
+Очікування ще мають пройти [review R3/R4/R5](../evals/expectations-review.md).
+[Error log](../evals/error-log.md) порожній; [evaluation report](evaluation-report.md)
+містить структуру. Немає claims про expert agreement, unseen data або доведену
+відсутність галюцинацій. IP screening не є остаточним legal/FTO clearance.
 
-Назви після competitive_landscape/commercial_opportunity означають поля їхнього
-structured_data. coverage обов’язково пояснює всі шість категорій конкурентів,
-включно зі standard_of_care. Порожня карта не означає відсутність конкурентів.
-
-Деталі ліцензування належать майбутньому ip_licensing, пошук партнерів —
-partnerships; investment використає їхні висновки для фінансових сценаріїв.
-Усі сім вузлів входять у погоджений план; реалізований тут лише market.
-
-
-## Стан перевірки й передачі — 2026-10-07
-
-47 локальних тестів API пройшли (40 market + 7 science/translation).
-Код структурно покриває список вимог market; live-якість не підтверджена.
-Окремий тимчасовий Gemini-тест підтвердив доступ до моделі, але генерація
-завершувалася тайм-аутами, також без provider-enforced schema. Причина невідома.
-Подальші спроби припинено; командний шлюз не використовувався.
-
-Обидві секції не є самодостатнім повним виходом: ризики та повні записи claims
-з evidence_ids лежать у RoleResult, а джерела й уривки — у вхідному pack.
-R2 має передавати їх разом. clinical_alignment не підтверджує реального
-узгодження з R4. Повне закриття live-задачі вимагає adapter/runtime/Report R2,
-доказів і аудиту R3, перевірки критеріїв R4 та відображення R1.
-Деталі та межі передачі: [r5-01-handoff](r5-01-handoff.md).
-
-
-## ip_licensing — локальна реалізація 2026-10-07
-
-На гілці codex/r5-ip-licensing додано вузол, prompt 1.0.0, тести й синтетичні
-приклади. Використовує спільні Pydantic-контракти R2 із main 6d52de8.
-Усі 11 пунктів вимог користувачки зіставлено з полями в
-[r5-ip-licensing-guide.md](r5-ip-licensing-guide.md).
-Результат: RoleResult з claims/risks/unknowns і блоком ip_licensing у
-critical_unknowns; нова дванадцята секція Report не створюється.
-47 тестів вузла та 158 backend-тестів пройшли. Це офлайн-перевірка на
-синтетичних даних; справжні патентні факти, юридичні висновки й live-інтеграція
-ще не перевірені. [Передача команді](r5-ip-licensing-handoff.md).
+Деталі: [market](r5-01-handoff.md), [investment](r5-investment-handoff.md),
+[Chair](r5-chair-handoff.md), [Failure Miner](r5-failure-miner-handoff.md),
+[threshold](r5-investment-threshold-handoff.md), [partnerships](r5-partnerships-handoff.md),
+[IP](r5-ip-licensing-handoff.md), [R2 integration](r2-full-workflow-handoff.md).

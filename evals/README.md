@@ -28,6 +28,9 @@
 - `cases/dataset-lock.json` — hashes dataset і коду, з яким його звірено;
   це стартова фіксація контенту, не заморожена конфігурація live holdout run.
 - `review-template.json` — форма ручної оцінки після отримання реальної відповіді.
+- [expectations-review.md](expectations-review.md) — tracker предметного погодження R3/R4/R5.
+- [error-log.md](error-log.md) — порожній журнал для майбутніх спостережених помилок.
+- [Evaluation report](../docs/evaluation-report.md) — структура без live-результатів.
 - `validation-results.json` — фактичні офлайн-результати підготовки dataset;
   це не результати аналізу реальної LLM.
 
@@ -137,3 +140,11 @@ R3 importer стабільно відтворює source/evidence IDs за вм�
 Синтетичні джерела не мають реальних персональних/приватних даних або справжніх URL.
 Leakage позначено partial: не виконували blind guessing й не доводили model cutoff.
 Жодних runtime/cost, expert agreement або відсутності галюцинацій не вигадано.
+
+## Що можна узгодити до live-запусків
+
+R3 читає input/pack/expectations і перевіряє semantic support/provenance/leakage;
+R4 — science/clinical достатність та before/after критерії. R5 узгоджує business
+рішення й фіксує версію контенту. Для цього не потрібно отримувати model outputs.
+Результат предметного погодження записуємо у [review tracker](expectations-review.md).
+Задачу для R3/R4 користувачка може створити на GitHub окремо.
