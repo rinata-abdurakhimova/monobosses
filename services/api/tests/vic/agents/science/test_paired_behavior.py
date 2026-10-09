@@ -5,12 +5,12 @@ evidence guards and that the expectations are falsifiable. They are not a live-m
 """
 import json
 import re
+import sys
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
-
 from vic.agents.science.clinical import ClinicalPlanAnalysis, analyze_clinical
 from vic.agents.science.scientific import ScientificAnalysis, analyze_science
 from vic.agents.science.translation import (
@@ -23,6 +23,9 @@ from vic.contracts import CaseInput, EvidencePack, RoleResult, RunContext
 MANIFEST_PATH = (
     Path(__file__).resolve().parents[6] / "evals" / "cases" / "r4_paired_manifest.json"
 )
+sys.path.insert(0, str(MANIFEST_PATH.parents[1]))
+from r4_evaluation_runner_stub import score
+
 MANIFEST = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
 FAMILIES = {family["family_id"]: family for family in MANIFEST["families"]}
 PAIR_A = "pair_a_negative_candidate_hepatotoxicity"
@@ -47,6 +50,7 @@ _A_BEFORE = {
         "clinical.target_population": ("supported", ["ev-a-class"]),
         "clinical.safety_requirements": ("mixed", ["ev-a-preclin-tox"]),
         "clinical.next_milestone": ("mixed", ["ev-a-class", "ev-a-preclin-tox"]),
+        "clinical.study_sequence": ("mixed", ["ev-a-class", "ev-a-preclin-tox"]),
     },
     "risks": {
         "science": ["science.risk.jak_selectivity"],
@@ -299,57 +303,7 @@ def _risk_ids(results: dict[str, RoleResult]) -> set[str]:
 
 
 def evaluate_pair(expect: dict, before: dict, after: dict) -> list[str]:
-    errors: list[str] = []
-    b, a = _claims(before), _claims(after)
-    changed = {item["claim_id"]: item for item in expect["changed_claims"]}
-    unchanged = expect["unchanged_claims"]
-    tolerated = expect["tolerated_claims"]
-
-    for claim_id, item in changed.items():
-        if _status(b, claim_id) != item["before_status"]:
-            errors.append(f"{claim_id}: before={_status(b, claim_id)} expected {item['before_status']}")
-        if _status(a, claim_id) != item["after_status"]:
-            errors.append(f"{claim_id}: after={_status(a, claim_id)} expected {item['after_status']}")
-        cited = set(a[claim_id].evidence_ids) if claim_id in a else set()
-        missing = set(item["required_evidence_ids"]) - cited
-        if missing:
-            errors.append(f"{claim_id}: changed premise lacks evidence {sorted(missing)}")
-
-    for claim_id, status in unchanged.items():
-        for phase, claims in (("before", b), ("after", a)):
-            if _status(claims, claim_id) != status:
-                errors.append(f"{claim_id}: {phase}={_status(claims, claim_id)} expected {status}")
-
-    for claim_id, allowed in tolerated.items():
-        if claim_id in a and _status(a, claim_id) not in allowed:
-            errors.append(f"{claim_id}: after={_status(a, claim_id)} outside tolerated {allowed}")
-
-    for claim_id in sorted((b.keys() | a.keys()) - changed.keys() - unchanged.keys() - tolerated.keys()):
-        if (claim_id in b) != (claim_id in a):
-            errors.append(f"{claim_id}: claim appeared or disappeared without expectation")
-        elif _status(b, claim_id) != _status(a, claim_id):
-            errors.append(
-                f"{claim_id}: unexpected change {_status(b, claim_id)} -> {_status(a, claim_id)}"
-            )
-
-    for claim_id in sorted(b.keys() & a.keys()):
-        if b[claim_id].scope != a[claim_id].scope:
-            errors.append(f"{claim_id}: scope drifted {b[claim_id].scope} -> {a[claim_id].scope}")
-
-    for rule in expect["forbidden_citations"]:
-        for claim_id, claim in a.items():
-            if claim_id.startswith(rule["claim_prefix"]) and rule["evidence_id"] in claim.evidence_ids:
-                errors.append(f"{claim_id}: cites out-of-subject evidence {rule['evidence_id']}")
-
-    for phase, results in (("before", before), ("after", after)):
-        for risk_id in sorted(set(expect["unchanged_risks"]) - _risk_ids(results)):
-            errors.append(f"{risk_id}: risk missing {phase}")
-
-    links = after["translation"].section_content[0].structured_data["translation_links"]
-    for key in expect["missing_links_preserved"]:
-        if links[key]["status"] not in {"gap", "unknown"}:
-            errors.append(f"{key}: missing link closed without expectation ({links[key]['status']})")
-    return errors
+    return score(expect, tuple(before.values()), tuple(after.values()))
 
 
 def _evaluator_texts(expect: dict) -> list[str]:
@@ -504,10 +458,10 @@ def _irrelevant_doc_cited():
     ("family_id", "mutate", "expected_error"),
     [
         (PAIR_A, _mechanism_wipe, "science.pathway_biology"),
-        (PAIR_B, _safety_risk_dropped, "clinical.risk.safety: risk missing after"),
-        (PAIR_B, _safety_declared_proven, "translation.safe_exposure: after=supported"),
+        (PAIR_B, _safety_risk_dropped, "risk clinical.risk.safety: missing in after run"),
+        (PAIR_B, _safety_declared_proven, "translation.safe_exposure: after status 'supported'"),
         (PAIR_B, _benefit_from_biomarker, "translation.patient_benefit"),
-        (PAIR_C, _irrelevant_doc_cited, "cites out-of-subject evidence ev-c-pde4b"),
+        (PAIR_C, _irrelevant_doc_cited, "cites forbidden evidence ev-c-pde4b"),
     ],
 )
 async def test_evaluator_flags_biologically_invalid_updates(family_id, mutate, expected_error):

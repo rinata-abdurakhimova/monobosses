@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Literal, get_args
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-
 from vic.contracts import (
     CaseInput,
     Claim,

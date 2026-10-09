@@ -17,6 +17,7 @@ import importlib
 import json
 import logging
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -25,13 +26,26 @@ API_SRC = REPO_ROOT / "services" / "api" / "src"
 if str(API_SRC) not in sys.path:
     sys.path.insert(0, str(API_SRC))
 
-from vic.agents.science.clinical import PROMPT_VERSION as CLINICAL_PROMPT_VERSION  # noqa: E402
-from vic.agents.science.clinical import analyze_clinical  # noqa: E402
-from vic.agents.science.scientific import PROMPT_VERSION as SCIENCE_PROMPT_VERSION  # noqa: E402
-from vic.agents.science.scientific import analyze_science  # noqa: E402
-from vic.agents.science.translation import PROMPT_VERSION as TRANSLATION_PROMPT_VERSION  # noqa: E402
-from vic.agents.science.translation import analyze_translation  # noqa: E402
-from vic.contracts import CaseInput, EvidencePack, LlmAdapter, RoleResult, RunContext, RunMode  # noqa: E402
+from vic.agents.science.clinical import PROMPT_VERSION as CLINICAL_PROMPT_VERSION
+from vic.agents.science.clinical import analyze_clinical
+from vic.agents.science.scientific import PROMPT_VERSION as SCIENCE_PROMPT_VERSION
+from vic.agents.science.scientific import analyze_science
+from vic.agents.science.translation import (
+    PROMPT_VERSION as TRANSLATION_PROMPT_VERSION,
+)
+from vic.agents.science.translation import analyze_translation
+from vic.config import Settings
+from vic.contracts import (
+    CaseInput,
+    EvidencePack,
+    LlmAdapter,
+    RoleResult,
+    RunBudget,
+    RunContext,
+    RunMode,
+)
+from vic.llm import build_llm
+from vic.prompts import load_prompt
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("r4_runner")
@@ -86,8 +100,10 @@ def build_packs(family: dict[str, Any]) -> tuple[EvidencePack, EvidencePack]:
 
 
 async def _run_snapshot(
-    case: CaseInput, pack: EvidencePack, adapter: LlmAdapter, opaque_id: str, label: str
+    case: CaseInput, pack: EvidencePack, adapter: LlmAdapter, opaque_id: str, label: str,
+    settings: Settings | None = None,
 ) -> Snapshot:
+    settings = settings or Settings(_env_file=None)
     ctx = RunContext(
         case_id=opaque_id,
         run_id=f"{opaque_id}-{label}",
@@ -95,10 +111,14 @@ async def _run_snapshot(
         as_of_date=None,
         mode=RunMode.EVIDENCE_ONLY,
         model=adapter,
+        budget=RunBudget(max_cost_usd=settings.max_run_cost_usd,
+                         max_seconds=settings.max_run_seconds,
+                         deadline=time.monotonic() + settings.max_run_seconds),
     )
-    sci = await analyze_science(case, pack, ctx)
-    trans = await analyze_translation(case, pack, ctx)
-    clin = await analyze_clinical(case, pack, sci, trans, ctx)
+    async with asyncio.timeout(settings.max_run_seconds):
+        sci = await analyze_science(case, pack, ctx)
+        trans = await analyze_translation(case, pack, ctx)
+        clin = await analyze_clinical(case, pack, sci, trans, ctx)
     return sci, trans, clin
 
 
@@ -114,7 +134,8 @@ def _dump(results: Snapshot) -> dict[str, Any]:
     return {
         "positions": {_status(r.role_id): r.position for r in results},
         "claims": {
-            c.id: {"status": _status(c.support_status), "evidence_ids": list(c.evidence_ids)}
+            c.id: {"status": _status(c.support_status), "evidence_ids": list(c.evidence_ids),
+                   "scope": _status(c.scope), "text": c.text, "assumptions": c.assumptions}
             for r in results
             for c in r.claims
         },
@@ -154,6 +175,18 @@ def score(expectations: dict[str, Any], before: Snapshot, after: Snapshot) -> li
         if got not in allowed:
             failures.append(f"{key}: after status '{got}' not in tolerated {allowed}")
 
+    declared = {item["claim_id"] for item in expectations.get("changed_claims", [])}
+    declared.update(expectations.get("unchanged_claims", {}))
+    declared.update(expectations.get("tolerated_claims", {}))
+    for key in sorted((b_claims.keys() | a_claims.keys()) - declared):
+        if (key in b_claims) != (key in a_claims):
+            failures.append(f"{key}: claim appeared or disappeared without expectation")
+        elif status_of(b_claims, key) != status_of(a_claims, key):
+            failures.append(f"{key}: unexpected status change")
+    for key in sorted(b_claims.keys() & a_claims.keys()):
+        if b_claims[key].scope != a_claims[key].scope:
+            failures.append(f"{key}: scope drifted")
+
     for rule in expectations.get("forbidden_citations", []):
         for claim in a_claims.values():
             if claim.id.startswith(rule["claim_prefix"]) and rule["evidence_id"] in claim.evidence_ids:
@@ -172,7 +205,8 @@ def score(expectations: dict[str, Any], before: Snapshot, after: Snapshot) -> li
     return failures
 
 
-async def evaluate_family(family: dict[str, Any], adapter: LlmAdapter, adapter_spec: str) -> dict[str, Any]:
+async def evaluate_family(family: dict[str, Any], adapter: LlmAdapter, adapter_spec: str,
+                          settings: Settings | None = None) -> dict[str, Any]:
     family_id = family["family_id"]
     case = CaseInput.model_validate(family["case"])
     pack_before, pack_after = build_packs(family)
@@ -181,31 +215,39 @@ async def evaluate_family(family: dict[str, Any], adapter: LlmAdapter, adapter_s
     record: dict[str, Any] = {
         "family_id": family_id,
         "kind": family.get("kind"),
-        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
         "snapshots": {"before": pack_before.snapshot_id, "after": pack_after.snapshot_id},
         "versions": {
             "science_prompt": SCIENCE_PROMPT_VERSION,
             "translation_prompt": TRANSLATION_PROMPT_VERSION,
             "clinical_prompt": CLINICAL_PROMPT_VERSION,
             "adapter": adapter_spec,
+            "prompt_hashes": {key: load_prompt(key).version
+                              for key in ("science", "translation", "clinical")},
+            "model": settings.llm_model if settings else None,
+            "provider": settings.llm_provider if settings else None,
         },
     }
     try:
-        before = await _run_snapshot(case, pack_before, adapter, opaque_id, "s1")
-        after = await _run_snapshot(case, pack_after, adapter, opaque_id, "s2")
-    except Exception as exc:  # an agent/schema failure is a scored failure, not a runner crash
-        record.update(passed=False, failures=[f"run error: {type(exc).__name__}: {exc}"])
+        before = await _run_snapshot(case, pack_before, adapter, opaque_id, "s1", settings)
+        after = await _run_snapshot(case, pack_after, adapter, opaque_id, "s2", settings)
+    except Exception as exc:  # noqa: BLE001 - score agent failures and continue other families
+        # Raw schema/provider errors may echo evidence, model output or credentials.
+        record.update(passed=False, failures=[f"run error: {type(exc).__name__}"],
+                      error_code=getattr(exc, "code", "run_failed"))
         return record
 
     failures = score(family["expectations"], before, after)
     record.update(passed=not failures, failures=failures, before=_dump(before), after=_dump(after))
     return record
 
-def load_adapter(spec: str) -> LlmAdapter:
+def load_adapter(spec: str, settings: Settings | None = None) -> LlmAdapter:
+    if spec == "vic.llm":
+        return build_llm(settings or Settings(_env_file=REPO_ROOT / "services/api/.env"))
     module_name, _, attr = spec.partition(":")
     module = importlib.import_module(module_name)
     if not attr:
-        obj: Any = module  # module exposing a module-level async generate_structured, e.g. vic.llm
+        obj: Any = module
     else:
         obj = getattr(module, attr)
         if isinstance(obj, type) or not hasattr(obj, "generate_structured"):
@@ -221,7 +263,7 @@ async def main() -> None:
     parser.add_argument("--output", type=Path, default=REPO_ROOT / "evals/results/r4_paired_results.jsonl")
     parser.add_argument(
         "--adapter",
-        help="'package.module' (module-level generate_structured, e.g. vic.llm) or 'module:attr'",
+        help="'vic.llm' (configured backend adapter), 'package.module', or 'module:attr'",
     )
     parser.add_argument("--validate-only", action="store_true", help="Validate manifest and packs; run no model")
     args = parser.parse_args()
@@ -242,18 +284,19 @@ async def main() -> None:
     if not args.adapter:
         logger.warning(
             "No --adapter given: manifest validated, evaluation skipped, no results written. "
-            "Run with --adapter vic.llm once the R2-02 adapter is implemented."
+            "Run with --adapter vic.llm to use services/api/.env and environment settings."
         )
         return
 
-    adapter = load_adapter(args.adapter)
+    settings = Settings(_env_file=REPO_ROOT / "services/api/.env")
+    adapter = load_adapter(args.adapter, settings)
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     results: list[dict[str, Any]] = []
     with args.output.open("w", encoding="utf-8") as out:
         for family in families:
             logger.info("Evaluating %s", family["family_id"])
-            result = await evaluate_family(family, adapter, args.adapter)
+            result = await evaluate_family(family, adapter, args.adapter, settings)
             results.append(result)
             out.write(json.dumps(result, ensure_ascii=False) + "\n")
             verdict = "PASS" if result["passed"] else f"FAIL {result['failures']}"

@@ -7,6 +7,13 @@
 
 > **Status: NOT YET RUN.** No live-adapter evaluation has been executed. All "Actual" columns are TBD. Earlier mock-generated results were removed and must not be cited.
 
+The PR branch includes the current backend from `main`. The R4 runner's `vic.llm`
+option constructs the backend's `StructuredLlm` adapter using `services/api/.env`
+and environment overrides. Each snapshot uses the configured run timeout and cost
+budget. It records prompt content hashes and model/provider names; raw exception
+text is excluded from result files. The committed JSONL contains historical
+failures from the old backend stub, not results for this integrated revision.
+
 ---
 
 ## 1. Scope
@@ -53,6 +60,12 @@ Link statuses map to claim statuses as `established → supported`, `partially_e
 
 Pass criteria per family: every changed, unchanged and tolerated status matches; required evidence ids are cited; there are no forbidden citations; every listed risk id is present in both runs; and the `missing_links_preserved` links remain `unknown`.
 
+Unexpected status changes, claim appearance/disappearance outside declared
+expectations, and scope drift also fail. Claim text and assumptions are retained
+for manual review: a same-status milestone change requires review of the changed
+premise, beyond the automated status/citation checks. The paired unit tests use
+the runner's scoring function rather than a separate evaluator.
+
 ---
 
 ## 4. Run record (fill after the first live run)
@@ -74,8 +87,28 @@ Pass criteria per family: every changed, unchanged and tolerated status matches;
 python evals/r4_evaluation_runner_stub.py --validate-only
 
 # Live paired evaluation
-python evals/r4_evaluation_runner_stub.py --adapter <package.module>:<adapter_or_factory>
+python evals/r4_evaluation_runner_stub.py --adapter vic.llm --output artifacts/pr55/r4-live-results.jsonl
 
 # Unit / behavioural tests
 pytest services/api/tests/vic/agents/science/test_paired_behavior.py -v
+pytest services/api/tests/vic/agents/science/test_r4_runner.py -v
 ```
+
+For whole-workflow testing, follow `docs/r2-full-workflow-handoff.md`: start the API
+with `RUN_BACKEND=pipeline` and `DEV_STUBS=false`, then run
+`python services/api/scripts/check_workflow.py --output artifacts/pr55/workflow --revision`.
+This exercises all report roles, PDF evidence import, and an explicit report
+revision while verifying that the original report stays unchanged. Live model
+quality for these three R4 families still requires running the command above and
+reviewing the recorded claims; deterministic tests do not establish it.
+
+## Integration review validation
+
+- Backend suite: `pytest services/api/tests -q` — **1,013 passed**, including the
+  full HTTP workflow tests for all roles, imported evidence and immutable revisions.
+- R4 suite: `pytest services/api/tests/vic/agents/science -q` — **76 passed**.
+- Manifest validation: `--validate-only` — **3 families valid**, no model calls.
+- Ruff on the changed Python files and `git diff --check` pass.
+
+These are deterministic integration/regression results; live model outcomes in
+the table above remain TBD.
