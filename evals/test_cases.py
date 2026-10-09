@@ -20,9 +20,9 @@ def copy_dataset(tmp_path):
 
 
 def edit_json(path, edit):
-    data = json.loads(path.read_text())
+    data = json.loads(path.read_text(encoding='utf-8'))
     edit(data)
-    path.write_text(json.dumps(data))
+    path.write_text(json.dumps(data), encoding='utf-8')
 
 
 def test_all_cases_use_real_offline_import_and_retrieval():
@@ -47,7 +47,7 @@ def test_each_split_is_accepted_by_current_runner():
 
 def test_rejects_label_marker_in_runtime_input(copy_dataset):
     case = copy_dataset / 'cases/dev-01-sparse'
-    label = json.loads((case / 'expectations.json').read_text())['evaluator_only_marker']
+    label = json.loads((case / 'expectations.json').read_text(encoding='utf-8'))['evaluator_only_marker']
     edit_json(case / 'input.json', lambda d: d.update(program_data=label))
     with pytest.raises(ValueError, match='marker leaked'):
         validator.load_dataset(copy_dataset / 'cases/manifest.json')
@@ -93,14 +93,14 @@ def test_rejects_required_fact_from_future_source(copy_dataset):
 
 
 def test_missing_price_cannot_pass_as_zero():
-    probe = json.loads((HERE / 'numeric/market-missing-price.json').read_text())
+    probe = json.loads((HERE / 'numeric/market-missing-price.json').read_text(encoding='utf-8'))
     probe['expected_values']['0.annual_market_opportunity'] = '0'
     with pytest.raises(ValueError, match='None.*0'):
         validator.numeric_probe(probe)
 
 
 def test_partial_budget_cannot_pass_as_full_capital():
-    probe = json.loads((HERE / 'numeric/investment-partial.json').read_text())
+    probe = json.loads((HERE / 'numeric/investment-partial.json').read_text(encoding='utf-8'))
     probe['expected_values']['scenarios.0.capital_to_milestone'] = {'minimum': '40000', 'maximum': '40000'}
     with pytest.raises(ValueError, match='capital_to_milestone'):
         validator.numeric_probe(probe)
@@ -109,6 +109,20 @@ def test_partial_budget_cannot_pass_as_full_capital():
 def test_dataset_lock_detects_modified_file(copy_dataset, monkeypatch):
     monkeypatch.setattr(validator, 'HERE', copy_dataset)
     path = copy_dataset / 'cases/dev-01-sparse/input.json'
-    path.write_text(path.read_text() + ' ')
+    path.write_text(path.read_text(encoding='utf-8') + ' ', encoding='utf-8')
     with pytest.raises(ValueError, match='Dataset changed since lock'):
         validator.check_lock(copy_dataset / 'cases/manifest.json')
+
+
+@pytest.mark.parametrize('defect', ['missing_protocol', 'unknown_premise'])
+def test_rejects_inference_without_both_valid_premises(copy_dataset, defect):
+    path = copy_dataset / 'cases/dev-06-role-conflict/expectations.json'
+    def corrupt(data):
+        rule = data['role_expectations']['market'][-1]
+        if defect == 'missing_protocol':
+            rule['evidence_ids'] = ['ev-67fc40acbe52-001']
+        else:
+            rule['premise_fact_ids'] = ['nonexistent-fact']
+    edit_json(path, corrupt)
+    with pytest.raises(ValueError, match='Inference must cite all premise evidence|Unknown inference premise fact'):
+        validator.load_dataset(copy_dataset / 'cases/manifest.json')

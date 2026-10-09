@@ -23,7 +23,7 @@
     {
       "id": "dev-06-role-conflict-fact-02",
       "document": "marketing-broad",
-      "assertion": "A promotional claim conflicts with protocol restrictions and lacks access evidence.",
+      "assertion": "The brochure proposes all-patient eligibility and universal access without eligibility analysis or reimbursement evidence.",
       "importance": "major",
       "source_id": "src-67fc40acbe52",
       "evidence_ids": [
@@ -63,8 +63,16 @@
         "importance": "critical"
       },
       {
-        "requirement": "Reconcile the clinical restrictions instead of silently adopting the broad brochure.",
-        "importance": "critical"
+        "requirement": "Compare the protocol restrictions (fact-01) with the broad brochure claims (fact-02), cite both evidence excerpts for the conflict, and retain unresolved eligibility/access gaps. The brochure alone does not establish protocol restrictions. Specify the evidence needed to resolve the discrepancy.",
+        "importance": "critical",
+        "premise_fact_ids": [
+          "dev-06-role-conflict-fact-01",
+          "dev-06-role-conflict-fact-02"
+        ],
+        "evidence_ids": [
+          "ev-b418ab3a3ea1-001",
+          "ev-67fc40acbe52-001"
+        ]
       }
     ],
     "investment": [
@@ -97,8 +105,16 @@
         "importance": "major"
       },
       {
-        "requirement": "Show unresolved conflicting inputs and specify the evidence needed to resolve them.",
-        "importance": "critical"
+        "requirement": "Compare the protocol restrictions (fact-01) with the broad brochure claims (fact-02), cite both evidence excerpts for the conflict, and retain unresolved eligibility/access gaps. The brochure alone does not establish protocol restrictions. Specify the evidence needed to resolve the discrepancy.",
+        "importance": "critical",
+        "premise_fact_ids": [
+          "dev-06-role-conflict-fact-01",
+          "dev-06-role-conflict-fact-02"
+        ],
+        "evidence_ids": [
+          "ev-b418ab3a3ea1-001",
+          "ev-67fc40acbe52-001"
+        ]
       }
     ],
     "investment_threshold": [

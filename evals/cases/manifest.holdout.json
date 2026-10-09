@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
   "rubric_version": "1.0.0",
-  "dataset_version": "1.0.0",
-  "validated_base_main": "a060c26",
+  "dataset_version": "1.0.1",
+  "validated_base_main": "c37fd9bd8d3fdac2ee4c87ad7afd01138b67f791",
   "description": "Twenty-one wholly synthetic integrated cases, evaluator-only expectations and optional direct arithmetic probes. No live or expert-labelled results.",
   "label_status": "author_defined_pending_R3_R4_R5_review",
   "cases": [

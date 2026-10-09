@@ -1,7 +1,9 @@
 # Узгодження expectations — R3 / R4 / R5
 
-Статус: NOT_REVIEWED · Dataset 1.0.0 · Підготовлено 2026-10-09.
-Зараз це tracker завдань, не записи завершеного людського review.
+Статус: PARTIAL_REVIEW · Dataset 1.0.1 · Оновлено 2026-10-09.
+R3: 19 PASS на незмінених кейсах; 2 CHANGES_REQUESTED, правки внесено,
+повторне погодження очікується. R4 і R5: NOT_REVIEWED.
+[Джерело review та опис правок](r3-review-notes.md).
 
 R3 перевіряє підтримку фактів, provenance і leakage; R4 — наукову/клінічну
 достатність; R5 узгоджує business-висновки.
@@ -12,27 +14,27 @@ R3 перевіряє підтримку фактів, provenance і leakage; R4
 
 | Case | Split | R3 | R4 | R5 узгодження | Коментар / reviewer / дата / зміни |
 | --- | --- | --- | --- | --- | --- |
-| [dev-01-sparse](cases/dev-01-sparse/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-02-market-coverage](cases/dev-02-market-coverage/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-03-budget-unknown](cases/dev-03-budget-unknown/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-04-partial-budget](cases/dev-04-partial-budget/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-05-schedule-stress](cases/dev-05-schedule-stress/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-06-role-conflict](cases/dev-06-role-conflict/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-07-patent-barrier](cases/dev-07-patent-barrier/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-08-partner-fit](cases/dev-08-partner-fit/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-09-cross-domain](cases/dev-09-cross-domain/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-10-safety-before](cases/dev-10-safety-before/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-11-admin-after](cases/dev-11-admin-after/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-12-safety-after](cases/dev-12-safety-after/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [dev-13-ready-research](cases/dev-13-ready-research/expectations.json) | development | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [hold-01-animal-human](cases/hold-01-animal-human/expectations.json) | holdout | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [hold-02-currency-price](cases/hold-02-currency-price/expectations.json) | holdout | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [hold-03-license-restriction](cases/hold-03-license-restriction/expectations.json) | holdout | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [hold-04-injection](cases/hold-04-injection/expectations.json) | holdout | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [hold-05-endpoint-gap](cases/hold-05-endpoint-gap/expectations.json) | holdout | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [hold-06-discontinued-unknown](cases/hold-06-discontinued-unknown/expectations.json) | holdout | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [hold-07-threshold-before](cases/hold-07-threshold-before/expectations.json) | holdout | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
-| [hold-08-threshold-after](cases/hold-08-threshold-after/expectations.json) | holdout | NOT_REVIEWED | NOT_REVIEWED | NOT_REVIEWED | — |
+| [dev-01-sparse](cases/dev-01-sparse/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [dev-02-market-coverage](cases/dev-02-market-coverage/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [dev-03-budget-unknown](cases/dev-03-budget-unknown/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [dev-04-partial-budget](cases/dev-04-partial-budget/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [dev-05-schedule-stress](cases/dev-05-schedule-stress/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [dev-06-role-conflict](cases/dev-06-role-conflict/expectations.json) | development | CHANGES_REQUESTED | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; правку внесено у 1.0.1, повторний R3 review pending |
+| [dev-07-patent-barrier](cases/dev-07-patent-barrier/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [dev-08-partner-fit](cases/dev-08-partner-fit/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [dev-09-cross-domain](cases/dev-09-cross-domain/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [dev-10-safety-before](cases/dev-10-safety-before/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [dev-11-admin-after](cases/dev-11-admin-after/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [dev-12-safety-after](cases/dev-12-safety-after/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [dev-13-ready-research](cases/dev-13-ready-research/expectations.json) | development | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [hold-01-animal-human](cases/hold-01-animal-human/expectations.json) | holdout | CHANGES_REQUESTED | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; правку внесено у 1.0.1, повторний R3 review pending |
+| [hold-02-currency-price](cases/hold-02-currency-price/expectations.json) | holdout | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [hold-03-license-restriction](cases/hold-03-license-restriction/expectations.json) | holdout | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [hold-04-injection](cases/hold-04-injection/expectations.json) | holdout | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [hold-05-endpoint-gap](cases/hold-05-endpoint-gap/expectations.json) | holdout | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [hold-06-discontinued-unknown](cases/hold-06-discontinued-unknown/expectations.json) | holdout | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [hold-07-threshold-before](cases/hold-07-threshold-before/expectations.json) | holdout | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
+| [hold-08-threshold-after](cases/hold-08-threshold-after/expectations.json) | holdout | PASS | NOT_REVIEWED | NOT_REVIEWED | Rinata / Codex, 2026-10-09; R3 PASS на snapshot e67b1f1; case unchanged |
 
 ## Як записати результат
 

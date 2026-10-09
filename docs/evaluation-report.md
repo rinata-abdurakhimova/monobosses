@@ -19,11 +19,11 @@ partnerships, ip_licensing, chair; їхній внесок у фінальний
 | Матеріал | Поточний стан |
 | --- | --- |
 | [Rubric](../evals/rubric.md) | Версія 1.0.0, 55 правил |
-| [Dataset](../evals/cases/manifest.json) | Версія 1.0.0, 21 synthetic case, 18 сімейств |
+| [Dataset](../evals/cases/manifest.json) | Версія 1.0.1, 21 synthetic case, 18 сімейств |
 | Development / holdout | 13 / 8; споріднені variants в одному split |
-| Expectations | Авторські; review R3/R4/R5 ще не зафіксовано |
+| Expectations | R3: 19 PASS, 2 виправлені кейси очікують повторного review; R4/R5 pending |
 | [Фіксація контенту](../evals/cases/dataset-lock.json) | Hashes dataset і code baseline; live model/config ще не заморожені |
-| [Review tracker](../evals/expectations-review.md) | NOT_REVIEWED |
+| [Review tracker](../evals/expectations-review.md) | PARTIAL_REVIEW; див. записи R3 |
 | [Журнал помилок](../evals/error-log.md) | Порожній шаблон |
 
 ### Вже виконані офлайн-перевірки
@@ -40,6 +40,14 @@ TypeScript, перевірка frontend-контрактів і підключе
 Деталі й розміри синтетичних запитів: [Market handoff](r5-market-request-budget.md).
 Це офлайн-перевірки; реальний mentor gateway після зміни ще не перевірений.
 Ці результати не додаємо до метрик якості реальної LLM нижче.
+
+Правки dataset 1.0.1 і надані R3 statuses описано в
+[R3 review notes](../evals/r3-review-notes.md). Попередні counts вище є
+результатами до цих правок, а не автоматичним підтвердженням нового review.
+
+Після двох R3-правок у dataset 1.0.1 повторно пройшли всі 21 case checks
+та 8 numeric probes; **984 backend + 13 evaluation-тестів — разом 997**.
+Model calls: 0; ці перевірки не є повторним предметним R3/R4 погодженням.
 
 ## 3. Узгодження очікувань
 

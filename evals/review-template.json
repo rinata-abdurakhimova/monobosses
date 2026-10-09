@@ -4,7 +4,7 @@
   "run_id": null,
   "split": null,
   "config_hash": null,
-  "expectations_version": "1.0.0",
+  "expectations_version": "1.0.1",
   "report_path": null,
   "trace_path": null,
   "review_status": "NOT_REVIEWED",

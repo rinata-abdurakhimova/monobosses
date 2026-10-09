@@ -151,6 +151,16 @@ def load_dataset(manifest_path):
             require(set(f['evidence_ids']) == set(expected['document_map'][f['document']]['evidence_ids']), 'Fact evidence mismatch')
         for role, rules in expected['role_expectations'].items():
             require(bool(rules) and all(r['requirement'].strip() for r in rules), f'Missing requirements for {role}')
+            facts = {f['id']: f for f in expected['required_facts']}
+            for rule in rules:
+                if 'premise_fact_ids' in rule:
+                    premises = rule['premise_fact_ids']
+                    require(bool(premises) and set(premises) <= facts.keys(), 'Unknown inference premise fact')
+                    premise_evidence = {eid for fid in premises for eid in facts[fid]['evidence_ids']}
+                    require(set(rule.get('evidence_ids', [])) == premise_evidence,
+                            'Inference must cite all premise evidence')
+                elif 'evidence_ids' in rule:
+                    require(set(rule['evidence_ids']) <= ev.keys(), 'Unknown role expectation evidence')
         marker = expected['evaluator_only_marker']
         runtime = json.dumps({'input': raw, 'pack': pack_raw}, ensure_ascii=False)
         require(marker not in runtime, 'Evaluator marker leaked into runtime input')
@@ -253,6 +263,7 @@ def validate(manifest_path=HERE / 'cases' / 'manifest.json'):
         require(probe['case_id'] in by_id, 'Numeric probe references missing case')
         probe_results.append(numeric_probe(probe))
     return {'validation_type': 'offline_content_and_deterministic_arithmetic',
+            'dataset_version': manifest['dataset_version'],
             'model_calls': 0, 'live_quality_evaluated': False, 'expert_labels_provided': False,
             'cases_checked': len(cases), 'families': len({c['row']['family'] for c in cases}),
             'splits': dict(Counter(c['row']['split'] for c in cases)),

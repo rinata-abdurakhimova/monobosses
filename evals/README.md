@@ -160,3 +160,14 @@ the previous baseline in code_baseline_history. This records code identity and
 offline compatibility, not semantic label approval or a frozen live model/config.
 All R3/R4/R5 expectation-review statuses remain pending. No holdout model outcomes
 were generated or used for this change.
+
+
+## Правки після R3 review — dataset 1.0.1
+
+Мішень у hold-01-animal-human узгоджено з evidence (H); у dev-06-role-conflict
+source-bound факт про brochure відокремлено від порівняння з protocol, яке
+посилається на обидва premises та evidence IDs. Усі pack documents незмінні.
+Докладно: [R3 review notes](r3-review-notes.md). R3 statuses перенесено в tracker;
+два змінені кейси очікують повторного R3 review, R4/R5 pending.
+Попередні згадки 1.0.0 вище описують історію підготовки та Market v2 baseline.
+Ці правки не спираються на model outcomes і не змінюють dev/holdout split.
