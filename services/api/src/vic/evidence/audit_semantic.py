@@ -54,8 +54,8 @@ def _format_items(claims: list[Claim], pack: EvidencePack) -> str:
     blocks: list[str] = []
     for c in claims:
         lines = [
-            f"CLAIM {c.id} (scope={c.scope.value}, importance={c.importance.value}, "
-            f"claimed_status={c.support_status.value})",
+            (f"CLAIM {c.id} (scope={c.scope.value}, importance={c.importance.value}, "
+            f"claimed_status={c.support_status.value})"),
             f"  Text: {c.text}",
         ]
         for eid in c.evidence_ids:
@@ -91,13 +91,25 @@ async def audit_claims_semantic(
         return result
 
     index = {c.id: i for i, c in enumerate(claims)}
-    for start in range(0, len(eligible), MAX_CLAIMS_PER_CALL):
-        chunk = eligible[start:start + MAX_CLAIMS_PER_CALL]
+    chunks, current = [], []
+    for claim in eligible:
+        candidate = [*current, claim]
+        measure = getattr(ctx.model, "structured_request_size", None)
+        payload = {"audit_items": _format_items(candidate, pack), "claim_count": len(candidate)}
+        sizes = measure(PROMPT_ID, payload, SemanticAudit, ctx) if callable(measure) else None
+        too_large = isinstance(sizes, dict) and sizes["request_bytes"] > 13500
+        if current and (len(candidate) > MAX_CLAIMS_PER_CALL or too_large):
+            chunks.append(current)
+            current = []
+        current.append(claim)
+    if current:
+        chunks.append(current)
+    for chunk in chunks:
         by_id = {c.id: c for c in chunk}
         payload = {"audit_items": _format_items(chunk, pack), "claim_count": len(chunk)}
         try:
             out = await ctx.model.generate_structured(PROMPT_ID, payload, SemanticAudit, ctx)
-        except Exception as exc:  # model/network failure must not break the run
+        except Exception as exc:  # noqa: BLE001 - report semantic audit unavailability safely
             result.warnings.append(
                 f"Semantic (LLM) audit unavailable for {len(chunk)} claim(s) ({type(exc).__name__}); "
                 "only structural and heuristic checks were applied.")

@@ -185,12 +185,16 @@ def _compact_schema(value, *, mapping=False):
 MARKET_PROMPTS = ("market_competitive", "market_commercial")
 
 
-def structured_request(prompt_id, payload, response_model, ctx):
+def structured_request(prompt_id, payload, response_model, ctx, *, system_override=None, compact=False):
     """Single serializer used by the planner and runtime, including audit feedback."""
     prompt = load_prompt(prompt_id)
-    schema = json.dumps(_compact_schema(response_model.model_json_schema()),
-                        ensure_ascii=False, separators=(",", ":"))
-    system = (f"{prompt.text}\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
+    if compact:
+        from vic.request_protocol import compact_schema
+        schema = compact_schema(response_model.model_json_schema())
+    else:
+        schema = json.dumps(_compact_schema(response_model.model_json_schema()),
+                            ensure_ascii=False, separators=(",", ":"))
+    system = (f"{system_override or prompt.text}\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
               f"that validates against this JSON Schema:\n{schema}")
     messages = [{"role": "user", "content": json.dumps(payload, ensure_ascii=False,
                                   default=str, separators=(",", ":"))}]
@@ -250,6 +254,9 @@ class StructuredLlm:
             return self._s.clinical_reasoning_effort
         if prompt_id in MARKET_PROMPTS:
             return self._s.market_reasoning_effort
+        if prompt_id in {"ip_licensing", "partnerships", "investment_plan", "investment",
+                         "investment_threshold", "failure_miner", "chair", "audit", "context_brief"}:
+            return self._s.node_reasoning_effort
         return None
 
     def cost_limit_enforceable(self) -> bool:
@@ -258,18 +265,40 @@ class StructuredLlm:
 
     async def generate_structured(self, prompt_id: str, payload: dict[str, Any],
                                   response_model: type[T], ctx: RunContext) -> T:
-        prompt, system, messages = structured_request(prompt_id, payload, response_model, ctx)
+        from vic.request_protocol import TASKS, generate_bounded
+        if prompt_id in TASKS and self.structured_request_size(prompt_id, payload, response_model, ctx)["request_bytes"] > self._s.node_initial_request_bytes:
+            return await generate_bounded(self, prompt_id, payload, response_model, ctx)
+        return await self._generate_direct(prompt_id, payload, response_model, ctx)
+
+    async def _generate_direct(self, prompt_id, payload, response_model, ctx, *, system_override=None,
+                               compact=False, inverse=None):
+        prompt, system, messages = structured_request(prompt_id, payload, response_model, ctx,
+                                                       system_override=system_override, compact=compact)
+        original_messages = messages
         repairs = 0
         while True:
             response = await self._call(prompt.prompt_id, prompt.version, system, messages, ctx)
             try:
+                if inverse:
+                    from vic.request_protocol import translate, validate_component_references
+                    data = translate(json.loads(_extract_json(response.text)), inverse)
+                    validate_component_references(prompt_id, payload, data, inverse)
+                    return response_model.model_validate(data)
                 return response_model.model_validate_json(_extract_json(response.text))
             except ValueError as exc:  # pydantic.ValidationError is a ValueError
+                if hasattr(exc, "errors"):
+                    locations = [{"type": error["type"], "loc": error["loc"]}
+                                 for error in exc.errors(include_input=False, include_context=False)]
+                    ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} schema errors {locations}")
                 if repairs >= self._s.llm_max_repairs:
                     raise MalformedModelOutput(
                         f"The model output for '{prompt_id}' did not match the required schema "
                         f"after {repairs} repair attempt(s)") from None
                 repairs += 1
+                if compact or prompt_id == "context_brief":
+                    messages = original_messages + [{"role": "user", "content":
+                        "Correct the schema error and return only valid JSON: " + str(exc)[:1000]}]
+                    continue
                 messages = messages + [
                     {"role": "assistant", "content": response.text},
                     {"role": "user", "content": "Your previous answer was invalid: "
@@ -277,6 +306,13 @@ class StructuredLlm:
 
     async def _call(self, prompt_id: str, version: str, system: str,
                     messages: list[dict[str, str]], ctx: RunContext) -> ProviderResponse:
+        if prompt_id not in {*MARKET_PROMPTS, "clinical", "clinical_design", "clinical_development"}:
+            sizes = request_sizes(system, messages, model=self._s.llm_model,
+                                  max_tokens=self._s.llm_max_output_tokens,
+                                  reasoning_effort=self._reasoning_effort(prompt_id))
+            ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} request sizes {sizes}; budget_bytes={self._s.node_request_max_bytes}")
+            if sizes["request_bytes"] > self._s.node_request_max_bytes:
+                raise RunFailure("Node request exceeds the configured byte budget", code="node_request_budget")
         if prompt_id in MARKET_PROMPTS:
             sizes = request_sizes(system, messages, model=self._s.llm_model,
                                   max_tokens=self._s.llm_max_output_tokens,
@@ -351,7 +387,7 @@ class StructuredLlm:
 def build_llm(settings: Settings) -> StructuredLlm:
     return StructuredLlm(make_provider(settings), settings)
 PROMPT_IDS = ("science", "translation", "clinical", "clinical_design", "clinical_development", "market", "market_competitive", "market_commercial", "investment_plan", "investment",
-              "chair", "audit", "ip_licensing", "partnerships", "investment_threshold", "failure_miner")
+              "chair", "audit", "ip_licensing", "partnerships", "investment_threshold", "failure_miner", "context_brief")
 
 
 async def generate_structured(prompt_id: str, payload: dict[str, Any], response_model: type[T],

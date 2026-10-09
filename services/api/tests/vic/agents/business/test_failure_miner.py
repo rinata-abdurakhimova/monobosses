@@ -1,68 +1,81 @@
 """Offline requirements, negative validation and real-adapter data flow."""
+import json
 from copy import deepcopy
 from datetime import date
-import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
+
 import pytest
 from pydantic import ValidationError
 from vic.agents.business.failure_miner import (
-    ROLES, FailureAnalysis, analyze_failure_miner, prepare_failure_inputs,
-    validate_failure_result, identify_failure_gaps,
+    ROLES,
+    FailureAnalysis,
+    analyze_failure_miner,
+    identify_failure_gaps,
+    prepare_failure_inputs,
+    validate_failure_result,
 )
 from vic.contracts import CaseInput, EvidencePack, RoleResult, RunContext
+
+
+@pytest.fixture(autouse=True)
+def _canonical_transport_contract(monkeypatch):
+    # Keep the original full-payload transport assertions; bounded defaults have
+    # separate full HTTP integration and protocol coverage.
+    monkeypatch.setenv("NODE_INITIAL_REQUEST_BYTES", "10000000")
+    monkeypatch.setenv("NODE_REQUEST_MAX_BYTES", "10000000")
 
 
 def inputs(empty=False):
     case = CaseInput(indication="Synthetic indication", mechanism="Synthetic mechanism", scope="approach")
     pack = EvidencePack(snapshot_id="miner-snapshot", synthetic=True,
-        sources=[] if empty else [dict(id="s1", title="Synthetic study", type="synthetic",
-            retrieved_at="2026-10-08T00:00:00Z", synthetic=True, content_hash="sha256:" + "a" * 64)],
-        evidence=[] if empty else [dict(id="e1", source_id="s1", scope="approach", excerpt="Synthetic limitation", locator="result")])
+        sources=[] if empty else [{"id": "s1", "title": "Synthetic study", "type": "synthetic",
+            "retrieved_at": "2026-10-08T00:00:00Z", "synthetic": True, "content_hash": "sha256:" + "a" * 64}],
+        evidence=[] if empty else [{"id": "e1", "source_id": "s1", "scope": "approach", "excerpt": "Synthetic limitation", "locator": "result"}])
     ctx = RunContext(case_id="miner-case", run_id="miner-run", mode="evidence_only", snapshot_id=pack.snapshot_id, as_of_date=None)
     return case, pack, ctx
 
 
 def finding(basis="hypothesis"):
-    return dict(value=None if basis == "unknown" else "A plausible failure scenario",
-        basis=basis, claim_ids=[] if basis == "unknown" else ["failure_miner.scenario"],
-        assumptions=["Requires applicable specialist verification"] if basis == "hypothesis" else [],
-        unknowns=["Applicable result missing"] if basis == "unknown" else [])
+    return {"value": None if basis == "unknown" else "A plausible failure scenario",
+        "basis": basis, "claim_ids": [] if basis == "unknown" else ["failure_miner.scenario"],
+        "assumptions": ["Requires applicable specialist verification"] if basis == "hypothesis" else [],
+        "unknowns": ["Applicable result missing"] if basis == "unknown" else []}
 
 
 def check():
-    return dict(question="Does the validated assay show the proposed limitation?", method="Review assay with controls",
-        evidence_needed="Assay results and controls", uncertainty_reduced="Mechanism applicability",
-        decision_if_positive="Confirmed limitation requires funding review",
-        decision_if_negative="Limitation absent supports continued diligence",
-        inconclusive_if="Invalid controls require a repeated assay")
+    return {"question": "Does the validated assay show the proposed limitation?", "method": "Review assay with controls",
+        "evidence_needed": "Assay results and controls", "uncertainty_reduced": "Mechanism applicability",
+        "decision_if_positive": "Confirmed limitation requires funding review",
+        "decision_if_negative": "Limitation absent supports continued diligence",
+        "inconclusive_if": "Invalid controls require a repeated assay"}
 
 
 def output():
-    return dict(summary="Synthetic failure scenarios", position="conditional",
-        claims=[dict(id="failure_miner.scenario", text="Limitation could constrain development", provenance="ai",
-            support_status="unverified", evidence_ids=[], assumptions=["Scenario for review"], scope="approach", importance="critical")],
-        failure_modes=[dict(id="translation_gap", domains=["science", "translation", "investment"], origins=[],
-            problem=finding(), affected=finding(), consequence=finding(), investment_impact=finding(),
-            priority="critical", priority_rationale=finding(), next_check=check())],
-        domain_reviews=[dict(role_id=r, assessment=finding("unknown"),
-            failure_ids=["translation_gap"] if r in ("science", "translation", "investment") else [],
-            risk_dispositions=[], next_check=f"Obtain {r} review") for r in ROLES],
-        interactions=[], interaction_limitations=["Only one failure identified; cross-domain links require data"],
-        diligence_priorities=[dict(id="assay_review", rank=1, failure_ids=["translation_gap"], interaction_ids=[],
-            priority="critical", rationale=finding(), check=check())], unknowns=["Applicability unknown"],
-        change_conditions=["Applicable results change the risk assessment"], limitations=["Synthetic example"])
+    return {"summary": "Synthetic failure scenarios", "position": "conditional",
+        "claims": [{"id": "failure_miner.scenario", "text": "Limitation could constrain development", "provenance": "ai",
+            "support_status": "unverified", "evidence_ids": [], "assumptions": ["Scenario for review"], "scope": "approach", "importance": "critical"}],
+        "failure_modes": [{"id": "translation_gap", "domains": ["science", "translation", "investment"], "origins": [],
+            "problem": finding(), "affected": finding(), "consequence": finding(), "investment_impact": finding(),
+            "priority": "critical", "priority_rationale": finding(), "next_check": check()}],
+        "domain_reviews": [{"role_id": r, "assessment": finding("unknown"),
+            "failure_ids": ["translation_gap"] if r in ("science", "translation", "investment") else [],
+            "risk_dispositions": [], "next_check": f"Obtain {r} review"} for r in ROLES],
+        "interactions": [], "interaction_limitations": ["Only one failure identified; cross-domain links require data"],
+        "diligence_priorities": [{"id": "assay_review", "rank": 1, "failure_ids": ["translation_gap"], "interaction_ids": [],
+            "priority": "critical", "rationale": finding(), "check": check()}], "unknowns": ["Applicability unknown"],
+        "change_conditions": ["Applicable results change the risk assessment"], "limitations": ["Synthetic example"]}
 
 
 def upstream(role):
     return RoleResult(role_id=role, summary="Synthetic upstream", position="conditional",
-        claims=[dict(id=f"{role}.result", text="Synthetic limitation", provenance="source", support_status="supported",
-            evidence_ids=["e1"], scope="approach", importance="major")],
-        risks=[dict(id=f"{role}.risk", description="Synthetic risk", priority="major", claim_ids=[f"{role}.result"],
-            impact="Development constraint", next_check="Review data")], unknowns=["Applicability unresolved"],
-        section_content=[dict(key="key_risks", summary="Synthetic", claim_ids=[f"{role}.result"],
-            structured_data={role:dict(snapshot_id="miner-snapshot", records=[dict(id="record_one", details="Complete nested data")])})])
+        claims=[{"id": f"{role}.result", "text": "Synthetic limitation", "provenance": "source", "support_status": "supported",
+            "evidence_ids": ["e1"], "scope": "approach", "importance": "major"}],
+        risks=[{"id": f"{role}.risk", "description": "Synthetic risk", "priority": "major", "claim_ids": [f"{role}.result"],
+            "impact": "Development constraint", "next_check": "Review data"}], unknowns=["Applicability unresolved"],
+        section_content=[{"key": "key_risks", "summary": "Synthetic", "claim_ids": [f"{role}.result"],
+            "structured_data": {role:{"snapshot_id": "miner-snapshot", "records": [{"id": "record_one", "details": "Complete nested data"}]}}}])
 
 
 def validate(raw, contexts=None, empty=False):
@@ -78,11 +91,11 @@ def with_contexts():
     contexts = {r: upstream(r) for r in ROLES}
     failure = raw["failure_modes"][0]
     failure["domains"] = list(ROLES)
-    failure["origins"] = [dict(role_id=r, upstream_claim_ids=[f"{r}.result"], upstream_risk_ids=[f"{r}.risk"], record_ids=["record_one"]) for r in ROLES]
+    failure["origins"] = [{"role_id": r, "upstream_claim_ids": [f"{r}.result"], "upstream_risk_ids": [f"{r}.risk"], "record_ids": ["record_one"]} for r in ROLES]
     for review in raw["domain_reviews"]:
         review["failure_ids"] = [failure["id"]]
-        review["risk_dispositions"] = [dict(upstream_risk_id=f"{review['role_id']}.risk", disposition="included",
-            failure_ids=[failure["id"]], rationale="Material development constraint")]
+        review["risk_dispositions"] = [{"upstream_risk_id": f"{review['role_id']}.risk", "disposition": "included",
+            "failure_ids": [failure["id"]], "rationale": "Material development constraint"}]
     return raw, contexts
 
 
@@ -92,8 +105,8 @@ def with_interaction():
     second.update(id="capital_pressure", domains=["investment"], origins=[])
     raw["failure_modes"].append(second)
     raw["domain_reviews"][4]["failure_ids"].append("capital_pressure")
-    raw["interactions"] = [dict(id="delay_to_capital", from_failure_id="translation_gap", to_failure_id="capital_pressure",
-        relationship="amplifies", mechanism=finding(), investment_impact=finding(), next_check=check())]
+    raw["interactions"] = [{"id": "delay_to_capital", "from_failure_id": "translation_gap", "to_failure_id": "capital_pressure",
+        "relationship": "amplifies", "mechanism": finding(), "investment_impact": finding(), "next_check": check()}]
     raw["diligence_priorities"][0].update(failure_ids=["translation_gap", "capital_pressure"], interaction_ids=["delay_to_capital"])
     return raw
 
@@ -109,9 +122,9 @@ def test_complete_chain_interactions_and_requirements():
 
 def test_documented_problem_does_not_upgrade_future_consequence():
     raw = output()
-    raw["claims"].append(dict(id="failure_miner.fact", text="Observed limitation", provenance="source", support_status="supported",
-        evidence_ids=["e1"], scope="approach", importance="critical"))
-    raw["failure_modes"][0]["problem"] = dict(value="Observed limitation", basis="documented", claim_ids=["failure_miner.fact"], assumptions=[], unknowns=[])
+    raw["claims"].append({"id": "failure_miner.fact", "text": "Observed limitation", "provenance": "source", "support_status": "supported",
+        "evidence_ids": ["e1"], "scope": "approach", "importance": "critical"})
+    raw["failure_modes"][0]["problem"] = {"value": "Observed limitation", "basis": "documented", "claim_ids": ["failure_miner.fact"], "assumptions": [], "unknowns": []}
     raw["position"] = "material_risks"
     analysis = validate(raw)
     assert analysis.failure_modes[0].consequence.basis == "hypothesis"
@@ -148,7 +161,7 @@ def test_reject_invalid_outputs(defect):
     if defect == "documented": f["problem"]["basis"] = "documented"
     if defect == "hypothesis": f["problem"]["assumptions"] = []
     if defect == "unknown_value": f["problem"].update(basis="unknown", unknowns=["Gap"])
-    if defect == "unknown_gaps": f["problem"] = dict(value=None, basis="unknown", claim_ids=[], assumptions=[], unknowns=[])
+    if defect == "unknown_gaps": f["problem"] = {"value": None, "basis": "unknown", "claim_ids": [], "assumptions": [], "unknowns": []}
     if defect == "unknown_claims": f["problem"] = finding("unknown"); f["problem"]["claim_ids"] = [c["id"]]
     if defect == "empty_modes": raw["failure_modes"] = []
     if defect == "duplicate_failure": raw["failure_modes"].append(deepcopy(f))
@@ -244,14 +257,14 @@ async def test_real_adapter_complete_input_processing_output(feedback):
     from vic.prompts import load_prompt
     requests = []
     raw, contexts = with_contexts()
-    contexts["investment"].section_content[0].structured_data["investment"]["calculated_financials"] = dict(subtotal=100, cost_coverage="partial", sensitivity=[dict(value=120, assumption="Delay")], unknowns=["Total budget unknown"])
+    contexts["investment"].section_content[0].structured_data["investment"]["calculated_financials"] = {"subtotal": 100, "cost_coverage": "partial", "sensitivity": [{"value": 120, "assumption": "Delay"}], "unknowns": ["Total budget unknown"]}
     class OfflineProvider:
         name = "offline-miner-test"
         async def complete(self, **request):
             requests.append(request)
             return ProviderResponse(json.dumps(raw), 100, 50)
     case, pack, ctx = inputs()
-    if feedback: ctx.feedback["failure_miner"] = [dict(reason="Review causal link")]
+    if feedback: ctx.feedback["failure_miner"] = [{"reason": "Review causal link"}]
     ctx.model = StructuredLlm(OfflineProvider(), Settings(_env_file=None, llm_max_retries=0, llm_max_repairs=0))
     result = await analyze_failure_miner(case, pack, ctx, **contexts)
     assert len(requests) == 1
@@ -314,7 +327,7 @@ def test_existing_upstream_examples(filename, role):
     for fixture in fixtures.values() if isinstance(fixtures, dict) else fixtures:
         case = CaseInput.model_validate(fixture["case"])
         pack = EvidencePack.model_validate(fixture["pack"])
-        context = dict(fixture.get("context", dict(case_id="case", run_id="run", snapshot_id=pack.snapshot_id, as_of_date=case.as_of_date, mode="evidence_only")))
+        context = dict(fixture.get("context", {"case_id": "case", "run_id": "run", "snapshot_id": pack.snapshot_id, "as_of_date": case.as_of_date, "mode": "evidence_only"}))
         payload = prepare_failure_inputs(case, pack, RunContext(**context), **{role:fixture["result"]})
         assert payload["upstream_context"][role] == fixture["result"]
 
@@ -323,8 +336,8 @@ def test_existing_upstream_examples(filename, role):
 async def test_nested_financial_unknowns_remain_actionable():
     case, pack, ctx = inputs()
     raw, contexts = with_contexts()
-    contexts["investment"].section_content[0].structured_data["investment"]["calculated_financials"] = dict(
-        subtotal=100, cost_coverage="partial", unknowns=["Full budget unknown"], sensitivity=dict(unknowns=["Delay cost unknown"]))
+    contexts["investment"].section_content[0].structured_data["investment"]["calculated_financials"] = {
+        "subtotal": 100, "cost_coverage": "partial", "unknowns": ["Full budget unknown"], "sensitivity": {"unknowns": ["Delay cost unknown"]}}
     before = contexts["investment"].model_dump(mode="json")
     ctx.model = SimpleNamespace(generate_structured=AsyncMock(return_value=raw))
     result = await analyze_failure_miner(case, pack, ctx, **contexts)
@@ -350,12 +363,12 @@ async def test_r3_audit_and_canonical_report_preserve_complete_role_output():
     roles = []
     for owner in dict.fromkeys(SECTION_OWNERS.values()):
         roles.append(RoleResult(role_id=owner, summary="Synthetic", position="unknown",
-            section_content=[dict(key=key, summary="Synthetic specialist section")
+            section_content=[{"key": key, "summary": "Synthetic specialist section"}
                              for key, role in SECTION_OWNERS.items() if role == owner]))
     roles.append(miner)
     decision = CommitteeDecision(recommendation="Conditional", rationale="Specialist review pending",
-        questions=[dict(question=f"Synthetic question {i}", why_it_matters="Applicability",
-            evidence_needed="Applicable data", decision_if_positive="Review", decision_if_negative="Revise") for i in range(5)])
+        questions=[{"question": f"Synthetic question {i}", "why_it_matters": "Applicability",
+            "evidence_needed": "Applicable data", "decision_if_positive": "Review", "decision_if_negative": "Revise"} for i in range(5)])
     report = build_report(case=case, pack=pack, roles=roles, decision=decision, claims=miner.claims,
         case_id=ctx.case_id, run_id=ctx.run_id, report_id="miner-report", version=1, synthetic=True)
     assert_report(report)

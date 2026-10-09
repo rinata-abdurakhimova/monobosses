@@ -603,7 +603,7 @@ def validate_prepared_plan(plan: PreparedInvestmentPlan, case: CaseInput, pack: 
         raise ValueError("Empty evidence cannot support factual planning claims")
 
 
-def validate_explanation_numbers(explanation: InvestmentExplanation) -> None:
+def validate_explanation_numbers(explanation: InvestmentExplanation | dict) -> None:
     """Keep numeric literals in Python records, not free-form model interpretation.
 
     Checking a global whitelist of numbers would still allow a valid amount to be
@@ -633,7 +633,7 @@ def validate_explanation_numbers(explanation: InvestmentExplanation) -> None:
                     "refer to Python calculated_financials instead"
                 )
 
-    check(explanation.model_dump(mode="json"))
+    check(explanation.model_dump(mode="json") if isinstance(explanation, BaseModel) else explanation)
 
 
 def assemble_investment_analysis(plan: PreparedInvestmentPlan,

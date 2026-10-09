@@ -7,8 +7,15 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-
-from vic.contracts import CaseInput, Claim, EvidencePack, Risk, RoleResult, RunContext, SectionContent
+from vic.contracts import (
+    CaseInput,
+    Claim,
+    EvidencePack,
+    Risk,
+    RoleResult,
+    RunContext,
+    SectionContent,
+)
 from vic.integrity import assert_pack
 
 PROMPT_ID = "partnerships"
@@ -130,7 +137,7 @@ def _walk(value):
             yield from _walk(child)
 
 
-def _validate_claims(claims, case, pack):
+def _validate_claims(claims, case, pack, *, require_assumptions=True):
     evidence = {e.id: e for e in pack.evidence}
     if len({c.id for c in claims}) != len(claims):
         raise ValueError("Duplicate claim IDs")
@@ -144,7 +151,7 @@ def _validate_claims(claims, case, pack):
                 raise ValueError("Factual claim requires evidence")
             if c.scope == "program" and not any(evidence[e].scope == "program" for e in c.evidence_ids):
                 raise ValueError("Program fact requires program evidence")
-        elif not c.assumptions:
+        elif require_assumptions and not c.assumptions:
             raise ValueError("Unknown/unverified claim requires assumptions or gaps")
 
 
@@ -167,7 +174,9 @@ def prepare_partnerships_inputs(case: CaseInput, pack: EvidencePack, ctx: RunCon
         if result is not None:
             if result.role_id != name:
                 raise ValueError(f"Expected {name} RoleResult")
-            _validate_claims(result.claims, case, pack)
+            # Upstream roles own their gap/assumption contracts; retain their
+            # unknown statuses without imposing Partnerships' output rules.
+            _validate_claims(result.claims, case, pack, require_assumptions=False)
             known = {c.id for c in result.claims}
             for block in [*result.risks, *result.section_content]:
                 if not set(block.claim_ids) <= known:
@@ -227,9 +236,8 @@ def validate_partnerships_result(analysis: PartnershipsAnalysis, case: CaseInput
                 if block.basis == "hypothesis" and (not block.assumptions or
                         any(c.support_status not in ("unverified", "unknown") for c in linked)):
                     raise ValueError("Hypothesis requires assumptions and unverified/unknown claims")
-    if not analysis.candidates:
-        if not analysis.candidate_search_unknowns or analysis.position != "insufficient_data":
-            raise ValueError("No candidates requires insufficient_data and search gaps")
+    if not analysis.candidates and (not analysis.candidate_search_unknowns or analysis.position != "insufficient_data"):
+        raise ValueError("No candidates requires insufficient_data and search gaps")
     if analysis.position == "potential_fit" and not any(
             p.fit.rationale.basis != "unknown" for p in analysis.candidates):
         raise ValueError("Potential fit requires a rationale")
@@ -238,7 +246,7 @@ def validate_partnerships_result(analysis: PartnershipsAnalysis, case: CaseInput
             raise ValueError("Candidate requires an explicit identity/category")
         if partner.kind == "organization" and partner.identity.basis != "documented":
             raise ValueError("Named organization requires documented identity")
-        if set(o.format for o in partner.collaboration_options) != set(Format.__args__):
+        if {o.format for o in partner.collaboration_options} != set(Format.__args__):
             raise ValueError("Assess each of the four formats exactly once")
         for option in partner.collaboration_options:
             if option.assessment == "insufficient_data" and not option.unknowns:
