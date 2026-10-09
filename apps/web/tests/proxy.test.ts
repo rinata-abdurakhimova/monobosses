@@ -317,6 +317,8 @@ test("proxy forwards bounded PDF multipart uploads and backend parsing failures"
   );
   form.set("title", "Private PDF");
   form.set("synthetic", "false");
+  form.set("published_at", "2026-10-08");
+  form.set("scope", "program");
   const response = await proxyBackend(
     request("cases/case-1/documents", { method: "POST", body: form }),
     ["cases", "case-1", "documents"],
@@ -327,21 +329,26 @@ test("proxy forwards bounded PDF multipart uploads and backend parsing failures"
         assert.ok(init?.body instanceof FormData);
         assert.equal(new Headers(init?.headers).get("content-type"), null);
         assert.equal((init!.body as FormData).get("title"), "Private PDF");
+        assert.equal(
+          (init!.body as FormData).get("published_at"),
+          "2026-10-08",
+        );
+        assert.equal((init!.body as FormData).get("scope"), "program");
         return Response.json(
           {
             error: {
-              code: "not_implemented",
-              message: "PDF parser not connected",
+              code: "unreadable_document",
+              message: "PDF contains no readable text",
               retryable: false,
             },
           },
-          { status: 501 },
+          { status: 422 },
         );
       },
     },
   );
-  assert.equal(response.status, 501);
-  assert.equal((await response.json()).error.code, "not_implemented");
+  assert.equal(response.status, 422);
+  assert.equal((await response.json()).error.code, "unreadable_document");
 });
 
 test("proxy rejects oversized PDF and cross-origin evidence import without forwarding", async () => {

@@ -22,6 +22,9 @@ ALIASES: dict[str, list[str]] = {
     "audit": ["audit", "auditor"],
     "ip_licensing": ["ip_licensing"],
     "partnerships": ["partnerships"],
+    "investment_plan": ["investment_plan"],
+    "investment_threshold": ["investment_threshold"],
+    "failure_miner": ["failure_miner"],
 }
 
 

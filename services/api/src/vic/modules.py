@@ -29,6 +29,10 @@ EXPECTED_PARAMS: dict[str, list[str]] = {
     "analyze_clinical": ["case", "pack", "scientific_result", "translation_result", "ctx"],
     "analyze_market": ["case", "pack", "ctx"],
     "analyze_investment": ["case", "pack", "clinical", "market", "ctx"],
+    "analyze_ip_licensing": ["case", "pack", "ctx"],
+    "analyze_partnerships": ["case", "pack", "ctx"],
+    "analyze_investment_threshold": ["case", "pack", "ctx"],
+    "analyze_failure_miner": ["case", "pack", "ctx"],
     "synthesize_committee": ["results", "audit", "ctx"],
 }
 # import_document is used by the PDF upload route (R2-03), not by the pipeline.
@@ -48,6 +52,10 @@ class Modules:
     analyze_clinical: Callable[..., Any] | None = None
     analyze_market: Callable[..., Any] | None = None
     analyze_investment: Callable[..., Any] | None = None
+    analyze_ip_licensing: Callable[..., Any] | None = None
+    analyze_partnerships: Callable[..., Any] | None = None
+    analyze_investment_threshold: Callable[..., Any] | None = None
+    analyze_failure_miner: Callable[..., Any] | None = None
     synthesize_committee: Callable[..., Any] | None = None
     origin: dict[str, str] = field(default_factory=dict)  # function name -> module path
 
@@ -70,17 +78,20 @@ def call_clinical(fn: Callable[..., Any], case, pack, science, translation, ctx)
     return fn(case, pack, [science, translation], ctx)
 
 
-def call_investment(fn: Callable[..., Any], case, pack, clinical, market, ctx):
+def call_investment(fn: Callable[..., Any], case, pack, clinical, market, ctx, **upstream):
     if positional_names(fn) == ["case", "pack", "ctx"]:
-        return fn(case, pack, ctx, clinical=clinical, market=market)
+        accepted = inspect.signature(fn).parameters
+        extras = {key: value for key, value in upstream.items() if key in accepted}
+        return fn(case, pack, ctx, clinical=clinical, market=market, **extras)
     return fn(case, pack, clinical, market, ctx)
 
 
-async def call_audit(fn: Callable[..., Any], claims, pack, ctx):
+async def call_audit(fn: Callable[..., Any], claims, pack, ctx, *, documents=None):
     args = (claims, pack, ctx) if "ctx" in inspect.signature(fn).parameters else (claims, pack)
+    kwargs = {"documents": documents} if "documents" in inspect.signature(fn).parameters else {}
     if inspect.iscoroutinefunction(fn):
-        return await fn(*args)
-    return await asyncio.to_thread(fn, *args)
+        return await fn(*args, **kwargs)
+    return await asyncio.to_thread(fn, *args, **kwargs)
 
 
 def compatible_signature(name: str, fn: Callable[..., Any]) -> bool:
@@ -125,6 +136,14 @@ def discover() -> dict[str, list[tuple[str, Callable[..., Any]]]]:
                     found[name].append((module.__name__, fn))
     for items in found.values():
         items.sort(key=lambda it: getattr(it[1], "__module__", "") != it[0])  # defined here first
+    # Explicit adapters select the semantic audit and bridge the rich Chair API.
+    try:
+        from vic.evidence.audit_semantic import audit_claims_semantic
+        from vic.committee import synthesize_committee
+        found["audit_claims"].insert(0, ("vic.evidence.audit_semantic", audit_claims_semantic))
+        found["synthesize_committee"] = [("vic.committee", synthesize_committee)]
+    except ImportError as exc:
+        IMPORT_ERRORS["vic.committee"] = str(exc)
     return found
 
 

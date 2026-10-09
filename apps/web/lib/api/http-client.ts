@@ -165,6 +165,9 @@ export function createHttpApiClient(
       form.set("file", file);
       form.set("title", title);
       form.set("synthetic", String(synthetic));
+      if (requestOptions?.publishedAt)
+        form.set("published_at", requestOptions.publishedAt);
+      if (requestOptions?.scope) form.set("scope", requestOptions.scope);
       return evidenceCreated(
         await request(
           `/cases/${encodeURIComponent(caseId)}/documents`,

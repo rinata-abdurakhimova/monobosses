@@ -8,6 +8,22 @@
             "title": "File",
             "type": "string"
           },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Scope",
+            "default": "approach"
+          },
           "synthetic": {
             "default": false,
             "title": "Synthetic",
@@ -1299,7 +1315,7 @@
     },
     "/cases/{case_id}/documents": {
       "post": {
-        "description": "Validates the upload (type, size). PDF extraction (R3) is not connected yet -> 501.",
+        "description": "Parse and persist PDF evidence without automatically starting an analysis.",
         "operationId": "upload_document_cases__case_id__documents_post",
         "parameters": [
           {
@@ -1372,16 +1388,6 @@
               }
             },
             "description": "Validation error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            },
-            "description": "Not implemented"
           }
         },
         "security": [

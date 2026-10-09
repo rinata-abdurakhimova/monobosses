@@ -118,6 +118,14 @@ class OpenAICompatibleProvider:
         if status == 429 or status >= 500:
             raise ProviderError(f"The model provider returned HTTP {status}")
         if not 200 <= status < 300:
+            if status == 400:
+                try:
+                    message = response.json().get("error", {}).get("message", "")
+                except (ValueError, AttributeError):
+                    message = ""
+                if isinstance(message, str) and "conservative input limit" in message.lower():
+                    raise ProviderError("The configured model gateway's input limit is too small for this analysis request.",
+                                        code="provider_context_limit", retryable=False)
             raise ProviderError(f"The model provider returned HTTP {status}",
                                 code="provider_rejected", retryable=False)
         try:
@@ -160,6 +168,16 @@ def _extract_json(text: str) -> str:
     return text[start:end + 1] if start != -1 and end > start else text
 
 
+def _compact_schema(value, *, mapping=False):
+    """Remove display titles while preserving schema validation and field instructions."""
+    if isinstance(value, dict):
+        return {key: _compact_schema(child, mapping=key in ("properties", "$defs", "definitions"))
+                for key, child in value.items() if mapping or key != "title"}
+    if isinstance(value, list):
+        return [_compact_schema(child) for child in value]
+    return value
+
+
 class StructuredLlm:
     """Implements the LlmAdapter protocol from vic.contracts."""
 
@@ -176,10 +194,12 @@ class StructuredLlm:
     async def generate_structured(self, prompt_id: str, payload: dict[str, Any],
                                   response_model: type[T], ctx: RunContext) -> T:
         prompt = load_prompt(prompt_id)
-        schema = json.dumps(response_model.model_json_schema(), ensure_ascii=False)
+        schema = json.dumps(_compact_schema(response_model.model_json_schema()),
+                            ensure_ascii=False, separators=(",", ":"))
         system = (f"{prompt.text}\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
                   f"that validates against this JSON Schema:\n{schema}")
-        messages = [{"role": "user", "content": json.dumps(payload, ensure_ascii=False, default=str)}]
+        messages = [{"role": "user", "content": json.dumps(payload, ensure_ascii=False,
+                                                              default=str, separators=(",", ":"))}]
         feedback = ctx.feedback.get("investment" if prompt_id == "investment_plan" else prompt_id)
         if feedback:
             messages.append({"role": "user", "content": "Correct the audit/completeness findings: "
@@ -261,7 +281,8 @@ class StructuredLlm:
 
 def build_llm(settings: Settings) -> StructuredLlm:
     return StructuredLlm(make_provider(settings), settings)
-PROMPT_IDS = ("science", "translation", "clinical", "market", "investment", "chair", "audit", "ip_licensing")
+PROMPT_IDS = ("science", "translation", "clinical", "market", "investment_plan", "investment",
+              "chair", "audit", "ip_licensing", "partnerships", "investment_threshold", "failure_miner")
 
 
 async def generate_structured(prompt_id: str, payload: dict[str, Any], response_model: type[T],

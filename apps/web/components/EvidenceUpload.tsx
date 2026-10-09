@@ -22,6 +22,10 @@ export function EvidenceUpload({
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [synthetic, setSynthetic] = useState(false);
+  const [publishedAt, setPublishedAt] = useState("");
+  const [documentScope, setDocumentScope] = useState<"approach" | "program">(
+    "approach",
+  );
   const [reviewMode, setReviewMode] = useState<"evidence_only" | "live">(
     report.synthetic ? "evidence_only" : "live",
   );
@@ -52,7 +56,12 @@ export function EvidenceUpload({
           kind === "text"
             ? await client.addEvidence(
                 report.contract.case_id,
-                { title: title.trim(), text, synthetic },
+                {
+                  title: title.trim(),
+                  text,
+                  synthetic,
+                  published_at: publishedAt || null,
+                },
                 { signal: active.signal },
               )
             : await client.uploadDocument(
@@ -60,7 +69,11 @@ export function EvidenceUpload({
                 file!,
                 title.trim(),
                 synthetic,
-                { signal: active.signal },
+                {
+                  signal: active.signal,
+                  publishedAt: publishedAt || undefined,
+                  scope: documentScope,
+                },
               );
         if (!active.signal.aborted) setImported(result);
       }
@@ -162,8 +175,32 @@ export function EvidenceUpload({
                 PDFs must contain readable text. Parsing and size errors appear
                 here.
               </p>
+              <label htmlFor="document-scope">Evidence scope</label>
+              <select
+                id="document-scope"
+                value={documentScope}
+                onChange={(event) =>
+                  setDocumentScope(event.target.value as "approach" | "program")
+                }
+              >
+                <option value="approach">Biological approach</option>
+                {report.scope === "program" && (
+                  <option value="program">This specific program</option>
+                )}
+              </select>
             </>
           )}
+          <label htmlFor="evidence-date">Publication date, if known</label>
+          <input
+            id="evidence-date"
+            type="date"
+            value={publishedAt}
+            onChange={(event) => setPublishedAt(event.target.value)}
+          />
+          <p>
+            Dated assessments use documents available on or before their
+            analysis date.
+          </p>
           <label className="checkbox-label">
             <input
               type="checkbox"

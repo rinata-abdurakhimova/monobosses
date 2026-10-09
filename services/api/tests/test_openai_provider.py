@@ -50,6 +50,16 @@ def test_gateway_request_and_token_usage():
     assert isinstance(make_provider(settings()), OpenAICompatibleProvider)
 
 
+def test_gateway_context_limit_is_actionable_without_exposing_provider_body():
+    provider = OpenAICompatibleProvider(settings(), transport=httpx.MockTransport(
+        lambda _: httpx.Response(400, json={"error": {"message":
+            "Input exceeds the conservative input limit. " + KEY}})))
+    with pytest.raises(ProviderError) as exc:
+        call(provider)
+    assert exc.value.code == "provider_context_limit" and not exc.value.retryable
+    assert KEY not in str(exc.value)
+
+
 @pytest.mark.parametrize("usage", [None, {}, {"prompt_tokens": -1, "completion_tokens": "20"},
                                    {"prompt_tokens": True}])
 def test_unavailable_usage_is_not_reported_as_zero(usage):

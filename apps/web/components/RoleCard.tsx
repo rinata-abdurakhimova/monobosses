@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { EvidenceDialog } from "@/components/EvidenceDialog";
+import { AnalysisDetails } from "@/components/AnalysisDetails";
 import type { Claim, Report, RoleResult } from "@/lib/types";
 
 export function RoleCard({
@@ -22,7 +23,10 @@ export function RoleCard({
       <p>{role.summary}</p>
       <div className="role-unknown">
         <span>Key unknown</span>
-        <strong>{role.unknown}</strong>
+        <strong>{role.unknowns[0] ?? role.unknown}</strong>
+        {role.unknowns.length > 1 && (
+          <small>{role.unknowns.length - 1} more in reasoning details</small>
+        )}
       </div>
       <details>
         <summary>Reasoning and decision conditions</summary>
@@ -79,7 +83,37 @@ export function RoleCard({
             </ul>
           </div>
         )}
+        {role.unknowns.length > 0 && (
+          <div className="role-unknown">
+            <span>Open unknowns</span>
+            <ul>
+              {role.unknowns.map((unknown, index) => (
+                <li key={index}>{unknown}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </details>
+      {role.section_content.map((section, index) => (
+        <details key={`${section.key}-${index}`}>
+          <summary>
+            {section.key.replaceAll("_", " ")} — analysis details
+          </summary>
+          <div className="section-content">
+            <p>{section.summary}</p>
+            {(section.limitations ?? []).map((item, i) => (
+              <p key={i}>{item}</p>
+            ))}
+            {section.structured_data && (
+              <AnalysisDetails
+                value={section.structured_data}
+                report={report}
+                onClaim={setClaim}
+              />
+            )}
+          </div>
+        </details>
+      ))}
       <EvidenceDialog
         claim={claim}
         report={report}

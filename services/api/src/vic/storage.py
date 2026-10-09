@@ -4,10 +4,12 @@ Reports are immutable (SQL triggers) and versions are allocated inside one IMMED
 transaction. Durability requires DATABASE_URL to point at a persistent volume.
 """
 import hashlib
+import json
+from dataclasses import asdict
 import sqlite3
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Callable, Iterator, Protocol
@@ -41,6 +43,9 @@ CREATE TABLE IF NOT EXISTS user_sources(
 CREATE TABLE IF NOT EXISTS user_evidence(
   case_id TEXT NOT NULL, evidence_id TEXT NOT NULL, data TEXT NOT NULL,
   PRIMARY KEY(case_id, evidence_id));
+CREATE TABLE IF NOT EXISTS parsed_documents(
+  case_id TEXT NOT NULL, source_id TEXT NOT NULL, data TEXT NOT NULL,
+  PRIMARY KEY(case_id, source_id));
 """
 
 
@@ -81,6 +86,8 @@ class Repository(Protocol):
     def list_reports(self, case_id: str) -> list[Report]: ...
     def add_evidence(self, case_id: str, payload: EvidenceCreate) -> EvidenceCreated: ...
     def list_user_evidence(self, case_id: str) -> tuple[list[Source], list[Evidence]]: ...
+    def add_import(self, case_id: str, result) -> EvidenceCreated: ...
+    def list_documents(self, case_id: str) -> list: ...
 
 
 class SqliteRepository:
@@ -301,7 +308,57 @@ class SqliteRepository:
                       (case_id, source_id, source.model_dump_json()))
             c.execute("INSERT INTO user_evidence(case_id,evidence_id,data) VALUES(?,?,?)",
                       (case_id, evidence_id, evidence.model_dump_json()))
+            from vic.evidence.importer import ParsedDocument
+            from vic.evidence.normalization import Unit
+            doc = ParsedDocument(title=payload.title, source_type="user_upload", text=payload.text,
+                units=[Unit(locator="text", text=payload.text)], content_hash=source.content_hash,
+                source_id=source_id, published_at=payload.published_at, synthetic=payload.synthetic)
+            c.execute("INSERT INTO parsed_documents(case_id,source_id,data) VALUES(?,?,?)",
+                (case_id, source_id, json.dumps(asdict(doc), default=str)))
         return EvidenceCreated(source_id=source_id, evidence_ids=[evidence_id])
+
+    def add_import(self, case_id: str, result) -> EvidenceCreated:
+        """Store a parsed pack and canonical document atomically; identical uploads are idempotent."""
+        from vic.integrity import assert_pack
+        assert_pack(result.pack)
+        with self._tx(immediate=True) as c:
+            if c.execute("SELECT 1 FROM cases WHERE id=?", (case_id,)).fetchone() is None:
+                raise KeyError(case_id)
+            for table, field, items in [("user_sources", "source_id", result.pack.sources),
+                                         ("user_evidence", "evidence_id", result.pack.evidence)]:
+                for item in items:
+                    old = c.execute(f"SELECT data FROM {table} WHERE case_id=? AND {field}=?",
+                                    (case_id, item.id)).fetchone()
+                    if old:
+                        previous = type(item).model_validate_json(old[0])
+                        # Retrieval time changes on re-upload; content and provenance must agree.
+                        left = previous.model_dump(exclude={"retrieved_at"})
+                        right = item.model_dump(exclude={"retrieved_at"})
+                        if left != right:
+                            raise ValueError("Identical document content has conflicting provenance")
+                    else:
+                        c.execute(f"INSERT INTO {table}(case_id,{field},data) VALUES(?,?,?)",
+                                  (case_id, item.id, item.model_dump_json()))
+            for doc in result.documents:
+                c.execute("INSERT OR IGNORE INTO parsed_documents(case_id,source_id,data) VALUES(?,?,?)",
+                          (case_id, doc.source_id, json.dumps(asdict(doc), default=str)))
+        return EvidenceCreated(source_id=result.pack.sources[0].id,
+                               evidence_ids=[item.id for item in result.pack.evidence])
+
+    def list_documents(self, case_id: str) -> list:
+        from vic.evidence.importer import Annotation, ParsedDocument
+        from vic.evidence.normalization import Unit
+        with self._tx() as c:
+            rows = c.execute("SELECT data FROM parsed_documents WHERE case_id=? ORDER BY rowid",
+                             (case_id,)).fetchall()
+        docs = []
+        for row in rows:
+            raw = json.loads(row[0])
+            raw["units"] = [Unit(**unit) for unit in raw["units"]]
+            raw["annotations"] = [Annotation(**item) for item in raw["annotations"]]
+            raw["published_at"] = date.fromisoformat(raw["published_at"]) if raw["published_at"] else None
+            docs.append(ParsedDocument(**raw))
+        return docs
 
     def list_user_evidence(self, case_id: str) -> tuple[list[Source], list[Evidence]]:
         with self._tx() as c:

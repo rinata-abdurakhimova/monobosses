@@ -4,6 +4,10 @@ import type * as Contract from "../contracts/generated";
 export type RunStatus = Contract.RunStatus;
 export type RunStage = Contract.RunStage;
 export type RequestOptions = { signal?: AbortSignal };
+export type UploadOptions = RequestOptions & {
+  publishedAt?: string;
+  scope?: Contract.Scope;
+};
 export type StartRunOptions = RequestOptions & {
   parentReportId?: string;
   mode?: Contract.RunMode;
@@ -19,7 +23,7 @@ export interface EvidenceClient {
     file: File,
     title: string,
     synthetic: boolean,
-    options?: RequestOptions,
+    options?: UploadOptions,
   ): Promise<Contract.EvidenceCreated>;
 }
 export type CreatedCase = { case_id: string };

@@ -194,6 +194,29 @@ export async function proxyBackend(
         sanitized.set("file", file);
         sanitized.set("title", title);
         sanitized.set("synthetic", synthetic);
+        const publishedAt = body.get("published_at");
+        if (publishedAt !== null && publishedAt !== "") {
+          if (
+            typeof publishedAt !== "string" ||
+            !/^\d{4}-\d{2}-\d{2}$/.test(publishedAt)
+          )
+            return fail(
+              422,
+              "invalid_upload",
+              "Enter the publication date as YYYY-MM-DD.",
+            );
+          sanitized.set("published_at", publishedAt);
+        }
+        const scope = body.get("scope");
+        if (scope !== null) {
+          if (scope !== "approach" && scope !== "program")
+            return fail(
+              422,
+              "invalid_upload",
+              "Select approach or program evidence.",
+            );
+          sanitized.set("scope", scope);
+        }
         body = sanitized;
       } else {
         if (

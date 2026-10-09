@@ -59,6 +59,7 @@ test("text/PDF imports never start a run; explicit review forwards the parent an
     new File(["%PDF-1.4"], "update.pdf", { type: "application/pdf" }),
     "Safety update",
     true,
+    { publishedAt: "2026-10-08", scope: "program" },
   );
   assert.equal(requests.length, 2);
   assert.ok(requests[1].init?.body instanceof FormData);
@@ -67,6 +68,11 @@ test("text/PDF imports never start a run; explicit review forwards the parent an
     null,
   );
   assert.equal((requests[1].init!.body as FormData).get("synthetic"), "true");
+  assert.equal(
+    (requests[1].init!.body as FormData).get("published_at"),
+    "2026-10-08",
+  );
+  assert.equal((requests[1].init!.body as FormData).get("scope"), "program");
   await client.startRun("case-1", {
     parentReportId: "report-1",
     mode: "evidence_only",

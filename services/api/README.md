@@ -171,3 +171,7 @@ availability. No live verification was performed by this PR review.
 
 R3/R4/R5 use `vic.contracts`, `vic.run_context.RunContext` and
 `vic.llm.generate_structured`; R2 does not edit their domain code or prompts.
+
+Current node wiring, PDF import, frontend output, evaluation runner and the
+observed live gateway limitation are documented in
+[R2 full workflow handoff](../../docs/r2-full-workflow-handoff.md).

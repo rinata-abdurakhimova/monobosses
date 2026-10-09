@@ -21,7 +21,9 @@ async def _pause() -> None:
 
 
 def _role(role: RoleId) -> RoleResult:
-    return next(r for r in synthetic.build_report(1).roles if r.role_id == role)
+    existing = next((r for r in synthetic.build_report(1).roles if r.role_id == role), None)
+    return existing or RoleResult(role_id=role, summary="Synthetic stub: analysis not performed",
+        position="Unknown", unknowns=[f"{role.value}: synthetic stub, no verified analysis"])
 
 
 def _questions_from(results: list[RoleResult]) -> list[DiligenceQuestion]:
@@ -87,6 +89,26 @@ async def analyze_investment(case, pack, clinical, market, ctx) -> RoleResult:
     return _role(RoleId.INVESTMENT)
 
 
+async def analyze_ip_licensing(case, pack, ctx, **upstream):
+    await _pause()
+    return _role(RoleId.IP_LICENSING)
+
+
+async def analyze_partnerships(case, pack, ctx, **upstream):
+    await _pause()
+    return _role(RoleId.PARTNERSHIPS)
+
+
+async def analyze_investment_threshold(case, pack, ctx, **upstream):
+    await _pause()
+    return _role(RoleId.INVESTMENT_THRESHOLD)
+
+
+async def analyze_failure_miner(case, pack, ctx, **upstream):
+    await _pause()
+    return _role(RoleId.FAILURE_MINER)
+
+
 async def audit_claims(claims: list[Claim], pack: EvidencePack, ctx: RunContext) -> AuditResult:
     await _pause()
     findings = [AuditFinding(claim_id=c.id, verdict=c.support_status,
@@ -118,10 +140,15 @@ async def synthesize_committee(results: list[RoleResult], audit: AuditResult,
 
 def make_stub_modules(use_r3_fixtures: bool = False) -> Modules:
     names = ("build_evidence_pack", "audit_claims", "analyze_science", "analyze_translation",
-             "analyze_clinical", "analyze_market", "analyze_investment", "synthesize_committee")
+             "analyze_clinical", "analyze_market", "analyze_investment", "synthesize_committee",
+             "analyze_ip_licensing", "analyze_partnerships", "analyze_investment_threshold",
+             "analyze_failure_miner")
     return Modules(
         build_evidence_pack=build_evidence_pack_r3 if use_r3_fixtures else build_evidence_pack_synthetic,
         audit_claims=audit_claims, analyze_science=analyze_science,
         analyze_translation=analyze_translation, analyze_clinical=analyze_clinical,
         analyze_market=analyze_market, analyze_investment=analyze_investment,
+        analyze_ip_licensing=analyze_ip_licensing, analyze_partnerships=analyze_partnerships,
+        analyze_investment_threshold=analyze_investment_threshold,
+        analyze_failure_miner=analyze_failure_miner,
         synthesize_committee=synthesize_committee, origin={n: STUB_ORIGIN for n in names})

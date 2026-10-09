@@ -6,6 +6,7 @@ when a Report passed validation and was saved.
 """
 import asyncio
 import logging
+import inspect
 import time
 from typing import Any, Callable
 
@@ -16,6 +17,7 @@ from vic.config import Settings
 from vic.contracts import (AuditResult, CaseInput, Claim, CommitteeDecision, EvidencePack,
                            Importance, Recommendation, Report, RoleId, RoleResult, Run, RunBudget,
                            RunContext, RunMode, RunStage, RunStatus, SupportStatus, Usage)
+from vic.contracts import SectionContent
 from vic.failures import ProviderAuthError, RunFailure, RunTimeout, SourceOutage, ValidationFailed
 from vic.modules import STUB_ORIGIN, Modules, call_audit, call_clinical, call_investment
 from vic.report_builder import build_report
@@ -23,7 +25,9 @@ from vic.storage import ReportExistsError, Repository, new_id
 from vic.tracing import config_version, scrub
 
 logger = logging.getLogger("vic")
-ROLE_ORDER = [RoleId.SCIENCE, RoleId.TRANSLATION, RoleId.CLINICAL, RoleId.MARKET, RoleId.INVESTMENT]
+ROLE_ORDER = [RoleId.SCIENCE, RoleId.TRANSLATION, RoleId.CLINICAL, RoleId.MARKET,
+              RoleId.IP_LICENSING, RoleId.PARTNERSHIPS, RoleId.INVESTMENT,
+              RoleId.INVESTMENT_THRESHOLD, RoleId.FAILURE_MINER]
 _NEEDS_EVIDENCE = (SupportStatus.SUPPORTED, SupportStatus.CONTRADICTED, SupportStatus.MIXED)
 
 
@@ -40,10 +44,20 @@ def _merge(items: list, label: str) -> list:
 def _expand(roles: set[RoleId]) -> set[RoleId]:
     """Roles whose input depends on a re-run role must be re-run too."""
     out = set(roles)
-    if out & {RoleId.SCIENCE, RoleId.TRANSLATION}:
-        out |= {RoleId.CLINICAL, RoleId.INVESTMENT}
-    if out & {RoleId.CLINICAL, RoleId.MARKET}:
-        out.add(RoleId.INVESTMENT)
+    dependencies = {
+        RoleId.CLINICAL: {RoleId.SCIENCE, RoleId.TRANSLATION},
+        RoleId.MARKET: {RoleId.CLINICAL},
+        RoleId.IP_LICENSING: {RoleId.SCIENCE, RoleId.CLINICAL, RoleId.MARKET},
+        RoleId.PARTNERSHIPS: {RoleId.SCIENCE, RoleId.CLINICAL, RoleId.MARKET, RoleId.IP_LICENSING},
+        RoleId.INVESTMENT: {RoleId.CLINICAL, RoleId.MARKET, RoleId.IP_LICENSING, RoleId.PARTNERSHIPS},
+        RoleId.INVESTMENT_THRESHOLD: set(ROLE_ORDER[:7]),
+        RoleId.FAILURE_MINER: set(ROLE_ORDER[:8]),
+    }
+    changed = True
+    while changed:
+        previous = set(out)
+        out.update(role for role, upstream in dependencies.items() if upstream & out)
+        changed = out != previous
     return out
 
 
@@ -62,6 +76,8 @@ class Pipeline:
         self._unresolved: set[str] = set()
         self._stubbed = False
         self._origin: dict[str, str] = {}
+        self._audit_findings: dict[str, Any] = {}
+        self._audit_warnings: list[str] = []
 
     async def _io(self, fn, *args):
         return await asyncio.to_thread(fn, *args)
@@ -161,7 +177,7 @@ class Pipeline:
         await self._enter(RunStage.AUDIT)
         audit = await self._audit_and_repair(case, pack, modules, results)
         await self._enter(RunStage.SYNTHESIZE)
-        decision = await self._synthesize(pack, modules, results, audit)
+        decision = await self._synthesize(case, pack, modules, results, audit)
         await self._enter(RunStage.FINALIZE)
         await self._finalize(case, pack, parent, results, decision)
 
@@ -291,8 +307,7 @@ class Pipeline:
                          case: CaseInput, pack: EvidencePack, modules: Modules) -> None:
         ctx = self.ctx
         first = {RoleId.SCIENCE: lambda: modules.analyze_science(case, pack, ctx),
-                 RoleId.TRANSLATION: lambda: modules.analyze_translation(case, pack, ctx),
-                 RoleId.MARKET: lambda: modules.analyze_market(case, pack, ctx)}
+                 RoleId.TRANSLATION: lambda: modules.analyze_translation(case, pack, ctx)}
         todo = [r for r in first if r in roles]
         outs = await self._gather([self._agent(r, first[r]) for r in todo])
         results.update(dict(zip(todo, outs)))
@@ -300,9 +315,30 @@ class Pipeline:
             results[RoleId.CLINICAL] = await self._agent(RoleId.CLINICAL, lambda: call_clinical(
                 modules.analyze_clinical, case, pack, results[RoleId.SCIENCE],
                 results[RoleId.TRANSLATION], ctx))
+        if RoleId.MARKET in roles:
+            kwargs = {"clinical": results[RoleId.CLINICAL]} if "clinical" in inspect.signature(modules.analyze_market).parameters else {}
+            results[RoleId.MARKET] = await self._agent(RoleId.MARKET,
+                lambda: modules.analyze_market(case, pack, ctx, **kwargs))
+        for role, name, inputs in [
+            (RoleId.IP_LICENSING, "analyze_ip_licensing", ("science", "clinical", "market")),
+            (RoleId.PARTNERSHIPS, "analyze_partnerships", ("science", "clinical", "market", "ip_licensing")),
+        ]:
+            if role in roles:
+                fn = getattr(modules, name)
+                upstream = {key: results[RoleId(key)] for key in inputs}
+                results[role] = await self._agent(role, lambda fn=fn, upstream=upstream:
+                    fn(case, pack, ctx, **upstream))
         if RoleId.INVESTMENT in roles:
             results[RoleId.INVESTMENT] = await self._agent(RoleId.INVESTMENT, lambda: call_investment(
-                modules.analyze_investment, case, pack, results[RoleId.CLINICAL], results[RoleId.MARKET], ctx))
+                modules.analyze_investment, case, pack, results[RoleId.CLINICAL], results[RoleId.MARKET], ctx,
+                partnerships=results[RoleId.PARTNERSHIPS], ip_licensing=results[RoleId.IP_LICENSING]))
+        for role, name in [(RoleId.INVESTMENT_THRESHOLD, "analyze_investment_threshold"),
+                           (RoleId.FAILURE_MINER, "analyze_failure_miner")]:
+            if role in roles:
+                fn = getattr(modules, name)
+                upstream = {r.value: results[r] for r in ROLE_ORDER[:ROLE_ORDER.index(role)]}
+                results[role] = await self._agent(role, lambda fn=fn, upstream=upstream:
+                    fn(case, pack, ctx, **upstream))
 
     async def _analyze_all(self, case, pack, modules) -> dict[RoleId, RoleResult]:
         results: dict[RoleId, RoleResult] = {}
@@ -332,11 +368,15 @@ class Pipeline:
         return found & ids
 
     async def _audit(self, claims: list[Claim], pack: EvidencePack, modules: Modules) -> AuditResult:
-        audit = await self._module("claim audit", call_audit, modules.audit_claims, claims, pack, self.ctx,
-                                   code="audit_error")
+        documents = await self._io(self.repo.list_documents, self.run.case_id)
+        async def invoke():
+            return await call_audit(modules.audit_claims, claims, pack, self.ctx, documents=documents)
+        audit = await self._module("claim audit", invoke, code="audit_error")
         if not isinstance(audit, AuditResult):
             raise RunFailure("The claim audit returned an invalid result", code="audit_error")
         self.ctx.warnings.extend(f"Audit: {w}"[:300] for w in audit.warnings)
+        self._audit_findings.update({finding.claim_id: finding for finding in audit.findings})
+        self._audit_warnings.extend(audit.warnings)
         return audit
 
     def _downgrade(self, results: dict[RoleId, RoleResult], ids: set[str]) -> None:
@@ -380,13 +420,20 @@ class Pipeline:
                 issues.append(f"Additional claim id '{c.id}' already exists; use a new stable key.")
         return issues
 
-    async def _synthesize(self, pack, modules, results, audit) -> CommitteeDecision:
+    async def _synthesize(self, case, pack, modules, results, audit) -> CommitteeDecision:
         ctx = self.ctx
         ordered = [results[r] for r in ROLE_ORDER if r in results]
         known = {c.id for res in ordered for c in res.claims}
 
         async def chair() -> CommitteeDecision:
-            d = await self._module("committee synthesis", modules.synthesize_committee, ordered, audit, ctx)
+            kwargs = {"case": case, "pack": pack} if "case" in inspect.signature(modules.synthesize_committee).parameters else {}
+            async def invoke():
+                return await modules.synthesize_committee(ordered, audit, ctx, **kwargs)
+            d = await self._module("committee synthesis", invoke)
+            from vic.agents.business.chair import ChairResult
+            if isinstance(d, ChairResult):
+                results[RoleId.CHAIR] = d.role_result
+                d = d.decision
             if not isinstance(d, CommitteeDecision):
                 raise RunFailure("The committee synthesis returned an invalid result", code="agent_error")
             return d
@@ -427,17 +474,42 @@ class Pipeline:
                 "recommendation": Recommendation.CONDITIONAL,
                 "conditions": [*decision.conditions, "Recommendation lowered to Conditional: critical claims "
                                "could not be verified: " + ", ".join(sorted(self._unresolved))]})
+        if RoleId.CHAIR in results:
+            role = results[RoleId.CHAIR]
+            sections = []
+            for section in role.section_content:
+                data = dict(section.structured_data or {})
+                rich = dict(data.get("chair", {}))
+                rich["committee_decision"] = decision.model_dump(mode="json")
+                rich["recommendation"] = decision.recommendation.value
+                data["chair"] = rich
+                sections.append(section.model_copy(update={"structured_data": data}))
+            results[RoleId.CHAIR] = role.model_copy(update={"claims": decision.additional_claims,
+                "position": decision.recommendation.value, "section_content": sections})
         return decision
 
     # ------------------------------------------------------------------ finalize
     async def _finalize(self, case, pack, parent, results, decision) -> None:
         run = self.run
         roles = [results[r] for r in ROLE_ORDER if r in results]
+        if RoleId.CHAIR in results:
+            roles.append(results[RoleId.CHAIR])
         claims = self._collect_claims(results, pack)
         have = {c.id for c in claims}
         for c in decision.additional_claims:
             if c.id not in have:
                 claims.append(c)
+        audited_claims = [claim for claim in claims if claim.id in self._audit_findings]
+        findings = [self._audit_findings[claim.id].model_dump(mode="json") for claim in audited_claims]
+        audit_summary = f"Checked {len(audited_claims)} claims; {len(self._unresolved)} unresolved critical claims."
+        roles.append(RoleResult(role_id=RoleId.AUDIT, summary=audit_summary,
+            position="Review required" if self._unresolved else "Audit completed with limitations",
+            claims=audited_claims, unknowns=list(dict.fromkeys(self._audit_warnings)),
+            section_content=[SectionContent(key="sources", summary=audit_summary,
+                claim_ids=[claim.id for claim in audited_claims],
+                limitations=["Automated audit is not independent expert verification."],
+                structured_data={"findings": findings,
+                                 "unresolved_critical_claim_ids": sorted(self._unresolved)})]))
         report_id = new_id("rep")
 
         def make(version: int) -> Report:

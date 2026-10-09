@@ -5,7 +5,7 @@ import { pollRun } from "../lib/api/poll-run.ts";
 import { validateRevisionPair } from "../lib/revisions.ts";
 import { ApiError } from "../lib/api/errors.ts";
 
-// Real HTTP smoke check for the current R2-01 skeleton. Never proves live analysis.
+// HTTP smoke check for persisted evidence and explicit revisions. Synthetic runs do not prove live analysis.
 const origin = process.env.WEB_BASE_URL ?? "http://127.0.0.1:3000";
 const requests: { path: string; method: string }[] = [];
 const client = createHttpApiClient({
@@ -30,10 +30,6 @@ const before = await client.getReport(
   created.case_id,
   firstRun.report_version!,
 );
-assert.ok(
-  firstRun.warnings.some((w) => w.startsWith("MOCK:")),
-  "This smoke check expects the synthetic R2-01 skeleton.",
-);
 const starts = () =>
   requests.filter((r) => r.method === "POST" && r.path.endsWith("/runs"))
     .length;
@@ -54,7 +50,7 @@ await assert.rejects(
     "Synthetic PDF",
     true,
   ),
-  (error: unknown) => error instanceof ApiError && error.status === 501,
+  (error: unknown) => error instanceof ApiError && error.status === 422,
 );
 assert.equal(starts(), count);
 const second = await client.startRun(created.case_id, {
@@ -74,8 +70,10 @@ assert.deepEqual(
 assert.deepEqual(await client.getReport(created.case_id, after.version), after);
 assert.equal(starts(), count + 1);
 assert.ok(
-  !after.content.evidence.some((e) => imported.evidence_ids.includes(e.id)),
-  "The mock revision does not use the imported document; this limitation must stay explicit.",
+  imported.evidence_ids.every((id) =>
+    after.content.evidence.some((e) => e.id === id),
+  ),
+  "The pipeline revision must include the imported evidence.",
 );
 console.log(
   JSON.stringify(
@@ -85,10 +83,10 @@ console.log(
       second_run: second.run_id,
       versions: [before.version, after.version],
       import_started_run: false,
-      pdf_status: 501,
+      unreadable_pdf_status: 422,
       old_report_unchanged: true,
       reads_started_run: false,
-      evidence_driven_revision: false,
+      imported_evidence_in_snapshot: true,
     },
     null,
     2,
