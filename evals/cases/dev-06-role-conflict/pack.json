@@ -1,0 +1,34 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — clinical-restriction",
+      "text": "Synthetic program C protocol permits only biomarker-positive adults after two therapies and excludes severe renal impairment. Biomarker-positive patients are a minority; no eligible population estimate is available.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic program C protocol permits only biomarker-positive adults after two therapies and excludes severe renal impairment. Biomarker-positive patients are a minority; no eligible population estimate is available.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Synthetic evaluation document — marketing-broad",
+      "text": "An unreviewed synthetic sponsor brochure suggests treating all patients with disease C and advertises universal access. It supplies no eligibility analysis or reimbursement evidence.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "An unreviewed synthetic sponsor brochure suggests treating all patients with disease C and advertises universal access. It supplies no eligibility analysis or reimbursement evidence.",
+          "scope": "program",
+          "limitations": [
+            "Unreviewed promotional statement; not proof of broad eligibility or access."
+          ]
+        }
+      ]
+    }
+  ]
+}

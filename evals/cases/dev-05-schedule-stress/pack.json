@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — complete-plan",
+      "text": "Synthetic program F has a reviewed full work plan for the next milestone only. Milestone: validated assay and exposure package. Assay costs USD 40000 and takes 10 days; exposure study costs USD 60000 and takes 20 days, starting in parallel with assay; integration costs USD 10000 and takes 5 days after both. Independent diligence costs USD 5000, excluded from development capital. Reviewed cash allocated solely to this milestone is USD 30000. All development costs and durations for this milestone are covered; later clinical stages are not covered. A separate possible equipment outage would add 7 elapsed days with USD 1000 per day incremental burn and USD 2000 extra repair cost; these increments do not overlap existing work or baseline costs. Probability of that outage is unknown.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic program F has a reviewed full work plan for the next milestone only. Milestone: validated assay and exposure package. Assay costs USD 40000 and takes 10 days; exposure study costs USD 60000 and takes 20 days, starting in parallel with assay; integration costs USD 10000 and takes 5 days after both. Independent diligence costs USD 5000, excluded from development capital. Reviewed cash allocated solely to this milestone is USD 30000. All development costs and durations for this milestone are covered; later clinical stages are not covered. A separate possible equipment outage would add 7 elapsed days with USD 1000 per day incremental burn and USD 2000 extra repair cost; these increments do not overlap existing work or baseline costs. Probability of that outage is unknown.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

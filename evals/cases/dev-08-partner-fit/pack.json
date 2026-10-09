@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — partner-portfolio",
+      "text": "Synthetic organization Fictional Partner Q works on target K assays and has relevant preclinical laboratory capacity in territory North. Its public fictional portfolio establishes capability only. No statement of interest in candidate PARTNER-Q, financing commitment, deal discussions, license offer, price or acquisition plan is supplied. Sponsor ownership of transferable assets is not documented.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic organization Fictional Partner Q works on target K assays and has relevant preclinical laboratory capacity in territory North. Its public fictional portfolio establishes capability only. No statement of interest in candidate PARTNER-Q, financing commitment, deal discussions, license offer, price or acquisition plan is supplied. Sponsor ownership of transferable assets is not documented.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

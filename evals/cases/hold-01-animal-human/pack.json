@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — animal-result",
+      "text": "Synthetic animal model H: target-H inhibition reduced tumor volume in mice under the tested conditions. There are no human exposure, safety, efficacy or survival results, and no clinical comparator data. This does not study a named commercial program.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic animal model H: target-H inhibition reduced tumor volume in mice under the tested conditions. There are no human exposure, safety, efficacy or survival results, and no clinical comparator data. This does not study a named commercial program.",
+          "scope": "approach",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

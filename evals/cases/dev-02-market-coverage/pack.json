@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — market-map",
+      "text": "Synthetic territory North data as of 2026-10-08: therapy N-Standard is approved and current standard of care; N-Clinical is in phase 2 and targets K; N-Alternative is approved with a different mechanism; N-Stopped was discontinued because the sponsor lost funding, not because efficacy failed. The target population is adults with disease N after standard therapy. Clinical eligibility is adults with biomarker K and adequate organ function. Prevalence is 100000, eligible fraction 0.20, access fraction 0.50. N-Standard list price is USD 12000 per patient per year; this is not a proposed price for the candidate. Reimbursement covers the eligible subgroup; prescribing requires a specialist. A patient survey reports unmet need but does not establish willingness to pay. No head-to-head advantage of the candidate has been demonstrated.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic territory North data as of 2026-10-08: therapy N-Standard is approved and current standard of care; N-Clinical is in phase 2 and targets K; N-Alternative is approved with a different mechanism; N-Stopped was discontinued because the sponsor lost funding, not because efficacy failed. The target population is adults with disease N after standard therapy. Clinical eligibility is adults with biomarker K and adequate organ function. Prevalence is 100000, eligible fraction 0.20, access fraction 0.50. N-Standard list price is USD 12000 per patient per year; this is not a proposed price for the candidate. Reimbursement covers the eligible subgroup; prescribing requires a specialist. A patient survey reports unmet need but does not establish willingness to pay. No head-to-head advantage of the candidate has been demonstrated.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

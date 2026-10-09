@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — price-territories",
+      "text": "Synthetic disease E has EUR 900 per annual patient-year list pricing for comparator E-Annual in territory East and USD 200 per single treatment course for comparator W-Course in West. Course frequency is not supplied. East prevalence is 8000 with eligible fraction 0.25 and access fraction 0.40. West prevalence and access are unknown. Neither comparator establishes the candidate price or willingness to pay. Reimbursement and specialist prescribing differ across territories; no exchange rate is supplied.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic disease E has EUR 900 per annual patient-year list pricing for comparator E-Annual in territory East and USD 200 per single treatment course for comparator W-Course in West. Course frequency is not supplied. East prevalence is 8000 with eligible fraction 0.25 and access fraction 0.40. West prevalence and access are unknown. Neither comparator establishes the candidate price or willingness to pay. Reimbursement and specialist prescribing differ across territories; no exchange rate is supplied.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

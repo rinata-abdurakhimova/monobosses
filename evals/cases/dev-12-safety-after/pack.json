@@ -1,0 +1,49 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — safety-baseline",
+      "text": "Synthetic candidate SAFETY-S has preliminary human exposure data and a reproducible biomarker signal in a small early cohort, without established clinical efficacy. The prior safety review found no severe event at tested lower exposure. The next efficacy-relevant exposure has not been assessed. Clinical benefit, full financing plan, patent rights and partner commitments remain unknown. A dose-exposure safety study is required before further funding.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic candidate SAFETY-S has preliminary human exposure data and a reproducible biomarker signal in a small early cohort, without established clinical efficacy. The prior safety review found no severe event at tested lower exposure. The next efficacy-relevant exposure has not been assessed. Clinical benefit, full financing plan, patent rights and partner commitments remain unknown. A dose-exposure safety study is required before further funding.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Synthetic evaluation document — admin-only",
+      "text": "Synthetic SAFETY-S administrative update: the document archive contact mailbox changed. No scientific, safety, clinical, market, financial or patent information changed. No new results are reported.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic SAFETY-S administrative update: the document archive contact mailbox changed. No scientific, safety, clinical, market, financial or patent information changed. No new results are reported.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Synthetic evaluation document — safety-decisive",
+      "text": "Synthetic follow-up SAFETY-S study at the minimum exposure required for target engagement documented irreversible severe organ toxicity in every participant studied; an independent repeat assessment confirmed the same findings. Lower exposures failed to engage the target. Investigators found no feasible dose or mitigation strategy for this specific candidate at active exposure and discontinued this candidate. These observations concern SAFETY-S, not every target-K approach.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic follow-up SAFETY-S study at the minimum exposure required for target engagement documented irreversible severe organ toxicity in every participant studied; an independent repeat assessment confirmed the same findings. Lower exposures failed to engage the target. Investigators found no feasible dose or mitigation strategy for this specific candidate at active exposure and discontinued this candidate. These observations concern SAFETY-S, not every target-K approach.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

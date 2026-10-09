@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — partial-cost",
+      "text": "Synthetic program P: the reviewed assay quote is USD 40000 and an independent diligence review is USD 5000. The assay is one development work package. Clinical, CMC and operations costs have not been scoped. All durations and asset-allocated cash are unknown. These quotes do not form the full budget.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic program P: the reviewed assay quote is USD 40000 and an independent diligence review is USD 5000. The assay is one development work package. Clinical, CMC and operations costs have not been scoped. All durations and asset-allocated cash are unknown. These quotes do not form the full budget.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

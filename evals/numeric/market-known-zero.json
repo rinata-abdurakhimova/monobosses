@@ -1,0 +1,40 @@
+{
+  "id": "market-known-zero",
+  "engine": "market",
+  "case_id": "dev-02-market-coverage",
+  "input": [
+    {
+      "name": "base",
+      "population": "100000",
+      "eligible_fraction": "0.20",
+      "access_fraction": "0",
+      "annual_price": "12000",
+      "currency": "USD",
+      "geography": "North",
+      "as_of_date": "2026-10-09",
+      "assumptions": [
+        "Controlled zero-access counterfactual, not observed access; evidence describes the baseline only."
+      ],
+      "input_evidence_ids": {
+        "population": [
+          "ev-e7473a267d9b-001"
+        ],
+        "eligible_fraction": [
+          "ev-e7473a267d9b-001"
+        ],
+        "access_fraction": [
+          "ev-e7473a267d9b-001"
+        ],
+        "annual_price": [
+          "ev-e7473a267d9b-001"
+        ]
+      }
+    }
+  ],
+  "expected_values": {
+    "0.addressable_patients": "0",
+    "0.annual_market_opportunity": "0",
+    "0.missing_inputs": []
+  },
+  "rationale": "Explicit reviewer zero counterfactual differs from missing; does not relabel baseline evidence."
+}

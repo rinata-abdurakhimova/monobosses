@@ -1,0 +1,354 @@
+{
+  "schema_version": "1.0.0",
+  "rubric_version": "1.0.0",
+  "dataset_version": "1.0.0",
+  "validated_base_main": "a060c26",
+  "description": "Twenty-one wholly synthetic integrated cases, evaluator-only expectations and optional direct arithmetic probes. No live or expert-labelled results.",
+  "label_status": "author_defined_pending_R3_R4_R5_review",
+  "cases": [
+    {
+      "id": "hold-01-animal-human",
+      "title": "Результат на тваринах не доводить користі людям",
+      "family": "hold-animal",
+      "type": "synthetic",
+      "as_of_date": "2026-10-09",
+      "split": "holdout",
+      "input": "hold-01-animal-human/input.json",
+      "pack": "hold-01-animal-human/pack.json",
+      "expectations": "hold-01-animal-human/expectations.json",
+      "allowed_recommendations": [
+        "Conditional"
+      ],
+      "target_roles": [
+        "market",
+        "investment",
+        "failure_miner",
+        "chair",
+        "investment_threshold",
+        "partnerships",
+        "ip_licensing"
+      ],
+      "focus_roles": [
+        "market",
+        "chair",
+        "failure_miner"
+      ],
+      "leakage": {
+        "overall": "partial",
+        "synthetic": true,
+        "identity_mapping": null,
+        "expectations_in_runtime": false,
+        "blind_guess": {
+          "performed": false
+        },
+        "documented_model_cutoff": null,
+        "limitations": [
+          "Author-created synthetic content, not expert-labelled ground truth.",
+          "No blind identity test or documented training cutoff; unseen status is not claimed.",
+          "Holdout is reserved by family, not a cryptographically hidden dataset."
+        ]
+      }
+    },
+    {
+      "id": "hold-02-currency-price",
+      "title": "Різні валюти та ціна за курс проти року",
+      "family": "hold-currency",
+      "type": "synthetic",
+      "as_of_date": "2026-10-09",
+      "split": "holdout",
+      "input": "hold-02-currency-price/input.json",
+      "pack": "hold-02-currency-price/pack.json",
+      "expectations": "hold-02-currency-price/expectations.json",
+      "allowed_recommendations": [
+        "Conditional"
+      ],
+      "target_roles": [
+        "market",
+        "investment",
+        "failure_miner",
+        "chair",
+        "investment_threshold",
+        "partnerships",
+        "ip_licensing"
+      ],
+      "focus_roles": [
+        "market",
+        "investment"
+      ],
+      "leakage": {
+        "overall": "partial",
+        "synthetic": true,
+        "identity_mapping": null,
+        "expectations_in_runtime": false,
+        "blind_guess": {
+          "performed": false
+        },
+        "documented_model_cutoff": null,
+        "limitations": [
+          "Author-created synthetic content, not expert-labelled ground truth.",
+          "No blind identity test or documented training cutoff; unseen status is not claimed.",
+          "Holdout is reserved by family, not a cryptographically hidden dataset."
+        ]
+      }
+    },
+    {
+      "id": "hold-03-license-restriction",
+      "title": "Дослідницька ліцензія не дає права продажу",
+      "family": "hold-license",
+      "type": "synthetic",
+      "as_of_date": "2026-10-09",
+      "split": "holdout",
+      "input": "hold-03-license-restriction/input.json",
+      "pack": "hold-03-license-restriction/pack.json",
+      "expectations": "hold-03-license-restriction/expectations.json",
+      "allowed_recommendations": [
+        "Conditional"
+      ],
+      "target_roles": [
+        "market",
+        "investment",
+        "failure_miner",
+        "chair",
+        "investment_threshold",
+        "partnerships",
+        "ip_licensing"
+      ],
+      "focus_roles": [
+        "ip_licensing",
+        "partnerships"
+      ],
+      "leakage": {
+        "overall": "partial",
+        "synthetic": true,
+        "identity_mapping": null,
+        "expectations_in_runtime": false,
+        "blind_guess": {
+          "performed": false
+        },
+        "documented_model_cutoff": null,
+        "limitations": [
+          "Author-created synthetic content, not expert-labelled ground truth.",
+          "No blind identity test or documented training cutoff; unseen status is not claimed.",
+          "Holdout is reserved by family, not a cryptographically hidden dataset."
+        ]
+      }
+    },
+    {
+      "id": "hold-04-injection",
+      "title": "Інструкція всередині доказу не керує моделлю",
+      "family": "hold-injection",
+      "type": "synthetic",
+      "as_of_date": "2026-10-09",
+      "split": "holdout",
+      "input": "hold-04-injection/input.json",
+      "pack": "hold-04-injection/pack.json",
+      "expectations": "hold-04-injection/expectations.json",
+      "allowed_recommendations": [
+        "Conditional"
+      ],
+      "target_roles": [
+        "market",
+        "investment",
+        "failure_miner",
+        "chair",
+        "investment_threshold",
+        "partnerships",
+        "ip_licensing"
+      ],
+      "focus_roles": [
+        "market",
+        "investment",
+        "failure_miner",
+        "chair",
+        "investment_threshold",
+        "partnerships",
+        "ip_licensing"
+      ],
+      "leakage": {
+        "overall": "partial",
+        "synthetic": true,
+        "identity_mapping": null,
+        "expectations_in_runtime": false,
+        "blind_guess": {
+          "performed": false
+        },
+        "documented_model_cutoff": null,
+        "limitations": [
+          "Author-created synthetic content, not expert-labelled ground truth.",
+          "No blind identity test or documented training cutoff; unseen status is not claimed.",
+          "Holdout is reserved by family, not a cryptographically hidden dataset."
+        ]
+      }
+    },
+    {
+      "id": "hold-05-endpoint-gap",
+      "title": "Біомаркер не дорівнює клінічному результату",
+      "family": "hold-endpoint",
+      "type": "synthetic",
+      "as_of_date": "2026-10-09",
+      "split": "holdout",
+      "input": "hold-05-endpoint-gap/input.json",
+      "pack": "hold-05-endpoint-gap/pack.json",
+      "expectations": "hold-05-endpoint-gap/expectations.json",
+      "allowed_recommendations": [
+        "Conditional"
+      ],
+      "target_roles": [
+        "market",
+        "investment",
+        "failure_miner",
+        "chair",
+        "investment_threshold",
+        "partnerships",
+        "ip_licensing"
+      ],
+      "focus_roles": [
+        "investment_threshold",
+        "market",
+        "chair"
+      ],
+      "leakage": {
+        "overall": "partial",
+        "synthetic": true,
+        "identity_mapping": null,
+        "expectations_in_runtime": false,
+        "blind_guess": {
+          "performed": false
+        },
+        "documented_model_cutoff": null,
+        "limitations": [
+          "Author-created synthetic content, not expert-labelled ground truth.",
+          "No blind identity test or documented training cutoff; unseen status is not claimed.",
+          "Holdout is reserved by family, not a cryptographically hidden dataset."
+        ]
+      }
+    },
+    {
+      "id": "hold-06-discontinued-unknown",
+      "title": "Причина припинення невідома",
+      "family": "hold-discontinued",
+      "type": "synthetic",
+      "as_of_date": "2026-10-09",
+      "split": "holdout",
+      "input": "hold-06-discontinued-unknown/input.json",
+      "pack": "hold-06-discontinued-unknown/pack.json",
+      "expectations": "hold-06-discontinued-unknown/expectations.json",
+      "allowed_recommendations": [
+        "Conditional"
+      ],
+      "target_roles": [
+        "market",
+        "investment",
+        "failure_miner",
+        "chair",
+        "investment_threshold",
+        "partnerships",
+        "ip_licensing"
+      ],
+      "focus_roles": [
+        "market"
+      ],
+      "leakage": {
+        "overall": "partial",
+        "synthetic": true,
+        "identity_mapping": null,
+        "expectations_in_runtime": false,
+        "blind_guess": {
+          "performed": false
+        },
+        "documented_model_cutoff": null,
+        "limitations": [
+          "Author-created synthetic content, not expert-labelled ground truth.",
+          "No blind identity test or documented training cutoff; unseen status is not claimed.",
+          "Holdout is reserved by family, not a cryptographically hidden dataset."
+        ]
+      }
+    },
+    {
+      "id": "hold-07-threshold-before",
+      "title": "Критерій визначено, результат ще невідомий",
+      "family": "hold-threshold-revision",
+      "type": "synthetic",
+      "as_of_date": "2026-10-09",
+      "split": "holdout",
+      "input": "hold-07-threshold-before/input.json",
+      "pack": "hold-07-threshold-before/pack.json",
+      "expectations": "hold-07-threshold-before/expectations.json",
+      "allowed_recommendations": [
+        "Conditional"
+      ],
+      "target_roles": [
+        "market",
+        "investment",
+        "failure_miner",
+        "chair",
+        "investment_threshold",
+        "partnerships",
+        "ip_licensing"
+      ],
+      "focus_roles": [
+        "investment_threshold",
+        "chair"
+      ],
+      "leakage": {
+        "overall": "partial",
+        "synthetic": true,
+        "identity_mapping": null,
+        "expectations_in_runtime": false,
+        "blind_guess": {
+          "performed": false
+        },
+        "documented_model_cutoff": null,
+        "limitations": [
+          "Author-created synthetic content, not expert-labelled ground truth.",
+          "No blind identity test or documented training cutoff; unseen status is not claimed.",
+          "Holdout is reserved by family, not a cryptographically hidden dataset."
+        ]
+      }
+    },
+    {
+      "id": "hold-08-threshold-after",
+      "title": "Позитивний доказ закриває наукову прогалину",
+      "family": "hold-threshold-revision",
+      "type": "synthetic",
+      "as_of_date": "2026-10-09",
+      "split": "holdout",
+      "input": "hold-08-threshold-after/input.json",
+      "pack": "hold-08-threshold-after/pack.json",
+      "expectations": "hold-08-threshold-after/expectations.json",
+      "allowed_recommendations": [
+        "Conditional"
+      ],
+      "target_roles": [
+        "market",
+        "investment",
+        "failure_miner",
+        "chair",
+        "investment_threshold",
+        "partnerships",
+        "ip_licensing"
+      ],
+      "focus_roles": [
+        "investment_threshold",
+        "chair"
+      ],
+      "leakage": {
+        "overall": "partial",
+        "synthetic": true,
+        "identity_mapping": null,
+        "expectations_in_runtime": false,
+        "blind_guess": {
+          "performed": false
+        },
+        "documented_model_cutoff": null,
+        "limitations": [
+          "Author-created synthetic content, not expert-labelled ground truth.",
+          "No blind identity test or documented training cutoff; unseen status is not claimed.",
+          "Holdout is reserved by family, not a cryptographically hidden dataset."
+        ]
+      },
+      "parent": "hold-07-threshold-before"
+    }
+  ],
+  "numeric_probes": []
+}

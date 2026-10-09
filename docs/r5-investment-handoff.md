@@ -1,8 +1,10 @@
 # R5 investment — two-stage handoff
 
-Local branch `codex/r5-investment`, updated by fast-forward to main `3cca985`. No commit, push or
-live API experiment. The node now prepares financial inputs itself from the
-supplied clinical plan and evidence before performing deterministic arithmetic.
+Current state (2026-10-09): the node is in main and wired by R2 in `a060c26`.
+[Full workflow handoff](r2-full-workflow-handoff.md) records offline integration
+and live limitations. Original implementation branch was `codex/r5-investment`.
+The node prepares financial inputs from clinical context and evidence before
+performing deterministic arithmetic; live semantic quality remains unverified.
 
 ## Entry point and output
 
@@ -54,13 +56,11 @@ triggers tied to work. No mandatory three invented numeric scenarios.
 
 ## Integration owners
 
-- R2: **register and load new prompt ID `investment_plan`** from
-  agents/business/prompts/investment_plan.md (1.0.0). Existing `investment` now
-  loads investment.md 2.0.0 and uses InvestmentExplanation. Pipeline calls the
-  node once; the node makes the two ordered adapter calls. Track both prompt
-  versions/usage. Pass common snapshot/date and full clinical/market/IP/partnerships
-  outputs. Adapter, pipeline and Report builder are still shared implementation
-  needs; none were edited by R5.
+- R2: the loader now resolves `investment_plan` 1.0.0 and `investment` 2.0.0.
+  Pipeline calls the node once, which makes two ordered adapter calls. Common
+  snapshot/date and full clinical/market/IP/partnerships outputs are wired;
+  prompt hashes/usage are recorded. Shared runtime is implemented by R2,
+  not modified by this R5 documentation update.
 - R3: audit actual support and applicability of numeric bindings/analogues, scope
   and coverage, and new claims. Exact quote/number/unit checks do not replace audit.
 - R4: review milestone/success criteria, work/resource plan, graph and delays.
@@ -69,21 +69,23 @@ triggers tied to work. No mandatory three invented numeric scenarios.
 - IP specialist: review transfer/licensing rights and retained obligations.
   Partner fit does not prove interest or committed funding.
 
-Fixtures in examples/investment-synthetic.json contain both mock responses and
+Fixtures in docs/examples/investment-synthetic.json contain both mock responses and
 replay without caller-supplied scenarios. Tests exercise arithmetic, preparation,
 source errors, missing inputs, fixed records, schema boundaries, upstream examples
-and a manually assembled synthetic Report. No real Report builder or live model
-execution; no demonstrated hallucination/prompt-injection defense or profitability.
+and a manually assembled synthetic Report in the original node fixtures.
+Current R2 integration tests additionally exercise the real Report builder with
+prepared provider responses. Neither test style proves live reasoning quality,
+hallucination/prompt-injection defense or profitability.
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=services/api/src /private/tmp/r5-ip-licensing-venv/bin/python -m pytest services/api/tests -q -p no:cacheprovider
 ```
 
-Only R5 investment files/prompts/tests/docs/examples changed. Shared contracts,
+The original node implementation changed only R5 investment files/prompts/tests/docs/examples. Shared contracts,
 llm.py, pipeline, report_builder, OpenAPI, frontend and other nodes are untouched.
 Codex.code-workspace is preserved without staging.
 
-Final validation against main 3cca985 after regression fixes: 514 backend tests passed, including 205 investment tests.
+Historical implementation validation against main 3cca985 after regression fixes: 514 backend tests passed, including 205 investment tests.
 
 ## Numeric narrative and source-sign regression fixes
 

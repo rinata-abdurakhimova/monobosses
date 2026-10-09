@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — work-no-cost",
+      "text": "Synthetic program B requires assay validation and an exposure study before selecting a clinical dose. No quotes, unit costs, duration estimates, allocated asset cash or financing agreements are available.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic program B requires assay validation and an exposure study before selecting a clinical dose. No quotes, unit costs, duration estimates, allocated asset cash or financing agreements are available.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

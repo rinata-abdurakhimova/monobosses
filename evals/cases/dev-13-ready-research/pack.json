@@ -1,0 +1,64 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — ready-science",
+      "text": "Synthetic READY-R mechanism was replicated in two independent assay systems with consistent target engagement. The next research milestone is assay and exposure validation, with pre-specified reproducibility and exposure readouts. Reviewed resources, access to the two assays and study materials are confirmed. No human efficacy is established or needed to call this research experiment successful; human benefit and chronic safety require later stages.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic READY-R mechanism was replicated in two independent assay systems with consistent target engagement. The next research milestone is assay and exposure validation, with pre-specified reproducibility and exposure readouts. Reviewed resources, access to the two assays and study materials are confirmed. No human efficacy is established or needed to call this research experiment successful; human benefit and chronic safety require later stages.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Synthetic evaluation document — ready-market",
+      "text": "Synthetic disease R adults in territory North have an approved standard therapy R-Standard and a clinical-stage same-target comparator R-Clinical. A documented access review identifies residual unmet need in biomarker-positive patients after standard therapy. No advantage of READY-R has been demonstrated; price and reimbursement for the candidate remain unknown. Those commercial questions do not change the cost or feasibility of the capped research experiment.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic disease R adults in territory North have an approved standard therapy R-Standard and a clinical-stage same-target comparator R-Clinical. A documented access review identifies residual unmet need in biomarker-positive patients after standard therapy. No advantage of READY-R has been demonstrated; price and reimbursement for the candidate remain unknown. Those commercial questions do not change the cost or feasibility of the capped research experiment.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Synthetic evaluation document — ready-rights-partner",
+      "text": "Synthetic sponsor READY-R holds a signed nonexclusive research license covering the materials and assay uses needed for this exact next milestone in North. Counsel reviewed the documented license for this limited research purpose and identified no restriction blocking that experiment; commercial sale and sublicensing are not granted. Fictional CRO R signed a fixed-price work order, reserved capacity and confirmed the supplied assay competencies. This is a services agreement, not a financing, acquisition or commercial partnership commitment.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic sponsor READY-R holds a signed nonexclusive research license covering the materials and assay uses needed for this exact next milestone in North. Counsel reviewed the documented license for this limited research purpose and identified no restriction blocking that experiment; commercial sale and sublicensing are not granted. Fictional CRO R signed a fixed-price work order, reserved capacity and confirmed the supplied assay competencies. This is a services agreement, not a financing, acquisition or commercial partnership commitment.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Synthetic evaluation document — ready-finance",
+      "text": "The reviewed full development scope for the capped READY-R next milestone is one CRO assay/exposure work package costing USD 20000 over 20 days. The contract includes all labor, materials, data delivery and integration for that milestone. USD 20000 of cash is documented as allocated only to this experiment. Diligence is completed separately and not charged to this package. Any change to scope requires a new funding review; future human trials, commercialization, licensing price and acquisition value are unbudgeted and not included in this request.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "The reviewed full development scope for the capped READY-R next milestone is one CRO assay/exposure work package costing USD 20000 over 20 days. The contract includes all labor, materials, data delivery and integration for that milestone. USD 20000 of cash is documented as allocated only to this experiment. Diligence is completed separately and not charged to this package. Any change to scope requires a new funding review; future human trials, commercialization, licensing price and acquisition value are unbudgeted and not included in this request.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

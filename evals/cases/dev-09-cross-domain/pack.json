@@ -1,0 +1,34 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — translation-gap",
+      "text": "Synthetic candidate CHAIN-X shows target activity in an animal assay. Human exposure at the active concentration is unknown, and no safety margin at that concentration has been measured.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic candidate CHAIN-X shows target activity in an animal assay. Human exposure at the active concentration is unknown, and no safety margin at that concentration has been measured.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Synthetic evaluation document — resource-dependency",
+      "text": "Synthetic clinical design requires a validated human exposure assay before dose selection. Manufacturing qualification has not begun and is needed before dosing. Partner X requires that exposure/safety package before discussing collaboration. No duration, cost or partner commitment is supplied.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic clinical design requires a validated human exposure assay before dose selection. Manufacturing qualification has not begun and is needed before dosing. Partner X requires that exposure/safety package before discussing collaboration. No duration, cost or partner commitment is supplied.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

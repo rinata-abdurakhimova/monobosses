@@ -1,0 +1,210 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "hold-06-discontinued-unknown",
+  "title": "Причина припинення невідома",
+  "evaluator_only_marker": "R5_EXPECTATIONS_ONLY_hold-06-discontinued-unknown",
+  "label_status": "author_defined_pending_R3_R4_R5_review",
+  "scope": "integrated_pipeline_all_R5_roles",
+  "focus_roles": [
+    "market"
+  ],
+  "required_facts": [
+    {
+      "id": "hold-06-discontinued-unknown-fact-01",
+      "document": "discontinued-record",
+      "assertion": "D-Old is discontinued, but the reason is absent.",
+      "importance": "critical",
+      "source_id": "src-bd17aec353bb",
+      "evidence_ids": [
+        "ev-bd17aec353bb-001"
+      ]
+    }
+  ],
+  "required_risks": [
+    {
+      "id": "hold-06-discontinued-unknown-risk-01",
+      "requirement": "An invented failure reason would distort competitor and risk analysis.",
+      "importance": "major"
+    }
+  ],
+  "required_unknowns": [
+    "Discontinuation reason",
+    "Candidate differentiation",
+    "Clinical results"
+  ],
+  "forbidden_assertions": [
+    "D-Old failed because of toxicity",
+    "D-Old failed efficacy",
+    "Candidate superiority is demonstrated"
+  ],
+  "allowed_recommendations": [
+    "Conditional"
+  ],
+  "recommendation_rationale": "Classify the observed status while preserving the unknown cause and differentiation gaps.",
+  "role_expectations": {
+    "market": [
+      {
+        "requirement": "Describe evidence coverage for all six competitor categories; absence of evidence is not absence of competitors.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Preserve unknown pricing/population/access domains; do not infer a numerical opportunity without caller-reviewed calculated_scenarios.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Use discontinued tag/status, null reason and explicit discontinuation_unknowns.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Exclude the future dated outcome from this as-of analysis; do not use it to supply the missing discontinuation reason.",
+        "importance": "critical"
+      }
+    ],
+    "investment": [
+      {
+        "requirement": "Preserve missing capital/time inputs as unknown; distinguish a known subtotal from a complete budget.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "State milestone/work, three financing paths and stress kinds with explicit gaps rather than invented deals or numbers.",
+        "importance": "major"
+      }
+    ],
+    "failure_miner": [
+      {
+        "requirement": "Review every upstream domain and dispose of every supplied risk; missing knowledge is not a demonstrated failure.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Describe material failure chains and concrete checks with positive/negative/inconclusive handling.",
+        "importance": "major"
+      }
+    ],
+    "chair": [
+      {
+        "requirement": "Use all nine upstream roles plus audit and preserve critical risks/unknowns in the final decision.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Provide arguments, reasoned decision, actionable conditions/questions and review of contradictions.",
+        "importance": "major"
+      }
+    ],
+    "investment_threshold": [
+      {
+        "requirement": "Relate gates for now/next_stage to criteria, available evidence, gaps and checks.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Do not label an unobserved criterion not_met or a criterion without support met.",
+        "importance": "critical"
+      }
+    ],
+    "partnerships": [
+      {
+        "requirement": "Portfolio fit or a partner category does not prove interest, financing, agreement or deal readiness.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Assess all four collaboration formats for each candidate, with explicit prerequisites and IP dependencies.",
+        "importance": "major"
+      }
+    ],
+    "ip_licensing": [
+      {
+        "requirement": "State unsearched rights, territories and limitations; FTO remains unresolved or potential_barriers, never legal clearance.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Do not invent ownership, expiry dates, license terms or deal prices.",
+        "importance": "major"
+      }
+    ]
+  },
+  "rubric_ids": [
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05",
+    "Q06",
+    "Q07",
+    "Q08",
+    "Q09",
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M05",
+    "I01",
+    "I02",
+    "I03",
+    "I04",
+    "I05",
+    "I06",
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "T01",
+    "T02",
+    "T03",
+    "T04",
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "L01",
+    "L02",
+    "L03",
+    "L04",
+    "R04",
+    "R05"
+  ],
+  "rubric_na": {
+    "Q10": "No adversarial instruction unless explicitly part of this case.",
+    "R01": "Not a paired variant unless revision field is present.",
+    "R02": "Not a decisive pair unless revision field requests it.",
+    "R03": "Not a non-decisive pair unless revision field requests it."
+  },
+  "review_owners": {
+    "evidence": "R3",
+    "science_clinical": "R4",
+    "business_decision": "R5",
+    "runtime": "R2"
+  },
+  "automated_checks": [
+    "CaseInput schema",
+    "R3 document parsing and excerpt provenance",
+    "full Report integrity after an actual run"
+  ],
+  "manual_review_required": [
+    "claim/excerpt semantic support",
+    "scientific applicability",
+    "business rationale",
+    "material omissions",
+    "legal interpretation where relevant"
+  ],
+  "document_map": {
+    "discontinued-record": {
+      "source_id": "src-bd17aec353bb",
+      "evidence_ids": [
+        "ev-bd17aec353bb-001"
+      ]
+    },
+    "future-outcome": {
+      "source_id": "src-bb2cbdedb33a",
+      "evidence_ids": [
+        "ev-bb2cbdedb33a-001"
+      ]
+    }
+  },
+  "excluded_documents": [
+    "future-outcome"
+  ]
+}

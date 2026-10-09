@@ -1,6 +1,8 @@
 # R5 Chair handoff
 
-Base: origin/main caaa912 (verified 2026-10-09). No shared files modified.
+Current state (2026-10-09): Chair is connected in main `a060c26` through R2's
+`vic/committee.py` bridge. Full live quality remains unverified.
+Original implementation base: caaa912; R5 did not change shared runtime files.
 
 `await analyze_chair(case, pack, ctx, science=..., translation=..., clinical=...,
 market=..., investment=..., partnerships=..., ip_licensing=...,
@@ -29,16 +31,17 @@ links remain in the role record. Chair risks exist canonically in decision.risks
 role_result.risks is empty to avoid conflicting canonical records when a risk cites
 upstream claims (shared role integrity expects local claim refs).
 
-## R2 integration still required
+## Current R2 integration
 
-This module deliberately does NOT export synthesize_committee: current discovery
-would activate it automatically, but that signature lacks case and EvidencePack.
-R2 should supply an adapter/closure with positional (results, audit, ctx), capture
-case/pack, map all nine RoleResults into analyze_chair, return output.decision,
-and retain output.role_result among report roles. Forward all nine roles rather
-than only current ROLE_ORDER. Do not invoke analyze_chair with summaries alone.
-No pipeline, Modules/discovery, llm.py, Report builder, contracts, OpenAPI or UI
-changes are included. End-to-end API wiring is not claimed.
+The business module does not export the old positional synthesize_committee.
+R2's `vic/committee.py` supplies the bridge with results/audit/ctx and keyword
+case/pack; it maps all upstream roles into analyze_chair. Pipeline retains both
+ChairResult.decision and ChairResult.role_result among Report roles.
+All nine upstream roles are wired; summaries alone are not used.
+See [R2 full workflow handoff](r2-full-workflow-handoff.md).
+
+Offline HTTP/provider-fixture integration is verified; this does not demonstrate
+sound reasoning by a real model. New Chair claims still require final R3 audit.
 
 Existing load_prompt finds chair.md. StructuredLlm forwards chair feedback and
 records prompt hash. New chair claims go through R3's existing additional_claims
@@ -59,8 +62,12 @@ in upstream_context, avoiding duplication of large financial/scientific sections
 Invest also requires audit coverage of decisive and critical upstream claims,
 supported critical claims and no unknown domain assessments.
 
-Offline verification: 106 Chair tests and 961 backend tests pass, including
+Historical implementation verification: 106 Chair tests and 961 backend tests passed, including
 real R2 gateway via httpx.MockTransport, chair feedback/prompt hash trace,
 real Failure Miner and Threshold outputs, existing upstream JSON examples, R3
 new-claim audit, canonical Report assembly and JSON round-trip. Deployment tests
 require permission for local sockets; no live LLM/API is called.
+
+Latest recorded backend regression suite: 970 passed (2026-10-09).
+[Evaluation content](../evals/README.md) includes decisive, irrelevant and
+relevant non-decisive revisions; expectations review and live outputs are pending.

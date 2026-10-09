@@ -1,0 +1,41 @@
+{
+  "id": "market-complete",
+  "engine": "market",
+  "case_id": "dev-02-market-coverage",
+  "input": [
+    {
+      "name": "base",
+      "population": "100000",
+      "eligible_fraction": "0.20",
+      "access_fraction": "0.50",
+      "annual_price": "12000",
+      "currency": "USD",
+      "geography": "North",
+      "as_of_date": "2026-10-09",
+      "assumptions": [
+        "Reviewer-supplied synthetic values; analogue price used only as an explicit scenario assumption, not a candidate forecast."
+      ],
+      "input_evidence_ids": {
+        "population": [
+          "ev-e7473a267d9b-001"
+        ],
+        "eligible_fraction": [
+          "ev-e7473a267d9b-001"
+        ],
+        "access_fraction": [
+          "ev-e7473a267d9b-001"
+        ],
+        "annual_price": [
+          "ev-e7473a267d9b-001"
+        ]
+      }
+    }
+  ],
+  "expected_values": {
+    "0.eligible_patients": "20000",
+    "0.addressable_patients": "10000",
+    "0.annual_market_opportunity": "120000000",
+    "0.missing_inputs": []
+  },
+  "rationale": "100000 × 0.20 × 0.50 × 12000; annual opportunity only, not forecast revenue."
+}

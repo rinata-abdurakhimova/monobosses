@@ -51,8 +51,8 @@ met потребує документованого assessment, доказів �
 Після оновлення до main `7b80cd0` завантажувач R2 вже знаходить prompt
 investment_threshold за назвою файлу без зміни registry. Він записує hash
 вмісту prompt у trace; наше prompt_version=1.0.0 — оголошена версія інструкції.
-R2 ще має підключити функцію до pipeline після upstream-вузлів: поточний
-Modules/discovery і pipeline не включають investment_threshold.
+У main `a060c26` R2 вже підключила investment_threshold після upstream-вузлів;
+офлайн-інтеграцію перевірено. Успішний повний live run ще не підтверджений.
 Shared contracts, llm.py,
 Report builder, R3/R4 та frontend залишено без змін.
 
@@ -64,12 +64,12 @@ Prompt вимагає джерельних або явно гіпотетичн�
 для розгляду, а не автоматичною зупинкою проєкту.
 
 Перевірки — офлайн, із mock adapter; live LLM/API не запускали.
-Коміт, push і merge не виконували.
+Наведені нижче записи про відсутність commit/push описують історичний етап; вузол уже є в main.
 
 Оновлення 8 жовтня: origin/main підтягнутий у codex/r5-investment-threshold
 через fast-forward, без merge-коміту; локальні файли збережені. До тестів
 додано три перевірки сумісності з реальним StructuredLlm R2 та офлайн provider:
 реальний prompt і schema, повний payload/output усіх семи ролей, audit feedback,
 trace version/usage та відхилення schema-valid, але неузгодженого met gate.
-Зовнішні LLM/API не викликаються. Повне підключення API → pipeline → threshold
-не заявляється перевіреним, доки R2 не додасть вузол до pipeline.
+Зовнішні LLM/API не викликаються. Це історичний запис до інтеграції. Стан на 2026-10-09: R2 підключила вузол у main;
+офлайн-інтеграція перевірена, live semantic quality залишається відкритою.
