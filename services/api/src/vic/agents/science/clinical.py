@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Literal, get_args
 
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from vic.contracts import (
     CaseInput,
     Claim,
@@ -13,9 +14,9 @@ from vic.contracts import (
 )
 
 PROMPT_ID = "clinical"
-PROMPT_VERSION = "1.0.0"
+PROMPT_VERSION = "1.1.0"
 
-CLAIM_KEYS = [
+ClinicalClaimKey = Literal[
     "clinical.target_population",
     "clinical.primary_endpoint",
     "clinical.secondary_endpoints",
@@ -29,9 +30,22 @@ CLAIM_KEYS = [
     "clinical.unmet_need",
     "clinical.safety_requirements",
 ]
+CLAIM_KEYS: list[str] = list(get_args(ClinicalClaimKey))
+
+ClaimStatus = Literal["supported", "contradicted", "mixed", "unverified", "unknown"]
+Scope = Literal["approach", "program"]
+Importance = Literal["critical", "major", "minor"]
+Priority = Literal["critical", "major", "minor"]
+ClinicalPosition = Literal["feasible", "conditionally_feasible", "challenging", "insufficient_data"]
+
+_TRIAL_SIZE_DEFAULT_GAP = (
+    "Insufficient data to determine trial size; statistical design consultation needed"
+)
 
 
 class _TrialSizeEstimate(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
     has_basis: bool = Field(
         description="True only if there is a quantitative or evidence-based rationale for estimating trial size"
     )
@@ -46,76 +60,102 @@ class _TrialSizeEstimate(BaseModel):
     )
     evidence_ids: list[str] = Field(default_factory=list)
 
+    @model_validator(mode="after")
+    def enforce_trial_size_basis(self) -> _TrialSizeEstimate:
+        if self.has_basis:
+            if not (self.estimate and self.estimate.strip()):
+                raise ValueError("trial_size: has_basis=True requires a non-empty estimate")
+            if not self.assumptions and not self.evidence_ids:
+                raise ValueError(
+                    "trial_size: has_basis=True requires assumptions or evidence_ids; "
+                    "an ungrounded trial size is not allowed"
+                )
+        else:
+            self.estimate = None
+            if not self.statistical_design_gap:
+                self.statistical_design_gap = _TRIAL_SIZE_DEFAULT_GAP
+        return self
+
 
 class _StudyPhase(BaseModel):
-    phase: str = Field(description="e.g. 'Phase 1', 'Phase 1b/2', 'Phase 2', 'Phase 3'")
-    objective: str
-    population: str
-    primary_endpoint: str
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    phase: str = Field(min_length=1, description="e.g. 'Phase 1', 'Phase 1b/2', 'Phase 2', 'Phase 3'")
+    objective: str = Field(min_length=1)
+    population: str = Field(min_length=1)
+    primary_endpoint: str = Field(min_length=1)
     duration_estimate: str | None = None
     key_assumptions: list[str] = Field(default_factory=list)
 
 
 class _HistoricalAnalogue(BaseModel):
-    name: str
-    relevance: str
-    outcome: str
-    lessons: str
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    name: str = Field(min_length=1)
+    relevance: str = Field(min_length=1)
+    outcome: str = Field(min_length=1)
+    lessons: str = Field(min_length=1)
     evidence_ids: list[str] = Field(default_factory=list)
 
 
 class _ClaimOutput(BaseModel):
-    key: str = Field(description="Stable claim key from the predefined clinical set")
-    text: str
-    support_status: str = Field(
-        description="One of: supported, contradicted, mixed, unverified, unknown"
-    )
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    key: ClinicalClaimKey
+    text: str = Field(min_length=1)
+    support_status: ClaimStatus
     evidence_ids: list[str] = Field(default_factory=list)
     assumptions: list[str] = Field(default_factory=list)
-    scope: str
-    importance: str = Field(description="One of: critical, major, minor")
-    reasoning: str
+    scope: Scope
+    importance: Importance
+    reasoning: str = Field(min_length=1)
 
 
 class _RiskOutput(BaseModel):
-    id: str = Field(description="Stable risk identifier, e.g. 'clinical.risk.endpoint_miss'")
-    description: str
-    priority: str = Field(description="One of: critical, major, minor")
-    related_claim_keys: list[str] = Field(default_factory=list)
-    impact: str
-    next_check: str
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    id: str = Field(min_length=1, description="Stable risk identifier, e.g. 'clinical.risk.endpoint_miss'")
+    description: str = Field(min_length=1)
+    priority: Priority
+    related_claim_keys: list[ClinicalClaimKey] = Field(default_factory=list)
+    impact: str = Field(min_length=1)
+    next_check: str = Field(min_length=1)
 
 
 class _DiligenceQuestionOutput(BaseModel):
-    question: str
-    why_it_matters: str
-    evidence_needed: str
-    decision_if_positive: str
-    decision_if_negative: str
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    question: str = Field(min_length=1)
+    why_it_matters: str = Field(min_length=1)
+    evidence_needed: str = Field(min_length=1)
+    decision_if_positive: str = Field(min_length=1)
+    decision_if_negative: str = Field(min_length=1)
 
 
 class ClinicalPlanAnalysis(BaseModel):
-    thesis: str = Field(description="One-paragraph clinical development thesis")
-    position: str = Field(
-        description="Feasibility: feasible, conditionally_feasible, challenging, or insufficient_data"
-    )
-    target_population: str
-    clinically_meaningful_outcome: str
-    primary_endpoint: str
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    thesis: str = Field(min_length=1, description="One-paragraph clinical development thesis")
+    position: ClinicalPosition
+    target_population: str = Field(min_length=1)
+    clinically_meaningful_outcome: str = Field(min_length=1)
+    primary_endpoint: str = Field(min_length=1)
     secondary_endpoints: list[str] = Field(default_factory=list)
-    comparator: str
-    biomarker_strategy: str
+    comparator: str = Field(min_length=1)
+    biomarker_strategy: str = Field(min_length=1)
     trial_size: _TrialSizeEstimate
     study_sequence: list[_StudyPhase]
     regulatory_context: str = Field(
-        description="Relevant precedents and regulatory considerations; mark as context, not guarantee"
+        min_length=1,
+        description="Relevant precedents and regulatory considerations; mark as context, not guarantee",
     )
     historical_analogues: list[_HistoricalAnalogue] = Field(default_factory=list)
     next_milestone: str = Field(
-        description="The next value-creating milestone and evidence needed to reach it"
+        min_length=1,
+        description="The next value-creating milestone and evidence needed to reach it",
     )
-    standard_of_care: str
-    unmet_need: str
+    standard_of_care: str = Field(min_length=1)
+    unmet_need: str = Field(min_length=1)
     claims: list[_ClaimOutput]
     risks: list[_RiskOutput]
     unknowns: list[str]
@@ -125,6 +165,13 @@ class ClinicalPlanAnalysis(BaseModel):
     science_gaps_carried_forward: list[str] = Field(
         description="Unresolved gaps from scientific/translation analysis that affect the clinical plan"
     )
+
+    @model_validator(mode="after")
+    def reject_duplicate_claim_keys(self) -> ClinicalPlanAnalysis:
+        keys = [claim.key for claim in self.claims]
+        if len(keys) != len(set(keys)):
+            raise ValueError("clinical claim keys must be unique")
+        return self
 
 
 def _format_evidence(pack: EvidencePack) -> str:
@@ -153,53 +200,33 @@ def _format_evidence(pack: EvidencePack) -> str:
 def _val(x) -> str:
     return str(getattr(x, "value", x))
 
+
 def _format_prior_results(
     scientific_result: RoleResult,
     translation_result: RoleResult,
 ) -> str:
     sections: list[str] = []
-
-    sections.append("=== SCIENTIFIC ANALYSIS ===")
-    sections.append(f"Position: {scientific_result.position}")
-    sections.append(f"Thesis: {scientific_result.summary}")
-    if scientific_result.claims:
-        sections.append("Claims:")
-        for c in scientific_result.claims:
-            sections.append(
-                f"  [{c.id}] ({_val(c.support_status)}, {_val(c.importance)}) {c.text}"
-            )
-    if scientific_result.risks:
-        sections.append("Risks:")
-        for r in scientific_result.risks:
-            sections.append(f"  [{r.id}] ({r.priority}) {r.description}")
-    if scientific_result.unknowns:
-        sections.append("Unknowns: " + "; ".join(scientific_result.unknowns))
-    if scientific_result.change_conditions:
-        sections.append(
-            "Change conditions: " + "; ".join(scientific_result.change_conditions)
-        )
-
-    sections.append("")
-    sections.append("=== TRANSLATION ANALYSIS ===")
-    sections.append(f"Position: {translation_result.position}")
-    sections.append(f"Thesis: {translation_result.summary}")
-    if translation_result.claims:
-        sections.append("Claims:")
-        for c in translation_result.claims:
-            sections.append(
-                f"  [{c.id}] ({_val(c.support_status)}, {_val(c.importance)}) {c.text}"
-            )
-    if translation_result.risks:
-        sections.append("Risks:")
-        for r in translation_result.risks:
-            sections.append(f"  [{r.id}] ({r.priority}) {r.description}")
-    if translation_result.unknowns:
-        sections.append("Unknowns: " + "; ".join(translation_result.unknowns))
-    if translation_result.change_conditions:
-        sections.append(
-            "Change conditions: " + "; ".join(translation_result.change_conditions)
-        )
-
+    for title, result in (
+        ("SCIENTIFIC ANALYSIS", scientific_result),
+        ("TRANSLATION ANALYSIS", translation_result),
+    ):
+        if sections:
+            sections.append("")
+        sections.append(f"=== {title} ===")
+        sections.append(f"Position: {result.position}")
+        sections.append(f"Thesis: {result.summary}")
+        if result.claims:
+            sections.append("Claims:")
+            for c in result.claims:
+                sections.append(f"  [{c.id}] ({_val(c.support_status)}, {_val(c.importance)}) {c.text}")
+        if result.risks:
+            sections.append("Risks:")
+            for r in result.risks:
+                sections.append(f"  [{r.id}] ({_val(r.priority)}) {r.description}")
+        if result.unknowns:
+            sections.append("Unknowns: " + "; ".join(result.unknowns))
+        if result.change_conditions:
+            sections.append("Change conditions: " + "; ".join(result.change_conditions))
     return "\n".join(sections)
 
 
@@ -226,31 +253,46 @@ def _build_payload(
 
 def _valid_evidence_ids(ids: list[str], pack: EvidencePack) -> list[str]:
     known = {ev.id for ev in pack.evidence}
-    return [eid for eid in ids if eid in known]
+    return list(dict.fromkeys(eid for eid in ids if eid in known))
+
+
+def _dropped_evidence_ids(ids: list[str], pack: EvidencePack) -> list[str]:
+    known = {ev.id for ev in pack.evidence}
+    return list(dict.fromkeys(eid for eid in ids if eid not in known))
+
+
+def _missing_evidence_message(claim_key: str) -> str:
+    return f"{claim_key}: no valid evidence references remain after evidence-pack filtering."
 
 
 def _to_claims(analysis: ClinicalPlanAnalysis, pack: EvidencePack) -> list[Claim]:
     claims: list[Claim] = []
-    known = {ev.id for ev in pack.evidence}
-    for c in analysis.claims:
-        valid_ids = _valid_evidence_ids(c.evidence_ids, pack)
-        dropped_ids = list(dict.fromkeys(eid for eid in c.evidence_ids if eid not in known))
-        status = c.support_status
-        assumptions = list(c.assumptions)
+    evidence_dependent_statuses = {"supported", "contradicted", "mixed"}
+    for output in analysis.claims:
+        valid_ids = _valid_evidence_ids(output.evidence_ids, pack)
+        dropped_ids = _dropped_evidence_ids(output.evidence_ids, pack)
+        status = output.support_status
+        assumptions = list(output.assumptions)
+        text = output.text
         if dropped_ids:
-            assumptions.append(f"claim {c.key}: dropped unknown evidence ids {dropped_ids}")
-        if status in ("supported", "contradicted", "mixed") and not valid_ids:
+            assumptions.append(f"claim {output.key}: dropped unknown evidence ids {dropped_ids}")
+        if status in evidence_dependent_statuses and not valid_ids:
             status = "unverified"
+            message = _missing_evidence_message(output.key)
+            assumptions.append(message)
+            text = f"This conclusion is unverified. {message}"
+        elif status in {"unknown", "unverified"} and not valid_ids:
+            assumptions.append(_missing_evidence_message(output.key))
         claims.append(
             Claim(
-                id=c.key,
-                text=c.text,
+                id=output.key,
+                text=text,
                 provenance="ai",
                 support_status=status,
                 evidence_ids=valid_ids,
-                assumptions=assumptions,
-                scope=c.scope,
-                importance=c.importance,
+                assumptions=list(dict.fromkeys(assumptions)),
+                scope=output.scope,
+                importance=output.importance,
             )
         )
     return claims
@@ -270,6 +312,72 @@ def _to_risks(analysis: ClinicalPlanAnalysis) -> list[Risk]:
     ]
 
 
+def _normalise_trial_size(
+    trial_size: _TrialSizeEstimate, pack: EvidencePack
+) -> tuple[dict[str, object], list[str]]:
+    valid_ids = _valid_evidence_ids(trial_size.evidence_ids, pack)
+    dropped_ids = _dropped_evidence_ids(trial_size.evidence_ids, pack)
+    notes: list[str] = []
+    if dropped_ids:
+        notes.append(f"trial_size: dropped unknown evidence ids {dropped_ids}")
+
+    has_basis = trial_size.has_basis
+    estimate = trial_size.estimate
+    gap = trial_size.statistical_design_gap
+    if has_basis and not valid_ids and not trial_size.assumptions:
+        has_basis = False
+        notes.append(
+            "trial_size: estimate discarded because no valid evidence or stated assumptions "
+            "remain after evidence-pack filtering."
+        )
+    if not has_basis:
+        estimate = None
+        gap = gap or _TRIAL_SIZE_DEFAULT_GAP
+
+    return (
+        {
+            "has_basis": has_basis,
+            "estimate": estimate,
+            "assumptions": list(trial_size.assumptions),
+            "statistical_design_gap": gap,
+            "evidence_ids": valid_ids,
+        },
+        notes,
+    )
+
+
+def _normalise_analogues(
+    analysis: ClinicalPlanAnalysis, pack: EvidencePack
+) -> tuple[list[dict[str, object]], list[str]]:
+    analogues: list[dict[str, object]] = []
+    notes: list[str] = []
+    for a in analysis.historical_analogues:
+        valid_ids = _valid_evidence_ids(a.evidence_ids, pack)
+        dropped_ids = _dropped_evidence_ids(a.evidence_ids, pack)
+        if dropped_ids:
+            notes.append(f"historical analogue '{a.name}': dropped unknown evidence ids {dropped_ids}")
+        if not valid_ids:
+            notes.append(
+                f"historical analogue '{a.name}': no valid evidence reference; treat as unverified context."
+            )
+        analogues.append(
+            {
+                "name": a.name,
+                "relevance": a.relevance,
+                "outcome": a.outcome,
+                "lessons": a.lessons,
+                "evidence_ids": valid_ids,
+            }
+        )
+    return analogues, notes
+
+
+def _validate_analysis(value: object) -> ClinicalPlanAnalysis:
+    if isinstance(value, BaseModel):
+        value = value.model_dump()
+    return ClinicalPlanAnalysis.model_validate(value)
+
+
 async def analyze_clinical(
     case: CaseInput,
     pack: EvidencePack,
@@ -278,61 +386,18 @@ async def analyze_clinical(
     ctx: RunContext,
 ) -> RoleResult:
     payload = _build_payload(case, pack, scientific_result, translation_result)
-
-    analysis: ClinicalPlanAnalysis = await ctx.model.generate_structured(
-        PROMPT_ID, payload, ClinicalPlanAnalysis, ctx,
+    raw_analysis = await ctx.model.generate_structured(
+        PROMPT_ID, payload, ClinicalPlanAnalysis, ctx
     )
-
-    if not analysis.trial_size.has_basis:
-        analysis.trial_size.estimate = None
-        if not analysis.trial_size.statistical_design_gap:
-            analysis.trial_size.statistical_design_gap = (
-                "Insufficient data to determine trial size; "
-                "statistical design consultation needed"
-            )
+    analysis = _validate_analysis(raw_analysis)
 
     claims = _to_claims(analysis, pack)
     risks = _to_risks(analysis)
+    trial_size_data, trial_size_notes = _normalise_trial_size(analysis.trial_size, pack)
+    analogues_data, analogue_notes = _normalise_analogues(analysis, pack)
 
-    trial_size_data = {
-        "has_basis": analysis.trial_size.has_basis,
-        "estimate": analysis.trial_size.estimate,
-        "assumptions": analysis.trial_size.assumptions,
-        "statistical_design_gap": analysis.trial_size.statistical_design_gap,
-    }
-
-    study_sequence_data = [
-        {
-            "phase": sp.phase,
-            "objective": sp.objective,
-            "population": sp.population,
-            "primary_endpoint": sp.primary_endpoint,
-            "duration_estimate": sp.duration_estimate,
-            "key_assumptions": sp.key_assumptions,
-        }
-        for sp in analysis.study_sequence
-    ]
-
-    analogues_data = [
-        {
-            "name": a.name,
-            "relevance": a.relevance,
-            "outcome": a.outcome,
-            "lessons": a.lessons,
-        }
-        for a in analysis.historical_analogues
-    ]
-
-    diligence_data = [
-        {
-            "question": dq.question,
-            "why_it_matters": dq.why_it_matters,
-            "evidence_needed": dq.evidence_needed,
-            "decision_if_positive": dq.decision_if_positive,
-            "decision_if_negative": dq.decision_if_negative,
-        }
-        for dq in analysis.diligence_questions
-    ]
+    study_sequence_data = [sp.model_dump() for sp in analysis.study_sequence]
+    diligence_data = [dq.model_dump() for dq in analysis.diligence_questions]
 
     section = SectionContent(
         key="clinical_development_plan",
@@ -363,8 +428,13 @@ async def analyze_clinical(
         assumption
         for claim in claims
         for assumption in claim.assumptions
-        if "dropped unknown evidence ids" in assumption
+        if "no valid evidence references remain" in assumption
+        or "dropped unknown evidence ids" in assumption
     )
+    unknowns.extend(trial_size_notes)
+    unknowns.extend(analogue_notes)
+    if not claims:
+        unknowns.append("No clinical claims were returned; the clinical plan remains unverified.")
     unknowns = list(dict.fromkeys(unknowns))
 
     return RoleResult(

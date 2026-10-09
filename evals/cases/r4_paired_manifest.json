@@ -1,0 +1,268 @@
+{
+  "manifest_version": "r4-03.v1",
+  "issue": "#16 (R4-03)",
+  "label_status": "team-reviewed",
+  "label_note": "Synthetic paired cases with team-reviewed labels written before any model run. Not an external expert assessment.",
+  "split": "development",
+  "evaluator_only_fields": ["expectations"],
+  "families": [
+    {
+      "family_id": "pair_a_negative_candidate_hepatotoxicity",
+      "kind": "negative",
+      "case": {
+        "indication": "Moderate-to-severe plaque psoriasis",
+        "mechanism": "Allosteric TYK2 inhibition via the JH2 pseudokinase domain, blocking IL-23, IL-12 and type I interferon signalling",
+        "scope": "program",
+        "modality": "oral small molecule",
+        "development_stage": "Phase 1",
+        "program_data": "SYN-TYK-201 is an oral JH2-binding TYK2 inhibitor. Candidate-specific preclinical PK and 28-day rat/dog GLP toxicology are complete; a Phase 1 SAD/MAD study in healthy volunteers is ongoing."
+      },
+      "before": {
+        "snapshot_id": "snap-pair-a-v1",
+        "sources": [
+          {"id": "src-a-genetics", "title": "Synthetic: TYK2 P1104A variant association study", "url": null, "type": "synthetic", "published_at": "2024-03-01", "retrieved_at": "2026-10-01T00:00:00Z", "content_hash": "sha256:3fa543141a8f5d8145f2485af2f13137c34c1aaec550595c74cc2b5e560b0804", "synthetic": true},
+          {"id": "src-a-pathway", "title": "Synthetic: TYK2 JH2 selectivity in human primary T cells", "url": null, "type": "synthetic", "published_at": "2024-06-15", "retrieved_at": "2026-10-01T00:00:00Z", "content_hash": "sha256:d213f5b3d75aa05b3ba688bbee9a21e1da6f5927a4d7aee528f40e179f98b1f3", "synthetic": true},
+          {"id": "src-a-class", "title": "Synthetic: Phase 3 results of a first-in-class allosteric TYK2 inhibitor", "url": null, "type": "synthetic", "published_at": "2023-11-20", "retrieved_at": "2026-10-01T00:00:00Z", "content_hash": "sha256:f02a2247a8336f661381e85fa9f04f5caedaaf44b62b1ab84a76cbd1f4456f12", "synthetic": true},
+          {"id": "src-a-preclin-tox", "title": "Synthetic: SYN-TYK-201 28-day GLP toxicology summary", "url": null, "type": "synthetic", "published_at": "2026-02-10", "retrieved_at": "2026-10-01T00:00:00Z", "content_hash": "sha256:b0122bd0a65a352f8f00b4f4239254e3f579cf83e4dd39125faeac57c57a3c0d", "synthetic": true}
+        ],
+        "evidence": [
+          {"id": "ev-a-genetics", "source_id": "src-a-genetics", "excerpt": "Carriers of the TYK2 P1104A partial loss-of-function variant had a lower risk of psoriasis and other immune-mediated diseases in population genetic association studies, without an increase in serious infection signals.", "locator": "Results, Table 2", "scope": "approach", "limitations": ["Association data; partial loss of function does not model full pharmacological inhibition."]},
+          {"id": "ev-a-pathway", "source_id": "src-a-pathway", "excerpt": "In human primary T cells, selective TYK2 JH2 binding reduced IL-23-induced STAT3 phosphorylation and IL-12-induced STAT4 phosphorylation while sparing JAK1/JAK3-dependent IL-2 signalling.", "locator": "Figure 3", "scope": "approach", "limitations": ["Ex vivo system."]},
+          {"id": "ev-a-class", "source_id": "src-a-class", "excerpt": "A first-in-class allosteric TYK2 inhibitor achieved superiority over placebo on PASI 75 at week 16 in randomized Phase 3 trials in plaque psoriasis.", "locator": "Abstract", "scope": "approach", "limitations": ["Different chemotype from SYN-TYK-201."]},
+          {"id": "ev-a-preclin-tox", "source_id": "src-a-preclin-tox", "excerpt": "In 28-day GLP studies, SYN-TYK-201 showed no adverse liver findings in rats or dogs at exposures up to 10-fold the projected human efficacious AUC.", "locator": "Summary of findings", "scope": "program", "limitations": ["Animal toxicology does not establish human safety."]}
+        ]
+      },
+      "after": {
+        "snapshot_id": "snap-pair-a-v2",
+        "added_sources": [
+          {"id": "src-a-ph1-report", "title": "Synthetic: SYN-TYK-201 Phase 1 MAD interim safety report", "url": null, "type": "synthetic", "published_at": "2026-09-15", "retrieved_at": "2026-10-02T00:00:00Z", "content_hash": "sha256:8af7603a14c618605eba58cc830fcc4265c4bfac852f557dfe64ac0af90fc5db", "synthetic": true}
+        ],
+        "added_evidence": [
+          {"id": "ev-a-ph1-hepatotox", "source_id": "src-a-ph1-report", "excerpt": "In the SYN-TYK-201 Phase 1 MAD cohort at 300 mg once daily, 3 of 8 healthy participants developed ALT elevations above 5x ULN by day 10, leading to cohort discontinuation; elevations resolved after withdrawal. No ALT elevations occurred at 25-100 mg, where exposure remained below the projected efficacious AUC.", "locator": "Interim safety report, Section 4.2", "scope": "program", "limitations": ["Interim data; n=8 per cohort; healthy volunteers, not psoriasis patients."]},
+          {"id": "ev-a-ph1-metabolite", "source_id": "src-a-ph1-report", "excerpt": "Metabolite profiling identified a reactive acyl-glucuronide metabolite unique to the SYN-TYK-201 scaffold; covalent protein adducts were detected in human hepatocytes. The metabolite is not formed by the other TYK2 inhibitor chemotypes tested.", "locator": "Interim safety report, Section 5.1", "scope": "program", "limitations": ["Causal attribution rests on in vitro adduct data."]}
+        ]
+      },
+      "expectations": {
+        "case_scope": "program",
+        "changed_claims": [
+          {"claim_id": "translation.safe_exposure", "before_status": "unknown", "after_status": "contradicted", "required_evidence_ids": ["ev-a-ph1-hepatotox"], "changed_premise": "Candidate-specific dose-limiting hepatotoxicity now contradicts safe human exposure at the projected efficacious level."},
+          {"claim_id": "translation.therapeutic_window", "before_status": "unknown", "after_status": "contradicted", "required_evidence_ids": ["ev-a-ph1-hepatotox"], "changed_premise": "No tolerated SYN-TYK-201 dose reached projected efficacious exposure, so the candidate window is not demonstrated."},
+          {"claim_id": "translation.human_exposure", "before_status": "unknown", "after_status": "mixed", "required_evidence_ids": ["ev-a-ph1-hepatotox"], "changed_premise": "Human PK now exists but tolerated exposures sit below the projected efficacious AUC."},
+          {"claim_id": "clinical.safety_requirements", "before_status": "mixed", "after_status": "contradicted", "required_evidence_ids": ["ev-a-ph1-hepatotox"], "changed_premise": "Clean rat/dog toxicology is superseded by human ALT elevations; liver safety monitoring and stopping rules become gating."},
+          {"claim_id": "clinical.next_milestone", "before_status": "mixed", "after_status": "mixed", "required_evidence_ids": ["ev-a-ph1-hepatotox", "ev-a-ph1-metabolite"], "changed_premise": "Next milestone moves from Phase 2 PASI efficacy to a backup chemotype without the reactive metabolite."}
+        ],
+        "unchanged_claims": {
+          "science.genetic_evidence": "supported",
+          "science.pathway_biology": "supported",
+          "science.target_validation": "supported",
+          "science.prior_programs": "supported",
+          "translation.molecular_effect": "supported",
+          "translation.target_engagement": "unknown",
+          "translation.patient_benefit": "unknown",
+          "clinical.target_population": "supported"
+        },
+        "tolerated_claims": {
+          "clinical.study_sequence": ["mixed", "contradicted", "unverified"]
+        },
+        "forbidden_citations": [
+          {"evidence_id": "ev-a-ph1-hepatotox", "claim_prefix": "science."},
+          {"evidence_id": "ev-a-ph1-metabolite", "claim_prefix": "science."}
+        ],
+        "unchanged_risks": ["science.risk.jak_selectivity", "clinical.risk.safety", "clinical.risk.competitive_bar"],
+        "missing_links_preserved": ["translation.target_engagement", "translation.patient_benefit"],
+        "r5_handoff": {
+          "critical_facts": [
+            "Dose-limiting ALT elevation in 3 of 8 participants at 300 mg QD; reversible on withdrawal.",
+            "Tolerated doses did not reach projected efficacious exposure.",
+            "Hepatotoxicity is attributed to a scaffold-specific reactive metabolite, not to TYK2 inhibition."
+          ],
+          "critical_risks": [
+            "Program-level: SYN-TYK-201 may be non-developable at efficacious exposure.",
+            "Approach-level: competitive bar set by an approved allosteric TYK2 inhibitor."
+          ],
+          "acceptable_interpretations": [
+            "Downgrade or redirect the program to a backup chemotype while keeping the TYK2 approach thesis.",
+            "Conditional recommendation gated on a metabolite-free backup reaching efficacious exposure."
+          ],
+          "unacceptable_interpretations": [
+            "The TYK2 mechanism is invalidated by this candidate failure.",
+            "Clean rat/dog toxicology establishes human liver safety.",
+            "Low tolerated doses are both safe and efficacious."
+          ],
+          "limitations": [
+            "Interim healthy-volunteer data with eight participants per cohort.",
+            "Metabolite causality inferred from in vitro hepatocyte adducts."
+          ]
+        }
+      }
+    },
+    {
+      "family_id": "pair_b_positive_target_engagement",
+      "kind": "positive",
+      "case": {
+        "indication": "Alpha-1 antitrypsin deficiency-associated liver disease (PiZZ genotype)",
+        "mechanism": "Hepatocyte-targeted GalNAc-siRNA silencing of SERPINA1 to reduce hepatic Z-AAT polymer accumulation",
+        "scope": "program",
+        "modality": "GalNAc-conjugated siRNA",
+        "development_stage": "Phase 1/2",
+        "program_data": "SYN-AAT-301 is a GalNAc-siRNA targeting SERPINA1 mRNA. PiZ mouse and cynomolgus pharmacology are complete; a Phase 1/2 study in PiZZ adults with liver involvement is enrolling."
+      },
+      "before": {
+        "snapshot_id": "snap-pair-b-v1",
+        "sources": [
+          {"id": "src-b-review", "title": "Synthetic: Z-AAT proteotoxicity review", "url": null, "type": "synthetic", "published_at": "2023-05-04", "retrieved_at": "2026-10-01T00:00:00Z", "content_hash": "sha256:900584591b5ceba22696d6c1a389a259aec33d9f0169d5fdee6d939575e21043", "synthetic": true},
+          {"id": "src-b-pizmouse", "title": "Synthetic: SYN-AAT-301 in PiZ transgenic mice", "url": null, "type": "synthetic", "published_at": "2025-08-12", "retrieved_at": "2026-10-01T00:00:00Z", "content_hash": "sha256:62cba15a5a94dc33d19a017d1c17bb9d43183afdaca28c6d4d2bff6ab1cc0d0e", "synthetic": true},
+          {"id": "src-b-nhp", "title": "Synthetic: SYN-AAT-301 cynomolgus pharmacology", "url": null, "type": "synthetic", "published_at": "2025-12-01", "retrieved_at": "2026-10-01T00:00:00Z", "content_hash": "sha256:b677158a869799c8cf23837dbc16e60c78bd96cd0ae50110cc4a895f187a25f2", "synthetic": true}
+        ],
+        "evidence": [
+          {"id": "ev-b-mechanism", "source_id": "src-b-review", "excerpt": "Hepatic accumulation of misfolded Z-AAT polymers drives proteotoxic hepatocyte injury and fibrosis in PiZZ individuals; reducing Z-AAT synthesis is the mechanistic rationale for liver protection.", "locator": "Section 2", "scope": "approach", "limitations": []},
+          {"id": "ev-b-pizmouse", "source_id": "src-b-pizmouse", "excerpt": "In PiZ transgenic mice, SYN-AAT-301 reduced hepatic SERPINA1 mRNA by 90% and decreased PAS-D-positive globule burden and liver fibrosis markers after 12 weeks.", "locator": "Figure 2", "scope": "program", "limitations": ["Transgenic mouse model overexpresses human Z-AAT."]},
+          {"id": "ev-b-nhp", "source_id": "src-b-nhp", "excerpt": "In cynomolgus monkeys, single subcutaneous doses produced dose-dependent serum AAT reduction lasting more than 8 weeks.", "locator": "Table 1", "scope": "program", "limitations": ["Wild-type AAT; no disease phenotype."]}
+        ]
+      },
+      "after": {
+        "snapshot_id": "snap-pair-b-v2",
+        "added_sources": [
+          {"id": "src-b-ph1-interim", "title": "Synthetic: SYN-AAT-301 Phase 1/2 interim analysis", "url": null, "type": "synthetic", "published_at": "2026-09-20", "retrieved_at": "2026-10-02T00:00:00Z", "content_hash": "sha256:4d33312dfd694d62e1d7679912cbcd33f9633b7a7cbfc9794552402a896f3053", "synthetic": true}
+        ],
+        "added_evidence": [
+          {"id": "ev-b-ph1-pd", "source_id": "src-b-ph1-interim", "excerpt": "In PiZZ adult participants, SYN-AAT-301 reduced serum Z-AAT by a median of 87% at week 12 at the 200 mg dose, with dose-dependent reductions across cohorts; intrahepatic Z-AAT on paired liver biopsy decreased by a median of 70% at week 24 (n=6).", "locator": "Interim results, Table 3", "scope": "program", "limitations": ["Paired biopsies in six participants; no fibrosis-stage endpoint yet."]},
+          {"id": "ev-b-ph1-safety", "source_id": "src-b-ph1-interim", "excerpt": "Over 24 weeks of follow-up, no treatment-related serious adverse events were reported; follow-up is insufficient to assess long-term hepatic or pulmonary outcomes.", "locator": "Interim results, Section 6", "scope": "program", "limitations": ["24-week follow-up; small cohorts."]}
+        ]
+      },
+      "expectations": {
+        "case_scope": "program",
+        "changed_claims": [
+          {"claim_id": "translation.target_engagement", "before_status": "unknown", "after_status": "supported", "required_evidence_ids": ["ev-b-ph1-pd"], "changed_premise": "Human target engagement is now shown by dose-dependent serum and intrahepatic Z-AAT reduction in PiZZ participants."},
+          {"claim_id": "translation.biological_response", "before_status": "unknown", "after_status": "mixed", "required_evidence_ids": ["ev-b-ph1-pd"], "changed_premise": "Intrahepatic polymer reduction is a proximal biological response; fibrosis regression is not yet shown."},
+          {"claim_id": "clinical.biomarker_strategy", "before_status": "unverified", "after_status": "supported", "required_evidence_ids": ["ev-b-ph1-pd"], "changed_premise": "Serum and intrahepatic Z-AAT are now validated pharmacodynamic markers for dose selection, not surrogates of clinical benefit."}
+        ],
+        "unchanged_claims": {
+          "science.pathway_biology": "supported",
+          "science.animal_model_evidence": "supported",
+          "science.target_validation": "mixed",
+          "translation.molecular_effect": "supported",
+          "translation.patient_benefit": "unknown",
+          "clinical.target_population": "supported"
+        },
+        "tolerated_claims": {
+          "translation.human_exposure": ["unknown", "mixed", "supported"],
+          "translation.safe_exposure": ["unknown", "mixed"],
+          "clinical.safety_requirements": ["unknown", "mixed", "unverified"]
+        },
+        "forbidden_citations": [],
+        "unchanged_risks": ["science.risk.fibrosis_reversibility", "translation.risk.lung_protection", "clinical.risk.safety", "clinical.risk.surrogate_endpoint"],
+        "missing_links_preserved": ["translation.patient_benefit"],
+        "r5_handoff": {
+          "critical_facts": [
+            "Median serum Z-AAT reduction of 87% at week 12 (200 mg) and 70% intrahepatic reduction at week 24 (n=6).",
+            "No fibrosis-stage or clinical outcome data yet."
+          ],
+          "critical_risks": [
+            "Long-term hepatic and pulmonary safety remain unknown after 24 weeks.",
+            "Silencing SERPINA1 lowers circulating AAT and may not protect, or may further expose, the lung.",
+            "Regulatory acceptance of histologic surrogate endpoints is uncertain."
+          ],
+          "acceptable_interpretations": [
+            "Translation gap at target engagement is closed; patient benefit and long-term safety remain open.",
+            "Next milestone is histologic fibrosis improvement in a controlled study."
+          ],
+          "unacceptable_interpretations": [
+            "Biomarker reduction proves clinical benefit.",
+            "Absence of serious adverse events over 24 weeks establishes long-term safety.",
+            "Positive PD data remove the pulmonary risk."
+          ],
+          "limitations": [
+            "Interim, open-label data with small biopsy subset.",
+            "No comparator arm."
+          ]
+        }
+      }
+    },
+    {
+      "family_id": "pair_c_irrelevant_other_candidate",
+      "kind": "irrelevant",
+      "case": {
+        "indication": "Idiopathic pulmonary fibrosis",
+        "mechanism": "LPA1 receptor antagonism to block lysophosphatidic acid-driven fibroblast recruitment and vascular leak",
+        "scope": "approach",
+        "modality": "oral small molecule",
+        "development_stage": "Phase 2"
+      },
+      "before": {
+        "snapshot_id": "snap-pair-c-v1",
+        "sources": [
+          {"id": "src-c-bal", "title": "Synthetic: BAL lysophosphatidic acid in IPF", "url": null, "type": "synthetic", "published_at": "2022-09-30", "retrieved_at": "2026-10-01T00:00:00Z", "content_hash": "sha256:b5c2b88174d27b1b0e927bfbc20720195ee17813e3249d6a9ffa2a4406f13d14", "synthetic": true},
+          {"id": "src-c-knockout", "title": "Synthetic: LPA1-deficient mice in bleomycin fibrosis", "url": null, "type": "synthetic", "published_at": "2021-04-18", "retrieved_at": "2026-10-01T00:00:00Z", "content_hash": "sha256:b66ab4ca96ce1d277cd1906182a108171a48ecbd3f4a57852eaaaa56c398efce", "synthetic": true},
+          {"id": "src-c-ph2", "title": "Synthetic: Phase 2 LPA1 antagonist trial in IPF", "url": null, "type": "synthetic", "published_at": "2025-05-22", "retrieved_at": "2026-10-01T00:00:00Z", "content_hash": "sha256:b9567cee0d0c2e00ccddb82390075232f099352de433f0b7ac7bf9052acbaec8", "synthetic": true}
+        ],
+        "evidence": [
+          {"id": "ev-c-bal", "source_id": "src-c-bal", "excerpt": "Bronchoalveolar lavage LPA concentrations were elevated in patients with IPF compared with controls and correlated with fibroblast chemotactic activity.", "locator": "Results", "scope": "approach", "limitations": ["Correlative; cross-sectional."]},
+          {"id": "ev-c-knockout", "source_id": "src-c-knockout", "excerpt": "LPA1-deficient mice were protected from bleomycin-induced lung fibrosis, with reduced fibroblast accumulation and vascular leak.", "locator": "Figure 4", "scope": "approach", "limitations": ["Bleomycin model resolves spontaneously and imperfectly models IPF."]},
+          {"id": "ev-c-ph2", "source_id": "src-c-ph2", "excerpt": "In a 26-week randomized placebo-controlled Phase 2 trial, an LPA1 antagonist slowed the rate of FVC decline in patients with IPF.", "locator": "Primary endpoint", "scope": "approach", "limitations": ["FVC is a functional surrogate; 26 weeks."]}
+        ]
+      },
+      "after": {
+        "snapshot_id": "snap-pair-c-v2",
+        "added_sources": [
+          {"id": "src-c-other-candidate", "title": "Synthetic: SYN-PD-33 Phase 1 topline", "url": null, "type": "synthetic", "published_at": "2026-09-01", "retrieved_at": "2026-10-02T00:00:00Z", "content_hash": "sha256:dd3eaa15516ed9574b6ab56164eee1b1686afcfa2922f4fc4af557e7d1db4d04", "synthetic": true},
+          {"id": "src-c-admin", "title": "Synthetic: Sponsor corporate notice", "url": null, "type": "synthetic", "published_at": "2026-09-10", "retrieved_at": "2026-10-02T00:00:00Z", "content_hash": "sha256:d0b2b51f8b1f60fae3160b40fac8c0f21fb3d1a3bb7e80515e0be7fc3bc3c303", "synthetic": true}
+        ],
+        "added_evidence": [
+          {"id": "ev-c-pde4b", "source_id": "src-c-other-candidate", "excerpt": "SYN-PD-33, an oral PDE4B inhibitor, showed dose-limiting gastrointestinal intolerance in a Phase 1 study in healthy volunteers.", "locator": "Topline release", "scope": "program", "limitations": ["Different candidate and mechanism."]},
+          {"id": "ev-c-admin", "source_id": "src-c-admin", "excerpt": "The sponsor announced a corporate name change and relocation of its clinical operations office; no study protocols or data were affected.", "locator": "Corporate notice", "scope": "program", "limitations": ["Administrative; no scientific content."]}
+        ]
+      },
+      "expectations": {
+        "case_scope": "approach",
+        "changed_claims": [],
+        "unchanged_claims": {
+          "science.expression_relevance": "supported",
+          "science.causal_vs_correlative": "mixed",
+          "science.perturbation_data": "supported",
+          "science.prior_programs": "supported",
+          "science.target_validation": "mixed",
+          "translation.molecular_effect": "supported",
+          "translation.human_exposure": "unknown",
+          "translation.target_engagement": "unknown",
+          "translation.biological_response": "unknown",
+          "translation.patient_benefit": "mixed",
+          "translation.safe_exposure": "unknown",
+          "clinical.target_population": "supported",
+          "clinical.primary_endpoint": "supported",
+          "clinical.next_milestone": "mixed"
+        },
+        "tolerated_claims": {},
+        "forbidden_citations": [
+          {"evidence_id": "ev-c-pde4b", "claim_prefix": "science."},
+          {"evidence_id": "ev-c-pde4b", "claim_prefix": "translation."},
+          {"evidence_id": "ev-c-pde4b", "claim_prefix": "clinical."},
+          {"evidence_id": "ev-c-admin", "claim_prefix": "science."},
+          {"evidence_id": "ev-c-admin", "claim_prefix": "translation."},
+          {"evidence_id": "ev-c-admin", "claim_prefix": "clinical."}
+        ],
+        "unchanged_risks": ["science.risk.redundant_fibrotic_pathways", "translation.risk.exposure_unknown", "clinical.risk.safety", "clinical.risk.endpoint_variability"],
+        "missing_links_preserved": ["translation.human_exposure", "translation.target_engagement", "translation.biological_response"],
+        "r5_handoff": {
+          "critical_facts": [
+            "The new documents concern a PDE4B candidate and a corporate notice, not the LPA1 subject."
+          ],
+          "critical_risks": [
+            "Human LPA1 receptor occupancy remains unmeasured.",
+            "FVC slowing over 26 weeks is a functional surrogate, not survival benefit."
+          ],
+          "acceptable_interpretations": [
+            "No change to the LPA1 thesis; the documents are logged as irrelevant to the subject."
+          ],
+          "unacceptable_interpretations": [
+            "PDE4B intolerance implies LPA1 antagonist intolerance.",
+            "A sponsor name change affects scientific or clinical risk."
+          ],
+          "limitations": [
+            "Approach-scoped case; no candidate-specific program data."
+          ]
+        }
+      }
+    }
+  ]
+}
