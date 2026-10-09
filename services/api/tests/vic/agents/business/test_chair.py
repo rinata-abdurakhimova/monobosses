@@ -392,3 +392,188 @@ def test_invest_rejects_new_unverified_critical_chair_claim():
         verdict="supported", reason="Checked", evidence_ids=["e1"], blocking=False)]))
     with pytest.raises(ValueError, match="including new chair"):
         validate_chair_result(ChairAnalysis.model_validate(raw), case, pack, payload)
+
+
+# These are offline regression tests of the real node/adapter/report path.
+# Provider responses are scripted: they do not evaluate live LLM reasoning quality.
+def _chair_revision_inputs(update=None):
+    from datetime import date
+    from vic.contracts import Claim, Evidence, Risk, Source
+    from vic.report_builder import SECTION_OWNERS
+
+    _, contexts = complete()
+    case, pack, ctx = inputs()
+    ctx.as_of_date = date(2026, 10, 9)
+    ctx.run_id = "chair-baseline" if update is None else f"chair-{update}"
+    for role, result in contexts.items():
+        result.section_content.extend(
+            SectionContent(key=key, summary="Synthetic specialist section")
+            for key, owner in SECTION_OWNERS.items() if owner == result.role_id
+        )
+        result.section_content[0].structured_data[role]["as_of_date"] = "2026-10-09"
+    if update is not None:
+        pack.snapshot_id = f"chair-{update}-snapshot"
+        ctx.snapshot_id = pack.snapshot_id
+        pack.sources.append(Source(id="s2", title=f"Synthetic {update} update",
+            type="synthetic", retrieved_at="2026-10-09T00:00:00Z", synthetic=True,
+            content_hash="sha256:" + "b" * 64))
+        excerpt = (
+            "Synthetic controlled study of the assessed approach confirms unacceptable toxicity."
+            if update == "safety" else
+            "Synthetic administrative update changes the registry contact address only; "
+            "no scientific, safety, clinical or financial results change."
+        )
+        pack.evidence.append(Evidence(id="e2", source_id="s2", scope="approach",
+            excerpt=excerpt, locator="update", limitations=["Synthetic test fixture only"]))
+        for role, result in contexts.items():
+            result.section_content[0].structured_data[role]["snapshot_id"] = pack.snapshot_id
+        if update == "safety":
+            clinical = contexts["clinical"]
+            clinical.claims.append(Claim(id="clinical.toxicity", text=excerpt,
+                provenance="source", support_status="supported", evidence_ids=["e2"],
+                scope="approach", importance="critical"))
+            clinical.risks.append(Risk(id="clinical.toxicity_risk", description=excerpt,
+                priority="critical", claim_ids=["clinical.toxicity"],
+                impact="Unacceptable safety blocks financing", next_check="Review controlled study"))
+            clinical.section_content[0].claim_ids.append("clinical.toxicity")
+    return case, pack, ctx, contexts
+
+
+def _chair_revision_response(case, pack, ctx, contexts, audit, *, adverse=False):
+    raw = output()
+    if adverse:
+        safety = reason("documented", "clinical.toxicity")
+        safety.update(text="Do not invest: the new controlled study confirms unacceptable toxicity.",
+            evidence_weight="The new applicable controlled safety result is decisive; "
+            "other roles repeating earlier favorable evidence cannot outweigh it.")
+        raw.update(summary="New safety evidence changes Conditional to Do Not Invest",
+            recommendation="Do Not Invest", rationale=safety, conditions=[])
+        raw["arguments"][1].update(reason=deepcopy(safety),
+            decision_impact="The newly documented safety barrier prevents funding")
+        raw["key_risks"] = [dict(id="toxicity", description=deepcopy(safety), priority="critical",
+            impact="Safety barrier prevents investment", next_check="Independently review the safety study")]
+        raw["change_triggers"][0].update(result_or_new_evidence="Validated evidence overturns the safety finding",
+            resulting_recommendation="Conditional", rationale=reason("hypothesis"))
+        for q in raw["questions"]:
+            q["condition_ids"] = []
+        raw["questions"][0].update(risk_ids=["toxicity"], question="Does independent review confirm the toxicity?",
+            why_it_matters=deepcopy(safety), evidence_needed="Controlled safety study and raw data",
+            decision_if_positive="Keep Do Not Invest while toxicity remains confirmed",
+            decision_if_negative="Reconsider Conditional if the safety finding is overturned")
+    payload = prepare_chair_inputs(case, pack, ctx, **contexts, audit=audit)
+    for review in raw["domain_reviews"]:
+        review["dispositions"] = [dict(item_id=item["id"], disposition="considered",
+            rationale="Included in the decision and follow-up diligence", argument_ids=["gap"],
+            question_ids=[], condition_ids=[]) for item in payload["input_inventory"][review["role_id"]]]
+        if adverse and review["role_id"] == "clinical":
+            review["assessment"] = deepcopy(raw["rationale"])
+    return raw
+
+
+async def _run_chair_revision_pair(update):
+    from vic.config import Settings
+    from vic.evidence.audit import audit_claims
+    from vic.llm import ProviderResponse, StructuredLlm
+
+    calls = []
+    runs = []
+    for variant in (None, update):
+        case, pack, ctx, contexts = _chair_revision_inputs(variant)
+        audit = audit_claims([c for result in contexts.values() for c in result.claims], pack)
+        assert not audit.unresolved_critical_claim_ids
+        raw = _chair_revision_response(case, pack, ctx, contexts, audit, adverse=variant == "safety")
+        # Capture through the actual R2 adapter, rather than mocking analyze_chair.
+        class ScriptedProvider:
+            name = "offline-chair-revision"
+
+            async def complete(self, **request):
+                payload = json.loads(request["messages"][0]["content"])
+                calls.append(payload)
+                return ProviderResponse(json.dumps(raw), 100, 50)
+
+        ctx.model = StructuredLlm(ScriptedProvider(), Settings(
+            _env_file=None, llm_max_retries=0, llm_max_repairs=0))
+        result = await analyze_chair(case, pack, ctx, **contexts, audit=audit)
+        assert calls[-1]["snapshot_id"] == pack.snapshot_id
+        assert calls[-1]["upstream_context"] == {
+            role: upstream_result.model_dump(mode="json") for role, upstream_result in contexts.items()
+        }
+        runs.append((case, pack, ctx, contexts, result))
+    assert len(calls) == 2
+    assert {e["id"] for e in calls[0]["evidence"]} == {"e1"}
+    assert {e["id"] for e in calls[1]["evidence"]} == {"e1", "e2"}
+    return runs, calls
+
+
+def _chair_revision_report(run, *, parent=None):
+    from vic.contracts import Report
+    from vic.integrity import assert_report, check_revision
+    from vic.report_builder import build_report
+
+    case, pack, ctx, contexts, result = run
+    roles = [*contexts.values(), result.role_result]
+    report = build_report(case=case, pack=pack, roles=roles, decision=result.decision,
+        claims=[claim for role in roles for claim in role.claims], case_id=ctx.case_id,
+        run_id=ctx.run_id, report_id=ctx.run_id, version=2 if parent else 1,
+        parent=parent, synthetic=True)
+    assert_report(report)
+    if parent is not None:
+        assert check_revision(parent, report) == []
+    return Report.model_validate_json(report.model_dump_json())
+
+
+@pytest.mark.asyncio
+async def test_decisive_safety_evidence_changes_chair_recommendation_and_report():
+    """Scripted before/after decisions preserve the new decisive evidence and safety risk."""
+    runs, calls = await _run_chair_revision_pair("safety")
+    before, after = (run[-1] for run in runs)
+    before_json = before.model_dump_json()
+    assert before.decision.recommendation == "Conditional"
+    assert before.decision.conditions
+    assert after.decision.recommendation == "Do Not Invest"
+    assert not after.decision.conditions
+    data = after.role_result.section_content[0].structured_data["chair"]
+    assert data["rationale"]["claim_ids"] == ["clinical.toxicity"]
+    assert data["claim_evidence_links"]["clinical.toxicity"] == ["e2"]
+    assert data["evidence_source_links"]["e2"] == "s2"
+    assert next(e for e in data["evidence"] if e["id"] == "e2")["excerpt"] == calls[1]["evidence"][1]["excerpt"]
+    assert "new controlled study" in after.decision.rationale
+    assert next(r for r in after.decision.risks if r.id == "chair.toxicity").claim_ids == ["clinical.toxicity"]
+    assert any("toxicity" in q["risk_ids"] for q in data["questions"])
+    assert any(a["decisive"] and a["direction"] == "against" and
+        a["reason"]["claim_ids"] == ["clinical.toxicity"] for a in data["arguments"])
+    parent = _chair_revision_report(runs[0])
+    child = _chair_revision_report(runs[1], parent=parent)
+    assert child.revision.previous_recommendation == "Conditional"
+    assert child.revision.new_recommendation == "Do Not Invest"
+    assert child.revision.new_evidence_ids == ["e2"]
+    assert "e2" in child.revision.explanation
+    assert "clinical.toxicity" in {c.claim_id for c in child.revision.changed_claims}
+    assert child.roles[-1].section_content[0].structured_data["chair"] == data
+    assert before.model_dump_json() == before_json
+
+
+@pytest.mark.asyncio
+async def test_irrelevant_evidence_preserves_chair_decision_and_report_recommendation():
+    """A new snapshot/document does not mechanically force a recommendation change."""
+    runs, calls = await _run_chair_revision_pair("administrative")
+    before, after = (run[-1] for run in runs)
+    assert calls[0]["snapshot_id"] != calls[1]["snapshot_id"]
+    assert calls[0]["evidence"] != calls[1]["evidence"]
+    assert before.decision == after.decision
+    assert after.decision.recommendation == "Conditional"
+    before_data = before.role_result.section_content[0].structured_data["chair"]
+    after_data = after.role_result.section_content[0].structured_data["chair"]
+    for field in ("recommendation", "rationale", "arguments", "conditions", "questions"):
+        assert after_data[field] == before_data[field]
+    assert all("e2" not in refs for refs in after_data["claim_evidence_links"].values())
+    assert after_data["evidence_source_links"]["e2"] == "s2"
+    parent = _chair_revision_report(runs[0])
+    child = _chair_revision_report(runs[1], parent=parent)
+    assert child.revision.new_evidence_ids == ["e2"]
+    assert child.revision.changed_claims == []
+    assert child.revision.previous_recommendation == child.revision.new_recommendation == "Conditional"
+    assert child.recommendation == parent.recommendation
+    assert child.decision_conditions == parent.decision_conditions
+    assert child.diligence_questions == parent.diligence_questions
+    assert child.roles[-1].section_content[0].structured_data["chair"] == after_data
