@@ -1,0 +1,991 @@
+{
+  "id": "rep-synthetic-r5",
+  "case_id": "case-synthetic-01",
+  "run_id": "run-synthetic-r5",
+  "version": 1,
+  "scope": "program",
+  "synthetic": true,
+  "snapshot_id": "snap-synthetic-v1",
+  "recommendation": "Conditional",
+  "rationale": "The mechanism has partial support, but safe human exposure has not been established and programme data are incomplete. The decision is Conditional: interest depends on confirming safety.",
+  "decision_conditions": [
+    "Obtain human safety and exposure data",
+    "Confirm the target engagement biomarker",
+    "Obtain a phase 1 cost estimate and trial plan"
+  ],
+  "sections": [
+    {
+      "key": "recommendation",
+      "summary": "Conditional: interest depends on confirming exposure safety.",
+      "claim_ids": [
+        "translation.safe_exposure"
+      ],
+      "limitations": [],
+      "structured_data": {
+        "recommendation": "Conditional"
+      }
+    },
+    {
+      "key": "scientific_thesis",
+      "summary": "Target Y has partial genetic and preclinical support.",
+      "claim_ids": [
+        "science.target_validation",
+        "science.animal_model"
+      ],
+      "limitations": [
+        "Association does not establish causality."
+      ],
+      "structured_data": null
+    },
+    {
+      "key": "human_translation_thesis",
+      "summary": "The safety of the required human exposure has not been established.",
+      "claim_ids": [
+        "translation.safe_exposure",
+        "translation.biomarker_link"
+      ],
+      "limitations": [],
+      "structured_data": null
+    },
+    {
+      "key": "clinical_development_plan",
+      "summary": "Phase 1 focuses on safety; the path to efficacy has not been defined.",
+      "claim_ids": [
+        "clinical.phase1_design",
+        "clinical.efficacy_path"
+      ],
+      "limitations": [],
+      "structured_data": null
+    },
+    {
+      "key": "competitive_landscape",
+      "summary": "The competitive landscape requires independent verification.",
+      "claim_ids": [
+        "market.unmet_need"
+      ],
+      "limitations": [],
+      "structured_data": null
+    },
+    {
+      "key": "commercial_opportunity",
+      "summary": "Commercial value has not been confirmed by independent sources.",
+      "claim_ids": [
+        "market.company_claims",
+        "market.unmet_need"
+      ],
+      "limitations": [
+        "Population size is not the same as the addressable market."
+      ],
+      "structured_data": null
+    },
+    {
+      "key": "capital_to_milestone",
+      "summary": "The capital range has not been estimated: a budget and trial plan are missing.",
+      "claim_ids": [
+        "investment.capital_unknown"
+      ],
+      "limitations": [
+        "A cost estimate and trial plan are needed."
+      ],
+      "structured_data": null
+    },
+    {
+      "key": "key_risks",
+      "summary": "The critical risk is exposure safety; the model and budget are material risks.",
+      "claim_ids": [
+        "translation.safe_exposure",
+        "science.animal_model",
+        "investment.capital_unknown"
+      ],
+      "limitations": [],
+      "structured_data": {
+        "risk_ids": [
+          "risk-synthetic-01",
+          "risk-synthetic-02",
+          "risk-synthetic-03"
+        ]
+      }
+    },
+    {
+      "key": "critical_unknowns",
+      "summary": "Safe exposure, biomarker, path to efficacy, and budget.",
+      "claim_ids": [
+        "translation.safe_exposure",
+        "clinical.efficacy_path",
+        "investment.capital_unknown"
+      ],
+      "limitations": [],
+      "structured_data": null
+    },
+    {
+      "key": "diligence_questions",
+      "summary": "Six priority diligence questions.",
+      "claim_ids": [
+        "translation.safe_exposure",
+        "translation.biomarker_link"
+      ],
+      "limitations": [],
+      "structured_data": {
+        "question_count": 6
+      }
+    },
+    {
+      "key": "sources",
+      "summary": "Four synthetic sources; some are company materials.",
+      "claim_ids": [],
+      "limitations": [],
+      "structured_data": {
+        "source_ids": [
+          "src-synthetic-01",
+          "src-synthetic-02",
+          "src-synthetic-03",
+          "src-synthetic-04"
+        ]
+      }
+    }
+  ],
+  "roles": [
+    {
+      "role_id": "science",
+      "summary": "Partial biological support.",
+      "position": "Genetic and preclinical data support target Y; causality has not been established.",
+      "claims": [
+        {
+          "id": "science.target_validation",
+          "text": "Genetic data link loss of target Y function to a lower risk of X, but this is an association, not established causality.",
+          "provenance": "source",
+          "support_status": "mixed",
+          "evidence_ids": [
+            "ev-synthetic-01",
+            "ev-synthetic-02"
+          ],
+          "assumptions": [],
+          "scope": "approach",
+          "importance": "critical"
+        },
+        {
+          "id": "science.animal_model",
+          "text": "The animal model shows a reduction in a progression marker, but its relevance to humans is limited.",
+          "provenance": "source",
+          "support_status": "mixed",
+          "evidence_ids": [
+            "ev-synthetic-03"
+          ],
+          "assumptions": [],
+          "scope": "approach",
+          "importance": "major"
+        }
+      ],
+      "risks": [
+        {
+          "id": "risk-synthetic-02",
+          "description": "The effect in the animal model may not translate to humans.",
+          "priority": "major",
+          "claim_ids": [
+            "science.animal_model"
+          ],
+          "impact": "Reduces the scientific support for the mechanism in humans.",
+          "next_check": "Find human tissue or biomarker data."
+        }
+      ],
+      "unknowns": [
+        "Causality of the genetic association"
+      ],
+      "change_conditions": [
+        "Independent cohorts or human tissue data"
+      ],
+      "section_content": [
+        {
+          "key": "scientific_thesis",
+          "summary": "Target Y has partial genetic and preclinical support.",
+          "claim_ids": [
+            "science.target_validation",
+            "science.animal_model"
+          ],
+          "limitations": [
+            "Association does not establish causality."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "translation",
+      "summary": "Exposure safety has not been established.",
+      "position": "The exposure-to-safety link is missing; candidate properties cannot be generalized to the entire mechanism.",
+      "claims": [
+        {
+          "id": "translation.safe_exposure",
+          "text": "The safety of the required human exposure has not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [
+            "ev-synthetic-04"
+          ],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "critical"
+        },
+        {
+          "id": "translation.biomarker_link",
+          "text": "A biomarker linking target engagement to patient benefit has not been confirmed.",
+          "provenance": "ai",
+          "support_status": "unverified",
+          "evidence_ids": [],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "major"
+        }
+      ],
+      "risks": [
+        {
+          "id": "risk-synthetic-01",
+          "description": "The safety of the required human exposure has not been established.",
+          "priority": "critical",
+          "claim_ids": [
+            "translation.safe_exposure"
+          ],
+          "impact": "May halt development and invalidate the investment thesis.",
+          "next_check": "Obtain safety and exposure data from the phase 1 trial."
+        }
+      ],
+      "unknowns": [
+        "Target engagement biomarker"
+      ],
+      "change_conditions": [
+        "PK and safety data from the phase 1 trial"
+      ],
+      "section_content": [
+        {
+          "key": "human_translation_thesis",
+          "summary": "The safety of the required human exposure has not been established.",
+          "claim_ids": [
+            "translation.safe_exposure",
+            "translation.biomarker_link"
+          ],
+          "limitations": [],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "clinical",
+      "summary": "Phase 1 is planned; subsequent development is uncertain.",
+      "position": "The path to efficacy depends on safety.",
+      "claims": [
+        {
+          "id": "clinical.phase1_design",
+          "text": "The planned phase 1 trial focuses on safety and tolerability.",
+          "provenance": "source",
+          "support_status": "supported",
+          "evidence_ids": [
+            "ev-synthetic-05"
+          ],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "major"
+        },
+        {
+          "id": "clinical.efficacy_path",
+          "text": "The path to evidence of efficacy depends on safety results and has not been defined.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "major"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "Phase 2 endpoints"
+      ],
+      "change_conditions": [
+        "Safety results"
+      ],
+      "section_content": [
+        {
+          "key": "clinical_development_plan",
+          "summary": "Phase 1 focuses on safety; the path to efficacy has not been defined.",
+          "claim_ids": [
+            "clinical.phase1_design",
+            "clinical.efficacy_path"
+          ],
+          "limitations": [],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "market",
+      "summary": "Commercial value has not been confirmed.",
+      "position": "Company statements are not independent evidence.",
+      "claims": [
+        {
+          "id": "market.company_claims",
+          "text": "Company statements of intent are not independent evidence of commercial value.",
+          "provenance": "source",
+          "support_status": "supported",
+          "evidence_ids": [
+            "ev-synthetic-06"
+          ],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "minor"
+        },
+        {
+          "id": "market.unmet_need",
+          "text": "Unmet need in X requires verification using independent sources.",
+          "provenance": "ai",
+          "support_status": "unverified",
+          "evidence_ids": [],
+          "assumptions": [],
+          "scope": "approach",
+          "importance": "major"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "Standard of care and alternatives"
+      ],
+      "change_conditions": [
+        "Independent market review"
+      ],
+      "section_content": [
+        {
+          "key": "competitive_landscape",
+          "summary": "The competitive landscape requires independent verification.",
+          "claim_ids": [
+            "market.unmet_need"
+          ],
+          "limitations": [],
+          "structured_data": null
+        },
+        {
+          "key": "commercial_opportunity",
+          "summary": "Commercial value has not been confirmed by independent sources.",
+          "claim_ids": [
+            "market.company_claims",
+            "market.unmet_need"
+          ],
+          "limitations": [
+            "Population size is not the same as the addressable market."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "investment",
+      "summary": "Capital has not been estimated.",
+      "position": "A range cannot be justified without a budget; no number is invented.",
+      "claims": [
+        {
+          "id": "investment.capital_unknown",
+          "text": "Capital to the next milestone cannot be justified without a budget and trial plan.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "major"
+        }
+      ],
+      "risks": [
+        {
+          "id": "risk-synthetic-03",
+          "description": "The budget and time to the next milestone are unknown.",
+          "priority": "major",
+          "claim_ids": [
+            "investment.capital_unknown"
+          ],
+          "impact": "Funding needs cannot be assessed.",
+          "next_check": "Obtain a phase 1 cost estimate and trial plan."
+        }
+      ],
+      "unknowns": [
+        "Cost estimate and time to milestone"
+      ],
+      "change_conditions": [
+        "CRO cost estimate"
+      ],
+      "section_content": [
+        {
+          "key": "capital_to_milestone",
+          "summary": "The capital range has not been estimated: a budget and trial plan are missing.",
+          "claim_ids": [
+            "investment.capital_unknown"
+          ],
+          "limitations": [
+            "A cost estimate and trial plan are needed."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "failure_miner",
+      "summary": "Synthetic display example: Safe human exposure remains an unresolved failure mode.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "translation.safe_exposure",
+          "text": "The safety of the required human exposure has not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [
+            "ev-synthetic-04"
+          ],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "critical"
+        }
+      ],
+      "risks": [
+        {
+          "id": "risk-synthetic-01",
+          "description": "The safety of the required human exposure has not been established.",
+          "priority": "critical",
+          "claim_ids": [
+            "translation.safe_exposure"
+          ],
+          "impact": "May halt development and invalidate the investment thesis.",
+          "next_check": "Obtain safety and exposure data from the phase 1 trial."
+        }
+      ],
+      "unknowns": [
+        "Safe human exposure remains an unresolved failure mode."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "key_risks",
+          "summary": "Safe human exposure remains an unresolved failure mode.",
+          "claim_ids": [
+            "translation.safe_exposure"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "investment_threshold",
+      "summary": "Synthetic display example: Safe exposure is required before the thesis can advance.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "translation.safe_exposure",
+          "text": "The safety of the required human exposure has not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [
+            "ev-synthetic-04"
+          ],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "critical"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "Safe exposure is required before the thesis can advance."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "critical_unknowns",
+          "summary": "Safe exposure is required before the thesis can advance.",
+          "claim_ids": [
+            "translation.safe_exposure"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "partnerships",
+      "summary": "Synthetic display example: No partner interest is established in this fictional case.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "partnerships.interest_unknown",
+          "text": "No partner interest is established in this fictional case.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "major"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "No partner interest is established in this fictional case."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "commercial_opportunity",
+          "summary": "No partner interest is established in this fictional case.",
+          "claim_ids": [
+            "partnerships.interest_unknown"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "ip_licensing",
+      "summary": "Synthetic display example: Patent ownership and licensing rights have not been established.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "ip_licensing.rights_unknown",
+          "text": "Patent ownership and licensing rights have not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "major"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "Patent ownership and licensing rights have not been established."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "key_risks",
+          "summary": "Patent ownership and licensing rights have not been established.",
+          "claim_ids": [
+            "ip_licensing.rights_unknown"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "chair",
+      "summary": "Synthetic display example: The fictional committee remains Conditional pending safe exposure.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "translation.safe_exposure",
+          "text": "The safety of the required human exposure has not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [
+            "ev-synthetic-04"
+          ],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "critical"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "The fictional committee remains Conditional pending safe exposure."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "recommendation",
+          "summary": "The fictional committee remains Conditional pending safe exposure.",
+          "claim_ids": [
+            "translation.safe_exposure"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
+    },
+    {
+      "role_id": "audit",
+      "summary": "Synthetic display example: Evidence links in this display fixture do not establish live audit quality.",
+      "position": "Illustrative only; missing evidence remains unknown.",
+      "claims": [
+        {
+          "id": "translation.safe_exposure",
+          "text": "The safety of the required human exposure has not been established.",
+          "provenance": "ai",
+          "support_status": "unknown",
+          "evidence_ids": [
+            "ev-synthetic-04"
+          ],
+          "assumptions": [],
+          "scope": "program",
+          "importance": "critical"
+        }
+      ],
+      "risks": [],
+      "unknowns": [
+        "Evidence links in this display fixture do not establish live audit quality."
+      ],
+      "change_conditions": [
+        "Obtain and audit the missing evidence before changing this position."
+      ],
+      "section_content": [
+        {
+          "key": "sources",
+          "summary": "Evidence links in this display fixture do not establish live audit quality.",
+          "claim_ids": [
+            "translation.safe_exposure"
+          ],
+          "limitations": [
+            "Synthetic display fixture; no live analysis was performed."
+          ],
+          "structured_data": null
+        }
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "id": "science.target_validation",
+      "text": "Genetic data link loss of target Y function to a lower risk of X, but this is an association, not established causality.",
+      "provenance": "source",
+      "support_status": "mixed",
+      "evidence_ids": [
+        "ev-synthetic-01",
+        "ev-synthetic-02"
+      ],
+      "assumptions": [],
+      "scope": "approach",
+      "importance": "critical"
+    },
+    {
+      "id": "science.animal_model",
+      "text": "The animal model shows a reduction in a progression marker, but its relevance to humans is limited.",
+      "provenance": "source",
+      "support_status": "mixed",
+      "evidence_ids": [
+        "ev-synthetic-03"
+      ],
+      "assumptions": [],
+      "scope": "approach",
+      "importance": "major"
+    },
+    {
+      "id": "translation.safe_exposure",
+      "text": "The safety of the required human exposure has not been established.",
+      "provenance": "ai",
+      "support_status": "unknown",
+      "evidence_ids": [
+        "ev-synthetic-04"
+      ],
+      "assumptions": [],
+      "scope": "program",
+      "importance": "critical"
+    },
+    {
+      "id": "translation.biomarker_link",
+      "text": "A biomarker linking target engagement to patient benefit has not been confirmed.",
+      "provenance": "ai",
+      "support_status": "unverified",
+      "evidence_ids": [],
+      "assumptions": [],
+      "scope": "program",
+      "importance": "major"
+    },
+    {
+      "id": "clinical.phase1_design",
+      "text": "The planned phase 1 trial focuses on safety and tolerability.",
+      "provenance": "source",
+      "support_status": "supported",
+      "evidence_ids": [
+        "ev-synthetic-05"
+      ],
+      "assumptions": [],
+      "scope": "program",
+      "importance": "major"
+    },
+    {
+      "id": "clinical.efficacy_path",
+      "text": "The path to evidence of efficacy depends on safety results and has not been defined.",
+      "provenance": "ai",
+      "support_status": "unknown",
+      "evidence_ids": [],
+      "assumptions": [],
+      "scope": "program",
+      "importance": "major"
+    },
+    {
+      "id": "market.company_claims",
+      "text": "Company statements of intent are not independent evidence of commercial value.",
+      "provenance": "source",
+      "support_status": "supported",
+      "evidence_ids": [
+        "ev-synthetic-06"
+      ],
+      "assumptions": [],
+      "scope": "program",
+      "importance": "minor"
+    },
+    {
+      "id": "market.unmet_need",
+      "text": "Unmet need in X requires verification using independent sources.",
+      "provenance": "ai",
+      "support_status": "unverified",
+      "evidence_ids": [],
+      "assumptions": [],
+      "scope": "approach",
+      "importance": "major"
+    },
+    {
+      "id": "investment.capital_unknown",
+      "text": "Capital to the next milestone cannot be justified without a budget and trial plan.",
+      "provenance": "ai",
+      "support_status": "unknown",
+      "evidence_ids": [],
+      "assumptions": [],
+      "scope": "program",
+      "importance": "major"
+    },
+    {
+      "id": "user.program_summary",
+      "text": "The user provided a description of a synthetic programme; it has not been independently verified.",
+      "provenance": "user",
+      "support_status": "unverified",
+      "evidence_ids": [],
+      "assumptions": [],
+      "scope": "program",
+      "importance": "minor"
+    },
+    {
+      "id": "partnerships.interest_unknown",
+      "text": "No partner interest is established in this fictional case.",
+      "provenance": "ai",
+      "support_status": "unknown",
+      "evidence_ids": [],
+      "assumptions": [],
+      "scope": "program",
+      "importance": "major"
+    },
+    {
+      "id": "ip_licensing.rights_unknown",
+      "text": "Patent ownership and licensing rights have not been established.",
+      "provenance": "ai",
+      "support_status": "unknown",
+      "evidence_ids": [],
+      "assumptions": [],
+      "scope": "program",
+      "importance": "major"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-synthetic-01",
+      "source_id": "src-synthetic-01",
+      "excerpt": "loss-of-function variants in the target Y gene are associated with a lower risk of disease X",
+      "locator": "abstract",
+      "scope": "approach",
+      "limitations": [
+        "Synthetic cohort; causality has not been established"
+      ]
+    },
+    {
+      "id": "ev-synthetic-02",
+      "source_id": "src-synthetic-01",
+      "excerpt": "Association does not establish causality.",
+      "locator": "limitations",
+      "scope": "approach",
+      "limitations": []
+    },
+    {
+      "id": "ev-synthetic-03",
+      "source_id": "src-synthetic-02",
+      "excerpt": "target Y inhibition reduced a marker of X progression",
+      "locator": "results",
+      "scope": "approach",
+      "limitations": [
+        "The animal model only partially represents human disease"
+      ]
+    },
+    {
+      "id": "ev-synthetic-04",
+      "source_id": "src-synthetic-03",
+      "excerpt": "patient exposure has not been reported",
+      "locator": "record.results",
+      "scope": "program",
+      "limitations": []
+    },
+    {
+      "id": "ev-synthetic-05",
+      "source_id": "src-synthetic-03",
+      "excerpt": "the primary endpoint is safety and tolerability",
+      "locator": "record.endpoints",
+      "scope": "program",
+      "limitations": []
+    },
+    {
+      "id": "ev-synthetic-06",
+      "source_id": "src-synthetic-04",
+      "excerpt": "This is company material, not independent evidence.",
+      "locator": "slide 5",
+      "scope": "program",
+      "limitations": [
+        "Company material"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-synthetic-01",
+      "title": "[SYNTHETIC] Article: genetic association of target Y with disease X",
+      "url": null,
+      "type": "peer_reviewed",
+      "published_at": "2022-03-15",
+      "retrieved_at": "2025-01-10T12:00:00Z",
+      "content_hash": "sha256:ba1faa9d1ddef51a11586e9230dd01d6dbdf6110aba9ae8b616692461ef49bf7",
+      "synthetic": true,
+      "document_id": null
+    },
+    {
+      "id": "src-synthetic-02",
+      "title": "[SYNTHETIC] Preprint: preclinical model of target Y inhibition",
+      "url": null,
+      "type": "preprint",
+      "published_at": "2023-05-02",
+      "retrieved_at": "2025-01-10T12:00:00Z",
+      "content_hash": "sha256:48a91113bec5724748127900950c3553a172fbdc9ec604f7e097deeae887d2c1",
+      "synthetic": true,
+      "document_id": null
+    },
+    {
+      "id": "src-synthetic-03",
+      "title": "[SYNTHETIC] Clinical trial registry record",
+      "url": null,
+      "type": "registry",
+      "published_at": "2024-09-01",
+      "retrieved_at": "2025-01-10T12:00:00Z",
+      "content_hash": "sha256:a92f495441fc6062a56bb54cc1c94db3f4d0991744063d98394ffcbb3bbd20ea",
+      "synthetic": true,
+      "document_id": null
+    },
+    {
+      "id": "src-synthetic-04",
+      "title": "[SYNTHETIC] Developer company presentation",
+      "url": null,
+      "type": "company",
+      "published_at": "2024-11-20",
+      "retrieved_at": "2025-01-10T12:00:00Z",
+      "content_hash": "sha256:ec40ed13bf30897b1a8491e90a94dd7bcc875c3352581ad04b6544dc68d42cd1",
+      "synthetic": true,
+      "document_id": null
+    }
+  ],
+  "disagreements": [
+    {
+      "topic": "Adequacy of the genetic evidence",
+      "role_ids": [
+        "science",
+        "translation"
+      ],
+      "summary": "The scientific analysis sees support for the target; the human translation analysis identifies a gap in the exposure chain.",
+      "resolution": "The chair treats genetics as support for the mechanism, not evidence of benefit."
+    }
+  ],
+  "risks": [
+    {
+      "id": "risk-synthetic-01",
+      "description": "The safety of the required human exposure has not been established.",
+      "priority": "critical",
+      "claim_ids": [
+        "translation.safe_exposure"
+      ],
+      "impact": "May halt development and invalidate the investment thesis.",
+      "next_check": "Obtain safety and exposure data from the phase 1 trial."
+    },
+    {
+      "id": "risk-synthetic-02",
+      "description": "The effect in the animal model may not translate to humans.",
+      "priority": "major",
+      "claim_ids": [
+        "science.animal_model"
+      ],
+      "impact": "Reduces the scientific support for the mechanism in humans.",
+      "next_check": "Find human tissue or biomarker data."
+    },
+    {
+      "id": "risk-synthetic-03",
+      "description": "The budget and time to the next milestone are unknown.",
+      "priority": "major",
+      "claim_ids": [
+        "investment.capital_unknown"
+      ],
+      "impact": "Funding needs cannot be assessed.",
+      "next_check": "Obtain a phase 1 cost estimate and trial plan."
+    }
+  ],
+  "diligence_questions": [
+    {
+      "question": "Can the required human exposure be achieved safely?",
+      "why_it_matters": "This is a critical unknown that blocks the patient benefit thesis.",
+      "evidence_needed": "PK and safety data from the phase 1 trial.",
+      "decision_if_positive": "The recommendation may become Invest if other conditions are confirmed.",
+      "decision_if_negative": "The recommendation becomes Do Not Invest."
+    },
+    {
+      "question": "Which biomarker confirms target engagement in humans?",
+      "why_it_matters": "Without it, the effect-to-benefit chain remains incomplete.",
+      "evidence_needed": "Biomarker data from early trials.",
+      "decision_if_positive": "Strengthens the human translation thesis.",
+      "decision_if_negative": "Reduces confidence in the mechanism."
+    },
+    {
+      "question": "Is the genetic association confirmed in independent cohorts?",
+      "why_it_matters": "A single cohort does not establish causality.",
+      "evidence_needed": "Independent genetic studies.",
+      "decision_if_positive": "Strengthens the scientific thesis.",
+      "decision_if_negative": "The scientific case weakens."
+    },
+    {
+      "question": "What are the budget and timeline for the phase 1 trial?",
+      "why_it_matters": "Needed to estimate capital to milestone.",
+      "evidence_needed": "CRO cost estimate and trial plan.",
+      "decision_if_positive": "Allows a capital range to be estimated.",
+      "decision_if_negative": "A range cannot be justified; the decision remains conditional."
+    },
+    {
+      "question": "What alternatives exist for patients with X, and how does the programme differ?",
+      "why_it_matters": "Commercial value depends on differentiation from the standard of care.",
+      "evidence_needed": "Review of the standard of care and competing programmes.",
+      "decision_if_positive": "Strengthens the commercial thesis.",
+      "decision_if_negative": "Reduces commercial attractiveness."
+    },
+    {
+      "question": "Are there rights or licensing restrictions that affect the programme?",
+      "why_it_matters": "Third-party rights may change the deal terms.",
+      "evidence_needed": "Patent search and legal opinion.",
+      "decision_if_positive": "Deal terms can be discussed.",
+      "decision_if_negative": "Licences are needed, or the deal structure must change."
+    }
+  ],
+  "revision": null
+}

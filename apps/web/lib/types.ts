@@ -32,7 +32,10 @@ export type ReportSection = {
     | "Contradicted in sample"
     | "Uncertain"
     | "Data needed"
-    | "Illustrative plan";
+    | "Illustrative plan"
+    | "Reported plan"
+    | "Supported"
+    | "Contradicted";
   points: string[];
   claim_ids: string[];
   limitation?: string;
@@ -44,6 +47,11 @@ export type RoleResult = {
   summary: string;
   position: string;
   unknown: string;
+  claims: Claim[];
+  risks: Contract.Risk[];
+  unknowns: string[];
+  change_conditions: string[];
+  section_content: Contract.SectionContent[];
 };
 export type Risk = {
   id: string;
@@ -66,7 +74,7 @@ export type Report = {
   title: string;
   recommendation: Recommendation;
   scope: Scope;
-  synthetic: true;
+  synthetic: boolean;
   rationale: string;
   conditions: string[];
   sections: ReportSection[];

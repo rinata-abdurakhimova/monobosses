@@ -1,0 +1,34 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — discontinued-record",
+      "text": "Synthetic comparator D-Old was discontinued in territory West. The supplied registry lists discontinued status but contains no reason, efficacy results or adverse-event finding. Candidate STOP-D has no head-to-head study against D-Old or current standard care.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic comparator D-Old was discontinued in territory West. The supplied registry lists discontinued status but contains no reason, efficacy results or adverse-event finding. Candidate STOP-D has no head-to-head study against D-Old or current standard care.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Synthetic evaluation document — future-outcome",
+      "text": "A synthetic later investigation published on 2026-10-10 attributes D-Old discontinuation to toxicity. This outcome was not available on 2026-10-09.",
+      "published_at": "2026-10-10",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "A synthetic later investigation published on 2026-10-10 attributes D-Old discontinuation to toxicity. This outcome was not available on 2026-10-09.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

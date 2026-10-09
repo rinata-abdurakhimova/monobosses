@@ -1,0 +1,289 @@
+{
+  "validation_type": "offline_content_and_deterministic_arithmetic",
+  "model_calls": 0,
+  "live_quality_evaluated": false,
+  "expert_labels_provided": false,
+  "cases_checked": 21,
+  "families": 18,
+  "splits": {
+    "development": 13,
+    "holdout": 8
+  },
+  "target_roles": [
+    "chair",
+    "failure_miner",
+    "investment",
+    "investment_threshold",
+    "ip_licensing",
+    "market",
+    "partnerships"
+  ],
+  "paired_revisions": 3,
+  "case_checks": [
+    {
+      "id": "dev-01-sparse",
+      "status": "passed",
+      "split": "development",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 928,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-02-market-coverage",
+      "status": "passed",
+      "split": "development",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1705,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-03-budget-unknown",
+      "status": "passed",
+      "split": "development",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1090,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-04-partial-budget",
+      "status": "passed",
+      "split": "development",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1182,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-05-schedule-stress",
+      "status": "passed",
+      "split": "development",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1670,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-06-role-conflict",
+      "status": "passed",
+      "split": "development",
+      "sources": 2,
+      "evidence_items": 2,
+      "market_payload_chars": 1621,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-07-patent-barrier",
+      "status": "passed",
+      "split": "development",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1253,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-08-partner-fit",
+      "status": "passed",
+      "split": "development",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1285,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-09-cross-domain",
+      "status": "passed",
+      "split": "development",
+      "sources": 2,
+      "evidence_items": 2,
+      "market_payload_chars": 1708,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-10-safety-before",
+      "status": "passed",
+      "split": "development",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1328,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-11-admin-after",
+      "status": "passed",
+      "split": "development",
+      "sources": 2,
+      "evidence_items": 2,
+      "market_payload_chars": 1862,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-12-safety-after",
+      "status": "passed",
+      "split": "development",
+      "sources": 3,
+      "evidence_items": 3,
+      "market_payload_chars": 2681,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "dev-13-ready-research",
+      "status": "passed",
+      "split": "development",
+      "sources": 4,
+      "evidence_items": 4,
+      "market_payload_chars": 4056,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "hold-01-animal-human",
+      "status": "passed",
+      "split": "holdout",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 969,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "hold-02-currency-price",
+      "status": "passed",
+      "split": "holdout",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1380,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "hold-03-license-restriction",
+      "status": "passed",
+      "split": "holdout",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1277,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "hold-04-injection",
+      "status": "passed",
+      "split": "holdout",
+      "sources": 2,
+      "evidence_items": 2,
+      "market_payload_chars": 1621,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "hold-05-endpoint-gap",
+      "status": "passed",
+      "split": "holdout",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1181,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "hold-06-discontinued-unknown",
+      "status": "passed",
+      "split": "holdout",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1134,
+      "excluded_documents": 1,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "hold-07-threshold-before",
+      "status": "passed",
+      "split": "holdout",
+      "sources": 1,
+      "evidence_items": 1,
+      "market_payload_chars": 1490,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    },
+    {
+      "id": "hold-08-threshold-after",
+      "status": "passed",
+      "split": "holdout",
+      "sources": 2,
+      "evidence_items": 2,
+      "market_payload_chars": 2399,
+      "excluded_documents": 0,
+      "scope": "import/retrieval/input only; no model analysis"
+    }
+  ],
+  "numeric_probes": [
+    {
+      "id": "market-complete",
+      "status": "passed",
+      "kind": "exact_arithmetic",
+      "checked_values": 4
+    },
+    {
+      "id": "market-missing-price",
+      "status": "passed",
+      "kind": "exact_arithmetic",
+      "checked_values": 3
+    },
+    {
+      "id": "market-known-zero",
+      "status": "passed",
+      "kind": "exact_arithmetic",
+      "checked_values": 3
+    },
+    {
+      "id": "market-bad-fraction",
+      "status": "passed",
+      "kind": "expected_input_rejection"
+    },
+    {
+      "id": "investment-complete-stress",
+      "status": "passed",
+      "kind": "exact_arithmetic",
+      "checked_values": 9
+    },
+    {
+      "id": "investment-partial",
+      "status": "passed",
+      "kind": "exact_arithmetic",
+      "checked_values": 5
+    },
+    {
+      "id": "investment-cycle",
+      "status": "passed",
+      "kind": "expected_input_rejection"
+    },
+    {
+      "id": "investment-mixed-currency",
+      "status": "passed",
+      "kind": "expected_input_rejection"
+    }
+  ],
+  "numeric_values_checked": 24,
+  "dataset_lock": "matched",
+  "limitations": [
+    "No full pipeline analysis or real LLM-quality results.",
+    "Market payload character counts exclude prompt, schema, clinical context and retries; these are not token counts or gateway-fit guarantees.",
+    "Authored expectations await R3/R4/R5 review; holdout has not been used for tuning.",
+    "Direct numeric probes are caller-reviewed fixtures; the integrated runner does not pass MarketScenario arguments."
+  ]
+}

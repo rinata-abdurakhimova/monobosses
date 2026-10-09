@@ -152,11 +152,51 @@ def test_document_wrong_type_415(client):
     _assert_envelope(r.json(), "unsupported_media_type")
 
 
-def test_document_valid_pdf_is_501_until_r3(client):
+def test_document_unreadable_pdf_is_422(client):
     cid = _case(client)
     r = _upload(client, cid, "a.pdf", PDF, "application/pdf")
-    assert r.status_code == 501
-    _assert_envelope(r.json(), "not_implemented")
+    assert r.status_code == 422
+    _assert_envelope(r.json(), "unreadable_document")
+
+
+def test_document_pdf_parses_persists_and_does_not_start_run(client):
+    from tests.vic.evidence.pdf_helpers import make_pdf
+    cid = _case(client)
+    pdf = make_pdf([["Synthetic safety result: adverse event at target exposure."],
+                    ["Unrelated administrative note."]])
+    response = _upload(client, cid, "result.pdf", pdf, "application/pdf")
+    assert response.status_code == 201
+    body = response.json()
+    repo = get_repository()
+    sources, evidence = repo.list_user_evidence(cid)
+    assert sources[0].id == body["source_id"] and sources[0].url is None
+    assert len(evidence) == 2 and all(item.locator.startswith("page") for item in evidence)
+    assert repo.count_active_runs(cid) == 0 and repo.list_reports(cid) == []
+    from vic.storage import SqliteRepository
+    reopened = SqliteRepository(repo.path, seed=False)
+    assert reopened.list_user_evidence(cid) == (sources, evidence)
+    assert len(reopened.list_documents(cid)[0].units) == 2
+    assert _upload(client, cid, "result.pdf", pdf, "application/pdf").json() == body
+    assert len(repo.list_user_evidence(cid)[1]) == 2
+
+
+def test_pdf_program_scope_and_date_are_explicit(client):
+    from tests.vic.evidence.pdf_helpers import make_pdf
+    cid = client.post("/cases", json={**VALID, "scope": "program",
+        "program_data": "Synthetic candidate with a defined target and preclinical data only."}).json()["case_id"]
+    pdf = make_pdf([["Synthetic program safety result."]])
+    response = client.post(f"/cases/{cid}/documents", files={"file": ("result.pdf", pdf, "application/pdf")},
+        data={"title": "Synthetic result", "synthetic": "true", "published_at": "2026-10-08", "scope": "program"})
+    assert response.status_code == 201
+    sources, evidence = get_repository().list_user_evidence(cid)
+    assert sources[0].published_at.isoformat() == "2026-10-08"
+    assert evidence[0].scope.value == "program"
+    assert any("User identified" in note for note in evidence[0].limitations)
+    approach = _case(client)
+    rejected = client.post(f"/cases/{approach}/documents", files={"file": ("result.pdf", pdf, "application/pdf")},
+        data={"title": "Result", "synthetic": "true", "scope": "program"})
+    assert rejected.status_code == 422
+    assert get_repository().list_user_evidence(approach) == ([], [])
 
 
 def test_document_unknown_case_404(client):
@@ -172,3 +212,21 @@ def test_document_too_large_413(monkeypatch):
         _assert_envelope(r.json(), "payload_too_large")
     get_settings.cache_clear()
     get_repository.cache_clear()
+
+
+def test_api_key_is_required_when_a_secret_is_configured(monkeypatch):
+    monkeypatch.setenv("API_SHARED_SECRET", "s3cret-value")
+    with new_client() as c:
+        assert c.get("/health").status_code == 200          # health stays open
+        r = c.post("/cases", json=VALID)
+        assert r.status_code == 401
+        _assert_envelope(r.json(), "unauthorized")
+        assert c.post("/cases", json=VALID, headers={"X-API-Key": "wrong"}).status_code == 401
+        assert c.post("/cases", json=VALID, headers={"X-API-Key": "s3cret-value"}).status_code == 201
+
+
+def test_production_refuses_an_unsafe_configuration(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")   # secret is empty
+    with pytest.raises(RuntimeError):
+        with new_client():
+            pass

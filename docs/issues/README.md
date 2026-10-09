@@ -63,3 +63,10 @@
 | R5-04 | [#17](https://github.com/rinata-abdurakhimova/monobosses/issues/17) | R5 — Uliana |
 | R1-04 | [#18](https://github.com/rinata-abdurakhimova/monobosses/issues/18) | R1 — Rinata |
 | TEAM-01 | [#19](https://github.com/rinata-abdurakhimova/monobosses/issues/19) | Вся команда; R1 координує demo, R5 — quality gates |
+
+## Узгодження expectations до запусків
+
+R3 перевіряє докази/provenance/leakage, R4 — science/clinical критерії,
+R5 узгоджує business-висновки. Це можна зробити до live-запусків.
+Результат записати в [review tracker](../../evals/expectations-review.md).
+Задачу на GitHub користувачка створює окремо; локальні тексти issues не зберігаємо.

@@ -5,6 +5,7 @@ and the consumers (R1 UI, R3 evidence, R4 science, R5 business) before merging.
 """
 from dataclasses import dataclass, field
 from datetime import date, datetime
+import time
 from enum import Enum
 from typing import Annotated, Any, Literal, Protocol, TypeVar
 
@@ -107,6 +108,10 @@ class RoleId(str, Enum):  # prompt IDs from the contract
     INVESTMENT = "investment"
     CHAIR = "chair"
     AUDIT = "audit"
+    FAILURE_MINER = "failure_miner"
+    INVESTMENT_THRESHOLD = "investment_threshold"
+    PARTNERSHIPS = "partnerships"
+    IP_LICENSING = "ip_licensing"
 
 
 # Open question for R3: final list of source types.
@@ -390,9 +395,7 @@ class UploadedDocument(VicModel):  # passed to R3: import_document(...)
     title: str
     synthetic: bool = False
 
-# ------------------------------------------------------------------ RunContext (shared interface)
-# Lives here so every role can `from vic.contracts import RunContext`.
-# `vic.run_context` re-exports the same objects.
+
 T = TypeVar("T", bound=BaseModel)
 
 
@@ -405,11 +408,19 @@ class LlmAdapter(Protocol):
 class RunBudget:
     max_cost_usd: float | None = None
     max_seconds: int = 600
+    deadline: float | None = None       # time.monotonic() value, set when the run starts
+    spent_cost_usd: float = 0.0
+    cost_unavailable: bool = False      # True once any call had no usable usage/price
+
+    def remaining_seconds(self) -> float | None:
+        if self.deadline is None:
+            return None
+        return self.deadline - time.monotonic()
 
 
 @dataclass
 class TraceCollector:
-    """Collects stage events and usage. Must never contain secrets or raw API keys."""
+    """Collects stage events and usage. Must never contain secrets or raw prompts/outputs."""
     events: list[dict[str, Any]] = field(default_factory=list)
     usage: list[dict[str, Any]] = field(default_factory=list)
 
@@ -417,9 +428,9 @@ class TraceCollector:
         self.events.append({"stage": stage.value, "message": message})
 
     def record_usage(self, prompt_id: str, input_tokens: int | None,
-                     output_tokens: int | None) -> None:
+                     output_tokens: int | None, **extra: Any) -> None:
         self.usage.append({"prompt_id": prompt_id, "input_tokens": input_tokens,
-                           "output_tokens": output_tokens})
+                           "output_tokens": output_tokens, **extra})
 
 
 @dataclass
@@ -432,3 +443,7 @@ class RunContext:
     model: LlmAdapter | None = None
     budget: RunBudget = field(default_factory=RunBudget)
     trace: TraceCollector = field(default_factory=TraceCollector)
+    # Audit findings per role id for the single repair round (agents MAY read it).
+    feedback: dict[str, list[Any]] = field(default_factory=dict)
+    # Non-fatal notes any module may add; copied into Run.warnings.
+    warnings: list[str] = field(default_factory=list)

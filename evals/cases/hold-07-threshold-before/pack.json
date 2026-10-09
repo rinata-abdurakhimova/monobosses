@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — threshold-plan",
+      "text": "Synthetic candidate G is seeking funding for a confirmatory human exposure/safety study. The reviewed clinical plan defines a scientific gate: achieve the pre-specified target exposure in the stated adult population, with no severe treatment-related event during the stated follow-up and a reproducible assay result. The study is feasible at the current stage; recruitment and assay access are documented as available. No study outcome has yet been reported. Prices, full budget, patent rights and partner commitments are not supplied. This is a necessary scientific gate, not a complete investment approval criterion.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic candidate G is seeking funding for a confirmatory human exposure/safety study. The reviewed clinical plan defines a scientific gate: achieve the pre-specified target exposure in the stated adult population, with no severe treatment-related event during the stated follow-up and a reproducible assay result. The study is feasible at the current stage; recruitment and assay access are documented as available. No study outcome has yet been reported. Prices, full budget, patent rights and partner commitments are not supplied. This is a necessary scientific gate, not a complete investment approval criterion.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

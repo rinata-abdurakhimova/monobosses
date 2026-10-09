@@ -110,15 +110,32 @@ export function ReportSections({ report }: { report: Report }) {
                       <div>
                         <h4>{source.title}</h4>
                         <small>
-                          {source.type} · Synthetic ·{" "}
+                          {source.type} ·{" "}
+                          {source.synthetic ? "Synthetic" : "Source document"} ·{" "}
                           {source.published_at ?? "Publication date unknown"}
                         </small>
                         <p>{source.limitation}</p>
+                        {!source.synthetic &&
+                          source.type !== "user_upload" &&
+                          source.url &&
+                          /^https?:\/\//i.test(source.url) && (
+                            <a
+                              href={source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Open source
+                            </a>
+                          )}
                       </div>
                       <span
                         className={`tag ${source.available ? "" : "status-unverified"}`}
                       >
-                        {source.available ? "Fixture available" : "Unavailable"}
+                        {source.available
+                          ? source.synthetic
+                            ? "Fixture available"
+                            : "Evidence available"
+                          : "Unavailable"}
                       </span>
                     </article>
                   ))}
@@ -154,11 +171,17 @@ export function ReportSections({ report }: { report: Report }) {
                             {item.support_status === "unknown"
                               ? "Unknown · not a negative finding"
                               : item.support_status === "supported"
-                                ? "Supported within synthetic fixture"
+                                ? report.synthetic
+                                  ? "Supported within synthetic fixture"
+                                  : "Supported"
                                 : item.support_status === "mixed"
-                                  ? "Mixed support within synthetic fixture"
+                                  ? report.synthetic
+                                    ? "Mixed support within synthetic fixture"
+                                    : "Mixed support"
                                   : item.support_status === "contradicted"
-                                    ? "Contradicted within synthetic fixture"
+                                    ? report.synthetic
+                                      ? "Contradicted within synthetic fixture"
+                                      : "Contradicted"
                                     : item.provenance === "user"
                                       ? "Unverified user-provided statement"
                                       : "Unverified inference"}
@@ -179,7 +202,7 @@ export function ReportSections({ report }: { report: Report }) {
       </div>
       {additionalClaims.length > 0 && (
         <section className="panel section-content">
-          <h3>Additional fixture claims</h3>
+          <h3>Additional report claims</h3>
           <p>
             Statements included in the shared report without a section link.
           </p>

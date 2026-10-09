@@ -1,11 +1,11 @@
-import { reportV1 } from "./fixtures/report-v1.ts";
+import { reportR5 } from "./fixtures/report-r5.ts";
 import type { CaseInput, PreviewMode, Report } from "@/lib/types";
 import sharedCase from "../../../contracts/fixtures/case.json" with { type: "json" };
 
 export const sampleInput: CaseInput = {
   indication: sharedCase.indication,
   mechanism: sharedCase.mechanism,
-  scope: reportV1.scope,
+  scope: reportR5.scope,
   modality: sharedCase.modality ?? "",
   development_stage: sharedCase.development_stage ?? "",
   program_data: sharedCase.program_data ?? "",
@@ -51,10 +51,10 @@ export function readPreviewCase(id: string): PreviewCase | null {
   }
 }
 export function getPreviewReport(mode: PreviewMode): Report {
-  if (mode !== "unavailable") return reportV1;
+  if (mode !== "unavailable") return reportR5;
   return {
-    ...reportV1,
-    sections: reportV1.sections.map((section) =>
+    ...reportR5,
+    sections: reportR5.sections.map((section) =>
       section.key === "sources"
         ? {
             ...section,
@@ -64,7 +64,7 @@ export function getPreviewReport(mode: PreviewMode): Report {
           }
         : section,
     ),
-    sources: reportV1.sources.map((source) =>
+    sources: reportR5.sources.map((source) =>
       source.id === "src-synthetic-04"
         ? {
             ...source,
@@ -74,7 +74,7 @@ export function getPreviewReport(mode: PreviewMode): Report {
           }
         : source,
     ),
-    claims: reportV1.claims.map((claim) =>
+    claims: reportR5.claims.map((claim) =>
       claim.id === "market.company_claims"
         ? { ...claim, support_status: "unverified" }
         : claim,

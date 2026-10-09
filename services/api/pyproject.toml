@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.4"]
+anthropic = ["anthropic>=0.40"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -26,6 +27,9 @@ asyncio_default_fixture_loop_scope = "function"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+vic = ["agents/science/prompts/*.md", "agents/business/prompts/*.md", "evidence/prompts/*.md"]
 
 [tool.ruff]
 line-length = 100

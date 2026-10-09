@@ -1,4 +1,4 @@
-# Committee frontend preview (R1-01)
+# Committee frontend (R1)
 
 Next.js App Router + TypeScript UI for the independent part of [R1-01](https://github.com/rinata-abdurakhimova/monobosses/issues/3). No Python service, model key, or R2-generated fixture is required.
 
@@ -24,7 +24,7 @@ npm run build
 npm start
 ```
 
-Dependencies are pinned in `package.json` and `package-lock.json`. No environment variables are required. Inter needs browser access to Google Fonts; when unavailable, the interface uses its Arial/sans-serif fallback.
+Dependencies are pinned in `package.json` and `package-lock.json`. For Python API assessments, copy `.env.example` to `.env.local` and set server-only `API_BASE_URL` to the Python service (normally `http://127.0.0.1:8000`). Restart Next.js after changing it. Preview workflows need no environment variables. Inter needs browser access to Google Fonts; when unavailable, the interface uses its Arial/sans-serif fallback.
 
 ## Code formatting
 
@@ -40,35 +40,79 @@ Run `npm run format` to format frontend code, or `npm run format:check` to verif
 6. Expand the 11 report sections, inspect a claim in the evidence dialog, and read the seven illustrative role cards.
 7. Open an unknown `/cases/...` URL: a missing-local-preview state explains how to recover.
 
-The evidence dialog is a local fixture display for review, not an implemented backend evidence drill-down or R1-03 upload/revision flow.
+Evidence dialogs show claims and exact excerpts supplied by the report. API case pages include text/PDF import controls and explicit parented reviews; the backend still needs to connect PDF extraction and evidence-driven revisions. See [R1-03 handoff](../../docs/r1-03-handoff.md).
 
-## Data boundary
+## Python API integration (#8)
 
-R1-02 preparation adds a separate **Mock API workflow** selection to the form. It calls `createCase` once, `startRun` once, then polls `getRun` and reads the returned report version with `getReport`. The case/run identifiers remain in the URL; reload and **Check existing run again** only read the existing records. Mock records and completed report snapshots are stored in a separate tab-local namespace from the original fixed fixture preview.
+The form defaults to **Python API assessment**. One submission creates a case, starts one run with `mode: live`, then opens `/cases/{caseId}?flow=api&run={runId}`. Status reads and the final report version pass through the same-origin `/api/backend` route. Refreshing or **Check existing run again** performs reads only; no POST is automatically retried. Navigation aborts polling. Status checks pause after ten minutes and can resume against the same run.
 
-In **Preview states**, the mock workflow can simulate completion, failed runs, missing records, validation errors, one connection interruption, invalid responses, unavailable sources, and an 8-second polling deadline. Cancellation removes timers/listeners and aborts in-flight reads. A connection interruption can be resumed on the same run; a timeout never submits another run.
+Start the Python API using `services/api/README.md`, copy `.env.example` to `.env.local`, then run Next.js. `API_BASE_URL` is read only in the server route; never give it a `NEXT_PUBLIC_` prefix. Provider secrets remain in Python. The proxy allows assessment operations plus text evidence/PDF imports, rejects cross-origin mutations and redirects, strips browser credentials and upstream cookies, disables caching, and gives requests an eight-second deadline. Browser requests have a ten-second deadline. Backend errors retain their status and error envelope. Missing configuration returns an explicit 503; no request falls back to a fixture.
 
-- `lib/api.ts`: public client boundary and polling exports.
-- `lib/api/types.ts`: provisional request/run/client types, pending OpenAPI.
-- `lib/api/mock-client.ts`: local simulated service, saved run/report versions.
-- `lib/api/http-client.ts`: replaceable HTTP adapter with error decoding, response checks, request deadlines, and no automatic mutation retries.
-- `lib/api/poll-run.ts`: sequential, cancellable GET-only polling.
-- `components/ApiCase.tsx`: mock lifecycle and recovery UI.
-- `tests/api.test.ts`: meaningful transport, polling, and persistence checks.
+## Evidence and revisions (#15)
 
-The HTTP adapter defaults to `/api/backend`, a future same-origin server proxy. That proxy is **not implemented or enabled yet**. Shared OpenAPI is now available, while host/auth configuration and live pipeline verification remain pending. The HTTP report stays unknown until a live `mapReport` adapter is supplied; it is never silently replaced with the synthetic fixture. No backend URL, API key or LLM credential is exposed to the browser.
+Open `/cases/revision-sample?version=2` for the shared synthetic v1/v2 comparison. Each version opens separately; changed claims reveal their exact excerpts. On a Python API case page, import text or a PDF, then select **Review conclusion** to start one parented run. The old report remains available while checking the review. Upload errors do not start a run. Saved versions can be opened directly with `?flow=api&version=1` or `version=2`.
 
-- `lib/contracts/generated.ts`: TypeScript wire types generated from `contracts/openapi.json`. Run `npm run contracts:generate` after agreed schema changes; `npm run contracts:check` detects drift.
-- `lib/contracts/report.ts`: synthetic-report adapter with schema/reference checks and all 11 sections. Raw contract data remains available alongside presentation fields.
-- `lib/types.ts`: presentation models using shared scope, recommendation, section, claim, source and evidence types.
-- `lib/fixtures/report-v1.ts`: reads R2's shared `report-v1.json` and `case.json`; there is no independent R1 report copy.
-- `lib/preview.ts`: explicit local preview storage and fixture selection. It makes no API or model calls.
-- `components/CaseForm.tsx`: input and validation.
-- `components/CasePreview.tsx`: preview-only lifecycle, error and empty states.
-- `components/ReportView.tsx`, `ReportSections.tsx`, `RecommendationCard.tsx`, `RoleCard.tsx`: report rendering.
+The PDF endpoint still returns 501. R2's pipeline now performs full reruns with
+immutable versions and new evidence snapshots; its synthetic stubs do not establish
+evidence-driven decision changes. Keep #15 open pending #7/#14, #12 and #13.
+`test:evidence-api` retains the older fixed mock-revision expectations and should
+only be used with explicit development `RUN_BACKEND=mock`, not the new pipeline.
 
-Input is saved only in this browser tab's session storage; it is not sent to a backend or used to generate recommendations. The report remains R2's fixed fictional disease X / target Y example regardless of entered input. Original Ukrainian content is preserved. A refresh replays the short simulated lifecycle; this is not server persistence. Session namespaces were versioned during alignment, so older preview URLs may require creating a new preview.
+After PR #42, Python uses SQLite and background runs with stage/status polling,
+immutable report versions, stored traces and restart recovery. Reports and their
+synthetic flags come from Python. Configure a persistent volume for deployment;
+an ephemeral database path does not guarantee persistence across redeploys.
 
-## Pending R2 / later tasks
+Set the same server-only `API_SHARED_SECRET` in Next.js and Python. The proxy adds
+it as `X-API-Key` to every allowed backend request, including polling and uploads.
+Browser-supplied keys, Authorization and cookies are ignored. Never use a
+`NEXT_PUBLIC_` name or put the secret in a URL. An empty key is supported only for
+development with Python authentication disabled; production Python requires a
+secret. A mismatched key returns the backend's visible 401 error.
 
-R1-01 is aligned with R2's shared OpenAPI and synthetic fixture. R1-02 still needs the server proxy, live report mapping and verification against the Python runtime; PR #25 provides mock routes only. Uploads and report revisions belong to R1-03; deployment belongs to R1-04. This work does not close #8.
+For local integration checks use `APP_ENV=development`, `RUN_BACKEND=pipeline`,
+`DEV_STUBS=true`, `SEED_SYNTHETIC=true` and an isolated SQLite file in Python.
+Set `STUB_DELAY_SECONDS=0.3` to observe background stages. These runs are explicitly
+synthetic and use no provider calls. The non-stub pipeline still requires the real
+R5 committee chair (#13) and real-model verification; #8 remains open.
+
+## Verification
+
+```sh
+npm test
+npm run typecheck
+npm run contracts:check
+npm run format:check
+npm run build
+# With Python and Next.js running:
+npm run test:api
+```
+
+`test:api` uses real HTTP via Next.js: creates one case/run, observes stages, reads
+the correct report version, repeats reads to simulate reopening, verifies no
+additional mutation and checks 422/404. Set `CHECK_SEEDED_FAILURE=true` to also
+check the terminal failed fixture on a development API with `SEED_SYNTHETIC=true`.
+Set `WEB_BASE_URL` if Next.js uses another port. This command creates test records
+in the running Python repository; use an isolated development database.
+
+Browser verification: submit the fictional example in API mode; check that one POST case and one POST run are followed by GET status/report; reload the URL and verify GET-only reads; open `/cases/case-synthetic-01?flow=api&run=run-synthetic-failed` to inspect a terminal failure. Unit tests cover request deadlines, cancellation, terminal polling, backend error decoding, proxy restrictions, and report validation.
+
+## Data boundary and previews
+
+- `app/api/backend/[...path]/route.ts`: server environment and Next.js proxy handler.
+- `lib/api/backend-proxy.ts`: restricted transport, errors and cancellation.
+- `lib/api/http-client.ts`: typed HTTP operations; no automatic mutation retries.
+- `lib/api/types.ts`: shared OpenAPI status/stage types and client interfaces.
+- `lib/api/poll-run.ts`: sequential cancellable GET-only polling.
+- `lib/contracts/report.ts`: validates received reports and preserves all 11 sections, claims, roles, references and synthetic flags. `mapSyntheticReport` additionally enforces fixture-only previews.
+- `lib/contracts/generated.ts`: shared wire types generated from `contracts/openapi.json`; regenerate with `npm run contracts:generate` after agreed changes.
+- `components/ApiCase.tsx`: existing-run lifecycle, report loading, warnings and errors.
+- `scripts/check-python-api.ts`: repeatable HTTP integration verification.
+
+**Fixed fictional report preview** and **Mock API workflow** remain explicit local options. Mock scenarios cover completion, failure, missing records, validation, connection interruption, malformed responses, unavailable sources and polling timeout. Their tab-local storage is separate from the API workflow. `/cases/sample` opens the shared synthetic fixture without contacting Python.
+
+Shared fixtures and API-owned display text use English, as specified in `docs/implementation-contract.md`. Fixture translations are made in the Python generator and regenerated with their source hashes and exact evidence excerpts. Restart Python and rebuild/restart the frontend to pick up fixture changes. Previously saved report snapshots are not translated in place; create a new assessment or open the rebuilt example report.
+
+Uploads and before/after comparison belong to #15. SQLite/recovery are implemented
+in R2; deployed restart persistence must be verified with the configured volume.
+Live analysis remains gated on the real chair and end-to-end provider verification.

@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — ip-register",
+      "text": "Synthetic registry excerpt dated 2026-10-08: patent SYN-PAT-B is granted in territory North and its claim text covers manufacturing method B used by candidate IP-B. Recorded owner is Fictional Lab B, not the sponsor. Confirmed expiry date is not supplied. No license or alternative manufacturing rights have been supplied. This excerpt is a screening input, not a legal opinion.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic registry excerpt dated 2026-10-08: patent SYN-PAT-B is granted in territory North and its claim text covers manufacturing method B used by candidate IP-B. Recorded owner is Fictional Lab B, not the sponsor. Confirmed expiry date is not supplied. No license or alternative manufacturing rights have been supplied. This excerpt is a screening input, not a legal opinion.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

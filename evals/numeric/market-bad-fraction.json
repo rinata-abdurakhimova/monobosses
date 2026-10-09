@@ -1,0 +1,37 @@
+{
+  "id": "market-bad-fraction",
+  "engine": "market",
+  "case_id": "dev-02-market-coverage",
+  "input": [
+    {
+      "name": "base",
+      "population": "100000",
+      "eligible_fraction": "1.2",
+      "access_fraction": "0.50",
+      "annual_price": "12000",
+      "currency": "USD",
+      "geography": "North",
+      "as_of_date": "2026-10-09",
+      "assumptions": [
+        "Reviewer-supplied synthetic values; analogue price used only as an explicit scenario assumption, not a candidate forecast."
+      ],
+      "input_evidence_ids": {
+        "population": [
+          "ev-e7473a267d9b-001"
+        ],
+        "eligible_fraction": [
+          "ev-e7473a267d9b-001"
+        ],
+        "access_fraction": [
+          "ev-e7473a267d9b-001"
+        ],
+        "annual_price": [
+          "ev-e7473a267d9b-001"
+        ]
+      }
+    }
+  ],
+  "expected_values": {},
+  "rationale": "A fraction above one is rejected by MarketScenario.",
+  "expected_error_contains": "less than or equal to 1"
+}

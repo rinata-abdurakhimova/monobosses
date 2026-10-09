@@ -1,0 +1,13 @@
+{
+  "title": "SYNTHETIC: Human exposure and safety data summary for X-001",
+  "published_at": "2024-09-10",
+  "synthetic": true,
+  "sections": [
+    {"heading": "Pharmacokinetics", "text": "No human pharmacokinetic data for X-001 are available. The exposure required for target engagement in humans has not been established."},
+    {"heading": "Safety", "text": "No human safety data exist for X-001 at any dose. A safe human exposure range is unknown."}
+  ],
+  "evidence": [
+    {"excerpt": "No human pharmacokinetic data for X-001 are available.", "scope": "program", "limitations": ["Missing data; says nothing about whether exposure would be safe or unsafe."]},
+    {"excerpt": "A safe human exposure range is unknown.", "scope": "program", "limitations": ["Unknown, not a negative experimental result."]}
+  ]
+}

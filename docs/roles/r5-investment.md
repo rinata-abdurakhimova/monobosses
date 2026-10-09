@@ -69,20 +69,34 @@ Python у `services/api/src/vic/agents/business/`: `market.py`, `investment.py`,
 6. partnerships — відповідні партнери, формати співпраці та перевірки; відповідність не означає підтверджений інтерес.
 7. ip_licensing — патентні факти, права, бар’єри й ліцензійні питання для фахової перевірки.
 
-Усі сім входять у погоджений обсяг користувачки. Реалізований лише market.
+Усі сім входять у погоджений обсяг користувачки й реалізовані. У main `a060c26`
+R2 підключила їх до спільного pipeline; offline integration перевірено.
+Повний успішний live LLM-запуск і semantic evaluation ще не підтверджені.
 Деталі ліцензування аналізує ip_licensing; partnerships розглядає партнерів;
 investment використовує їхні висновки для фінансових сценаріїв. Evaluation
 R5-04 — окремий перевірочний процес. Вузли можна готувати незалежно на явно
 синтетичних fixtures; спільне підключення й запуск забезпечує R2.
 
-## Локальний стан R5-01 — 2026-10-07
+## Поточний стан R5 — 2026-10-09
 
-Market prompt 1.2.0, схема, розрахунки, перевірки й дві секції реалізовані.
-47 офлайн-тестів API проходять, із них 40 market. Локальна реалізація готова
-до review/commit; live-генерація, аудит і фінальний Report ще не підтверджені.
-Тимчасові Gemini-спроби завершувалися тайм-аутами після підтвердження доступу.
-У коміт не входять ключі, тимчасовий адаптер і його результати.
-[Передача R2/R3/R4/R1](../r5-01-handoff.md) · [Карта покриття](../r5-output-coverage.md).
+Реалізовані вузли, prompts, тести й handoff для всіх семи вузлів.
+Чекліст: 55 пунктів. Dataset: 21 synthetic case з окремими expectations,
+13 development / 8 reserved holdout за family; ці матеріали опубліковані
+в `codex/r5-evaluation` (коміти `3643c8c` і `fc7dbbd`).
+
+Офлайн-результати: 970 backend-тестів, 11 тестів dataset validator, 8 numeric probes.
+Це перевірка коду/даних, не міркування реальної LLM. Expectations ще потребують
+предметного review R3/R4/R5; після запусків потрібні per-case оцінки,
+error log, frozen holdout run і фактичний evaluation report.
+
+- [Пояснення й запуск офлайн-перевірок](../../evals/README.md).
+- [Review tracker](../../evals/expectations-review.md).
+- [Журнал помилок](../../evals/error-log.md) — порожній шаблон.
+- [Evaluation report](../evaluation-report.md) — структура, без live-метрик.
+- [Поточне покриття виходів](../r5-output-coverage.md).
+- [Підключення й відомі runtime limitations](../r2-full-workflow-handoff.md).
+
+Створення шаблонів і drafts не означає виконане людське review або закриті issues.
 
 ## Твої GitHub Issues
 

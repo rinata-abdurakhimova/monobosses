@@ -1,0 +1,179 @@
+{
+  "id": "investment-cycle",
+  "engine": "investment",
+  "case_id": "dev-05-schedule-stress",
+  "input": {
+    "scenarios": [
+      {
+        "id": "base",
+        "name": "base",
+        "milestone_id": "validated_package",
+        "horizon": "next_milestone",
+        "currency": "USD",
+        "geography": "North",
+        "as_of_date": "2026-10-09",
+        "assumptions": [
+          "Complete reviewed next-milestone scope; future stages excluded."
+        ],
+        "costs": [
+          {
+            "id": "assay",
+            "category": "research",
+            "description": "assay",
+            "scope": "development",
+            "work_ids": [
+              "assay"
+            ],
+            "amount": {
+              "minimum": "40000",
+              "maximum": "40000",
+              "evidence_ids": [
+                "ev-c33ae46e4e7d-001"
+              ],
+              "assumptions": [
+                "Synthetic reviewer-approved scope for this direct arithmetic probe."
+              ],
+              "unknowns": []
+            },
+            "currency": "USD",
+            "scale": "units"
+          },
+          {
+            "id": "exposure",
+            "category": "research",
+            "description": "exposure",
+            "scope": "development",
+            "work_ids": [
+              "exposure"
+            ],
+            "amount": {
+              "minimum": "60000",
+              "maximum": "60000",
+              "evidence_ids": [
+                "ev-c33ae46e4e7d-001"
+              ],
+              "assumptions": [
+                "Synthetic reviewer-approved scope for this direct arithmetic probe."
+              ],
+              "unknowns": []
+            },
+            "currency": "USD",
+            "scale": "units"
+          },
+          {
+            "id": "integration",
+            "category": "research",
+            "description": "integration",
+            "scope": "development",
+            "work_ids": [
+              "integration"
+            ],
+            "amount": {
+              "minimum": "10000",
+              "maximum": "10000",
+              "evidence_ids": [
+                "ev-c33ae46e4e7d-001"
+              ],
+              "assumptions": [
+                "Synthetic reviewer-approved scope for this direct arithmetic probe."
+              ],
+              "unknowns": []
+            },
+            "currency": "USD",
+            "scale": "units"
+          },
+          {
+            "id": "review",
+            "category": "other",
+            "description": "review",
+            "scope": "diligence",
+            "work_ids": [],
+            "amount": {
+              "minimum": "5000",
+              "maximum": "5000",
+              "evidence_ids": [
+                "ev-c33ae46e4e7d-001"
+              ],
+              "assumptions": [
+                "Synthetic reviewer-approved scope for this direct arithmetic probe."
+              ],
+              "unknowns": []
+            },
+            "currency": "USD",
+            "scale": "units"
+          }
+        ],
+        "cost_coverage": "full",
+        "cost_unknowns": [],
+        "schedule": [
+          {
+            "work_id": "assay",
+            "duration_days": {
+              "minimum": "10",
+              "maximum": "10",
+              "evidence_ids": [
+                "ev-c33ae46e4e7d-001"
+              ],
+              "assumptions": [
+                "Synthetic reviewer-approved scope for this direct arithmetic probe."
+              ],
+              "unknowns": []
+            },
+            "depends_on": [
+              "integration"
+            ]
+          },
+          {
+            "work_id": "exposure",
+            "duration_days": {
+              "minimum": "20",
+              "maximum": "20",
+              "evidence_ids": [
+                "ev-c33ae46e4e7d-001"
+              ],
+              "assumptions": [
+                "Synthetic reviewer-approved scope for this direct arithmetic probe."
+              ],
+              "unknowns": []
+            },
+            "depends_on": []
+          },
+          {
+            "work_id": "integration",
+            "duration_days": {
+              "minimum": "5",
+              "maximum": "5",
+              "evidence_ids": [
+                "ev-c33ae46e4e7d-001"
+              ],
+              "assumptions": [
+                "Synthetic reviewer-approved scope for this direct arithmetic probe."
+              ],
+              "unknowns": []
+            },
+            "depends_on": [
+              "assay",
+              "exposure"
+            ]
+          }
+        ],
+        "schedule_coverage": "full",
+        "schedule_unknowns": [],
+        "allocated_asset_cash": {
+          "minimum": "30000",
+          "maximum": "30000",
+          "evidence_ids": [
+            "ev-c33ae46e4e7d-001"
+          ],
+          "assumptions": [
+            "Synthetic reviewer-approved scope for this direct arithmetic probe."
+          ],
+          "unknowns": []
+        }
+      }
+    ]
+  },
+  "expected_values": {},
+  "rationale": "Reject cyclic work dependencies, not a numeric schedule.",
+  "expected_error_contains": "Cyclic schedule dependencies"
+}

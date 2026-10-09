@@ -2,45 +2,45 @@
   "sources": [
     {
       "id": "src-synthetic-01",
-      "title": "[SYNTHETIC] Стаття: генетична асоціація мішені Y із захворюванням X",
+      "title": "[SYNTHETIC] Article: genetic association of target Y with disease X",
       "url": null,
       "type": "peer_reviewed",
       "published_at": "2022-03-15",
       "retrieved_at": "2025-01-10T12:00:00Z",
-      "content_hash": "sha256:2de76d6e75d4bf59e2cad7f18d367e91494d7ff85d337a1e91b863375ee09ef2",
+      "content_hash": "sha256:ba1faa9d1ddef51a11586e9230dd01d6dbdf6110aba9ae8b616692461ef49bf7",
       "synthetic": true,
       "document_id": null
     },
     {
       "id": "src-synthetic-02",
-      "title": "[SYNTHETIC] Препринт: доклінічна модель інгібування мішені Y",
+      "title": "[SYNTHETIC] Preprint: preclinical model of target Y inhibition",
       "url": null,
       "type": "preprint",
       "published_at": "2023-05-02",
       "retrieved_at": "2025-01-10T12:00:00Z",
-      "content_hash": "sha256:57eb56d0dc18634310ad5eb48bedfe0cf9d81f090e26dc1e9bd29a636f6f212d",
+      "content_hash": "sha256:48a91113bec5724748127900950c3553a172fbdc9ec604f7e097deeae887d2c1",
       "synthetic": true,
       "document_id": null
     },
     {
       "id": "src-synthetic-03",
-      "title": "[SYNTHETIC] Запис реєстру клінічних досліджень",
+      "title": "[SYNTHETIC] Clinical trial registry record",
       "url": null,
       "type": "registry",
       "published_at": "2024-09-01",
       "retrieved_at": "2025-01-10T12:00:00Z",
-      "content_hash": "sha256:e81f869a09d3e0d3569592acc8b8af18e8cf208ca89259691be13571aed4f4fc",
+      "content_hash": "sha256:a92f495441fc6062a56bb54cc1c94db3f4d0991744063d98394ffcbb3bbd20ea",
       "synthetic": true,
       "document_id": null
     },
     {
       "id": "src-synthetic-04",
-      "title": "[SYNTHETIC] Презентація компанії-розробника",
+      "title": "[SYNTHETIC] Developer company presentation",
       "url": null,
       "type": "company",
       "published_at": "2024-11-20",
       "retrieved_at": "2025-01-10T12:00:00Z",
-      "content_hash": "sha256:04d6fb88279ddc6e8831b81a919487da1e82cb6970db6189e89317f80af4b67e",
+      "content_hash": "sha256:ec40ed13bf30897b1a8491e90a94dd7bcc875c3352581ad04b6544dc68d42cd1",
       "synthetic": true,
       "document_id": null
     }
@@ -49,17 +49,17 @@
     {
       "id": "ev-synthetic-01",
       "source_id": "src-synthetic-01",
-      "excerpt": "варіанти втрати функції гена мішені Y асоційовані зі зниженим ризиком захворювання X",
+      "excerpt": "loss-of-function variants in the target Y gene are associated with a lower risk of disease X",
       "locator": "abstract",
       "scope": "approach",
       "limitations": [
-        "Синтетична когорта; причинність не встановлена"
+        "Synthetic cohort; causality has not been established"
       ]
     },
     {
       "id": "ev-synthetic-02",
       "source_id": "src-synthetic-01",
-      "excerpt": "Асоціація не доводить причинності.",
+      "excerpt": "Association does not establish causality.",
       "locator": "limitations",
       "scope": "approach",
       "limitations": []
@@ -67,17 +67,17 @@
     {
       "id": "ev-synthetic-03",
       "source_id": "src-synthetic-02",
-      "excerpt": "інгібування мішені Y зменшувало маркер прогресування X",
+      "excerpt": "target Y inhibition reduced a marker of X progression",
       "locator": "results",
       "scope": "approach",
       "limitations": [
-        "Тваринна модель частково відтворює захворювання людини"
+        "The animal model only partially represents human disease"
       ]
     },
     {
       "id": "ev-synthetic-04",
       "source_id": "src-synthetic-03",
-      "excerpt": "експозицію в пацієнтів не повідомлено",
+      "excerpt": "patient exposure has not been reported",
       "locator": "record.results",
       "scope": "program",
       "limitations": []
@@ -85,7 +85,7 @@
     {
       "id": "ev-synthetic-05",
       "source_id": "src-synthetic-03",
-      "excerpt": "первинна кінцева точка — безпека та переносимість",
+      "excerpt": "the primary endpoint is safety and tolerability",
       "locator": "record.endpoints",
       "scope": "program",
       "limitations": []
@@ -93,16 +93,16 @@
     {
       "id": "ev-synthetic-06",
       "source_id": "src-synthetic-04",
-      "excerpt": "Це матеріал компанії, не незалежний доказ.",
+      "excerpt": "This is company material, not independent evidence.",
       "locator": "slide 5",
       "scope": "program",
       "limitations": [
-        "Матеріал компанії"
+        "Company material"
       ]
     }
   ],
   "retrieval_warnings": [
-    "Синтетичний пакет: мережеве отримання джерел не виконувалось."
+    "Synthetic pack: no sources were retrieved over the network."
   ],
   "snapshot_id": "snap-synthetic-v1",
   "synthetic": true

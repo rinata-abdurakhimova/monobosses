@@ -1,0 +1,13 @@
+{
+  "title": "SYNTHETIC: Market notes for Disease-D",
+  "published_at": "2024-10-01",
+  "synthetic": true,
+  "sections": [
+    {"heading": "Market", "text": "No market sizing, pricing or patient-population estimates are available for Disease-D in this synthetic dataset. The commercial opportunity for a SYN-1 inhibitor is unknown."},
+    {"heading": "Competitors", "text": "Two competitor programs, SYN-COMP-A and SYN-COMP-B, are mentioned by name only, with no development-stage information."}
+  ],
+  "evidence": [
+    {"excerpt": "The commercial opportunity for a SYN-1 inhibitor is unknown.", "scope": "approach", "limitations": ["Data gap; no figures were provided."]},
+    {"excerpt": "Two competitor programs, SYN-COMP-A and SYN-COMP-B, are mentioned by name only, with no development-stage information.", "scope": "approach", "limitations": ["Names only; stage and design of competitor programs are unknown."]}
+  ]
+}

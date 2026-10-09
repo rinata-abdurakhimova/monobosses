@@ -1,0 +1,199 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "dev-04-partial-budget",
+  "title": "Часткова сума не дорівнює бюджету",
+  "evaluator_only_marker": "R5_EXPECTATIONS_ONLY_dev-04-partial-budget",
+  "label_status": "author_defined_pending_R3_R4_R5_review",
+  "scope": "integrated_pipeline_all_R5_roles",
+  "focus_roles": [
+    "investment",
+    "failure_miner",
+    "chair"
+  ],
+  "required_facts": [
+    {
+      "id": "dev-04-partial-budget-fact-01",
+      "document": "partial-cost",
+      "assertion": "The known development quote is USD 40000; diligence is separately USD 5000.",
+      "importance": "critical",
+      "source_id": "src-4b77f8db6804",
+      "evidence_ids": [
+        "ev-4b77f8db6804-001"
+      ]
+    }
+  ],
+  "required_risks": [
+    {
+      "id": "dev-04-partial-budget-risk-01",
+      "requirement": "Clinical, CMC and operations coverage is missing, so a complete capital requirement is unknown.",
+      "importance": "critical"
+    }
+  ],
+  "required_unknowns": [
+    "Full budget",
+    "Schedule",
+    "Allocated cash"
+  ],
+  "forbidden_assertions": [
+    "Full development budget is USD 40000",
+    "Full development budget is USD 45000",
+    "Missing cash equals zero"
+  ],
+  "allowed_recommendations": [
+    "Conditional"
+  ],
+  "recommendation_rationale": "Known work subtotal is insufficient to approve a complete funding request.",
+  "role_expectations": {
+    "market": [
+      {
+        "requirement": "Describe evidence coverage for all six competitor categories; absence of evidence is not absence of competitors.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Preserve unknown pricing/population/access domains; do not infer a numerical opportunity without caller-reviewed calculated_scenarios.",
+        "importance": "critical"
+      }
+    ],
+    "investment": [
+      {
+        "requirement": "Preserve missing capital/time inputs as unknown; distinguish a known subtotal from a complete budget.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "State milestone/work, three financing paths and stress kinds with explicit gaps rather than invented deals or numbers.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Preserve known development subtotal while capital_to_milestone remains null; keep diligence separate.",
+        "importance": "critical"
+      }
+    ],
+    "failure_miner": [
+      {
+        "requirement": "Review every upstream domain and dispose of every supplied risk; missing knowledge is not a demonstrated failure.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Describe material failure chains and concrete checks with positive/negative/inconclusive handling.",
+        "importance": "major"
+      }
+    ],
+    "chair": [
+      {
+        "requirement": "Use all nine upstream roles plus audit and preserve critical risks/unknowns in the final decision.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Provide arguments, reasoned decision, actionable conditions/questions and review of contradictions.",
+        "importance": "major"
+      }
+    ],
+    "investment_threshold": [
+      {
+        "requirement": "Relate gates for now/next_stage to criteria, available evidence, gaps and checks.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Do not label an unobserved criterion not_met or a criterion without support met.",
+        "importance": "critical"
+      }
+    ],
+    "partnerships": [
+      {
+        "requirement": "Portfolio fit or a partner category does not prove interest, financing, agreement or deal readiness.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Assess all four collaboration formats for each candidate, with explicit prerequisites and IP dependencies.",
+        "importance": "major"
+      }
+    ],
+    "ip_licensing": [
+      {
+        "requirement": "State unsearched rights, territories and limitations; FTO remains unresolved or potential_barriers, never legal clearance.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Do not invent ownership, expiry dates, license terms or deal prices.",
+        "importance": "major"
+      }
+    ]
+  },
+  "rubric_ids": [
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05",
+    "Q06",
+    "Q07",
+    "Q08",
+    "Q09",
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M05",
+    "I01",
+    "I02",
+    "I03",
+    "I04",
+    "I05",
+    "I06",
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "T01",
+    "T02",
+    "T03",
+    "T04",
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "L01",
+    "L02",
+    "L03",
+    "L04",
+    "R04",
+    "R05"
+  ],
+  "rubric_na": {
+    "Q10": "No adversarial instruction unless explicitly part of this case.",
+    "R01": "Not a paired variant unless revision field is present.",
+    "R02": "Not a decisive pair unless revision field requests it.",
+    "R03": "Not a non-decisive pair unless revision field requests it."
+  },
+  "review_owners": {
+    "evidence": "R3",
+    "science_clinical": "R4",
+    "business_decision": "R5",
+    "runtime": "R2"
+  },
+  "automated_checks": [
+    "CaseInput schema",
+    "R3 document parsing and excerpt provenance",
+    "full Report integrity after an actual run"
+  ],
+  "manual_review_required": [
+    "claim/excerpt semantic support",
+    "scientific applicability",
+    "business rationale",
+    "material omissions",
+    "legal interpretation where relevant"
+  ],
+  "document_map": {
+    "partial-cost": {
+      "source_id": "src-4b77f8db6804",
+      "evidence_ids": [
+        "ev-4b77f8db6804-001"
+      ]
+    }
+  }
+}

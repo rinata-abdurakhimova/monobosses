@@ -1,6 +1,8 @@
 // Generated from contracts/openapi.json. Run npm run contracts:generate.
 export type Body_upload_document_cases__case_id__documents_post = {
   file: string;
+  published_at?: string | null;
+  scope?: Scope;
   synthetic?: boolean;
   title: string;
 };
@@ -139,7 +141,11 @@ export type RoleId =
   | "market"
   | "investment"
   | "chair"
-  | "audit";
+  | "audit"
+  | "failure_miner"
+  | "investment_threshold"
+  | "partnerships"
+  | "ip_licensing";
 
 export type RoleResult = {
   change_conditions?: Array<string>;

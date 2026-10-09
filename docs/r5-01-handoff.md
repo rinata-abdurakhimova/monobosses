@@ -1,6 +1,14 @@
 # R5-01: local market node
 
-Branch: `codex/r5-01-market`. Scope: market/competitor analysis only.
+**Current split implementation (2026-10-09):** see
+[Market request-budget handoff](r5-market-request-budget.md). Market now uses
+parallel competitive/commercial calls, bounded evidence batches and Python merge.
+The single-call descriptions below are historical; public output stays compatible.
+
+
+Current state (2026-10-09): market is in main and connected by R2 in `a060c26`.
+Original implementation branch: `codex/r5-01-market`; scope remains market only.
+See [R2 workflow handoff](r2-full-workflow-handoff.md) for offline wiring and live blockers.
 
 ## Files and execution
 
@@ -21,21 +29,19 @@ No API client, model key, RAG retriever or LangGraph dependency is introduced he
 
 ## R2 integration
 
-Call `await analyze_market(case, pack, ctx)` with the common evidence pack.
+Call `await analyze_market(case, pack, ctx, clinical=...)` with the common evidence pack.
 The node calls exactly:
 `await ctx.model.generate_structured("market", payload, MarketAnalysis, ctx)`.
-Register `prompts/market.md` for this prompt ID, including version/hash in traces.
+The current R2 loader resolves `prompts/market.md` and records its hash in traces.
 Provider and model choice remain in the shared adapter; none is hardcoded here.
-The current repository has no working R2 adapter or API runtime, so live model
-execution has not been verified. Invalid outputs raise exceptions; bounded
+R2 adapter and API runtime are implemented and connected; real-model semantic
+quality is not yet verified. Invalid outputs raise exceptions; bounded
 repair/retries, budgets and failed-run handling belong to R2.
 
-Current `vic/contracts.py` explicitly says it is a temporary R4 test contract.
-It defines singular `section_content`. We preserve it without modifying another
-owner's module. Both canonical report sections are available under
-`result.section_content.structured_data["sections"]`: competitive_landscape and
-commercial_opportunity. R2 must map these to final SectionContent models when
-finalizing the shared contract. No Invest recommendation is issued here.
+`vic/contracts.py` contains the shared R2 contracts. `RoleResult.section_content`
+is a list: item 0 is competitive_landscape, item 1 is commercial_opportunity.
+R2 Report builder consumes these SectionContent objects. No final Invest
+recommendation is issued by market.
 
 ## Numeric inputs
 
@@ -70,7 +76,7 @@ R3 must audit summaries, competitor statuses and claim-to-excerpt support. The
 chair must consume only appropriately audited outputs. A listed citation alone
 must never count as proof.
 
-No investment/chair node or R5-04 dataset implementation is included in this step.
+This original market implementation step did not include other nodes; all seven R5 nodes and evaluation content are now available. See [current coverage](r5-output-coverage.md).
 
 ## Target population (introduced in v1.1.0)
 
@@ -117,6 +123,10 @@ Pricing descriptions can reproduce supplied facts, but scenario inputs remain
 caller-reviewed. Citation existence is not proof of numerical or semantic support.
 Unknown prices, discontinuation reasons and commercial willingness to pay must
 stay explicit. Empty evidence cannot establish a positive commercial assessment.
+
+Historical implementation record (2026-10-07): the following counts and
+commit/push notes describe the original market handoff, not the current branch.
+Latest recorded backend regression suite: 970 passed on 2026-10-09.
 
 Validation: 47 offline tests pass (entire services/api/tests), including new output
 assembly, missing-data errors, invalid references, range grouping and R4 context.

@@ -1,6 +1,6 @@
 # monobosses
 
-Віртуальний інвестиційний комітет для biotech underwriting. Стек реалізації: Next.js + Python. Незалежна frontend-частина R1-01 реалізована у `apps/web` на явно позначеному синтетичному прикладі. Python API та live analysis ще не підключено.
+Віртуальний інвестиційний комітет для biotech underwriting. Стек реалізації: Next.js + Python. Незалежна frontend-частина R1-01 реалізована у `apps/web` на явно позначеному синтетичному прикладі. Python API та всі експертні вузли підключено в спільний pipeline; офлайн-інтеграцію перевірено. Повний успішний live LLM-аналіз ще не підтверджено.
 
 ## Запуск frontend preview
 
@@ -15,6 +15,8 @@ npm run dev
 Відкрити `http://127.0.0.1:3000`. Перевірки: `npm run typecheck`, `npm test`, `npm run build`. [Frontend README](apps/web/README.md) описує стани, локальні дані та залежності від R2. Для підготовки R1-02 у формі є окремий Mock API workflow; це локальна симуляція, а не підключення до Python. [Handoff R1-02](docs/r1-02-handoff.md) описує контракт, polling і наступні кроки інтеграції.
 
 ## Документація для команди
+
+- [Railway deployment: website + Python API, configuration and remaining checks for #18](docs/deployment.md).
 
 - [Продуктова концепція](virtual-investment-committee.md).
 - [Загальні інструкції та розподіл ролей](team-work-instructions.md).
@@ -49,19 +51,22 @@ Details, endpoints, mock behavior and contract changelog: [services/api/README.m
 
 ## Експертні перспективи й покриття R5
 
-Поточний R5-01 market node реалізує перспективу **експерта з ринку та доступу
-до лікування**: конкурентів, можливі переваги, цільову популяцію пацієнтів,
-бар'єри доступу та комерційні сценарії. Це локальна реалізація без підключеного
-live LLM adapter; семантичний аудит доказів надає R3. Prompt: **1.2.0**.
-Локальна реалізація готова до передачі для інтеграції, але повна live-задача
-R5-01 ще не підтверджена. Перевірка 2026-10-07: **47 тестів API пройшли,
-із них 40 — market**. Окремі тимчасові спроби Gemini завершилися тайм-аутами
-генерації; доступ до gemini-3.8-flash підтверджений, валідної відповіді немає.
-API-ключі та тимчасовий адаптер не входять до реалізації R5.
+Усі сім вузлів R5 реалізовані: `market`, `investment`, `failure_miner`,
+`chair`, `investment_threshold`, `partnerships`, `ip_licensing`. R2 підключила
+їх у main `a060c26`; R3 забезпечує evidence/audit, R4 — science/clinical,
+R1 — відображення. Offline integration не доводить якість реальних LLM-відповідей.
+[Підключення й live limitations](docs/r2-full-workflow-handoff.md).
 
-[Карта всіх експертних ролей, 11 Required Output та фактичного покриття R5](docs/r5-output-coverage.md).
-[Підключення market node для R2](docs/r5-01-handoff.md).
+Evaluation content доступний на `codex/r5-evaluation`: [rubric](evals/rubric.md),
+21 [synthetic case](evals/cases/manifest.json) з окремими expectations,
+13 development / 8 holdout, [guide](evals/README.md) та офлайн-валідатор.
+За збереженими [результатами](evals/validation-results.json): 970 backend-тестів,
+11 тестів валідатора, 8 numeric probes пройшли; live quality не оцінено.
 
+Предметне узгодження expectations — [review tracker](evals/expectations-review.md).
+[Error log](evals/error-log.md) порожній; [evaluation report](docs/evaluation-report.md)
+підготовлений як структура. Предметне узгодження expectations виконують R3/R4 разом із R5.
+[Карта всіх перспектив і 11 виходів](docs/r5-output-coverage.md).
 
 Офлайн-перевірка з кореня репозиторію:
 
@@ -69,7 +74,5 @@ API-ключі та тимчасовий адаптер не входять до
 PYTHONDONTWRITEBYTECODE=1 python3 -m pytest services/api/tests -q -p no:cacheprovider
 ```
 
-Погоджений план R5: `market`, `investment`, `failure_miner`, `chair`,
-`investment_threshold`, `partnerships`, `ip_licensing`. Реалізовано тільки
-`market`; evaluation — окремий процес. R2 забезпечує adapter/runtime/Report,
-R3 — evidence та аудит, R4 — клінічне узгодження, R1 — відображення.
+Evaluation R5-04 — окремий процес: підготовлені кейси й офлайн-тести
+не замінюють фактичні model outputs, предметний review і підсумкові метрики.
