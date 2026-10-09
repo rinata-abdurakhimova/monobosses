@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-
 from vic.contracts import (
     CaseInput,
     Claim,
@@ -20,14 +19,13 @@ from vic.contracts import (
     RunStage,
     SectionContent,
 )
-
 from vic.failures import RunFailure
 from vic.llm import request_sizes, structured_request
 
 from .calculations import MarketScenario, estimate_market_scenarios, summarize_market_ranges
 
 PROMPT_ID = "market"
-PROMPT_VERSION = "2.0.0"
+PROMPT_VERSION = "2.1.0"
 PROMPT_PATH = Path(__file__).parent / "prompts" / "market.md"
 Category = Literal["standard_of_care", "approved", "clinical_stage", "same_target", "alternative_mechanism", "discontinued"]
 
@@ -301,30 +299,72 @@ def plan_market_batches(payload, clinical, task, ctx):
     model = PASS_MODELS[task]
     cap = getattr(ctx.model, "market_request_budget", DEFAULT_REQUEST_MAX_BYTES)
     initial_cap = int(cap * INITIAL_BUDGET_FRACTION)
-    def make(records):
-        return prepare_pass_inputs(payload, clinical, task, records)
+    full_context = project_clinical_context(clinical, task)
+    def make(records, context=full_context, context_ids=None):
+        data = prepare_pass_inputs(payload, clinical, task, records)
+        data["clinical_input"] = context
+        if context_ids is not None:
+            data["coverage"].update(partial_clinical_context=True,
+                                    clinical_context_ids=context_ids)
+        return data
     def measure(data):
         measure_adapter = getattr(ctx.model, "structured_request_size", None)
         if callable(measure_adapter):
             return measure_adapter(task, data, model, ctx)
         _, system, messages = structured_request(task, data, model, ctx)
         return request_sizes(system, messages)
-    if measure(make([]))["request_bytes"] > initial_cap:
+    # Keep the original one-context path when it fits. Otherwise partition exact
+    # clinical records, never summarize or truncate safety/unknown text.
+    contexts = [(full_context, None)]
+    largest_evidence = max(payload["evidence"], default=None, key=lambda e: len(
+        json.dumps(e, ensure_ascii=False, default=str).encode("utf-8")))
+    probe = [largest_evidence] if largest_evidence else []
+    if full_context is not None and measure(make(probe))["request_bytes"] > initial_cap:
+        record_fields = {"claims", "risks", "unclaimed_context", "unknowns",
+                         "change_conditions", "limitations"}
+        header = {key: value for key, value in full_context.items() if key not in record_fields}
+        def empty_context():
+            return {**header, **{key: [] for key in record_fields}}
+        if measure(make(probe, empty_context(), []))["request_bytes"] > initial_cap:
+            raise RunFailure("Market schema/case/audit context or one exact excerpt exceeds "
+                             "the initial byte budget", code="market_request_budget")
+        contexts, current, ids = [], empty_context(), []
+        for field in sorted(record_fields):
+            for item in full_context.get(field, []):
+                identity = item.get("id") if isinstance(item, dict) else None
+                identity = identity or hashlib.sha256(json.dumps(item, sort_keys=True,
+                    ensure_ascii=False, default=str).encode("utf-8")).hexdigest()[:12]
+                record_id = f"{field}:{identity}"
+                candidate = {**current, field: [*current[field], item]}
+                if measure(make(probe, candidate, [*ids, record_id]))["request_bytes"] > initial_cap:
+                    if ids:
+                        contexts.append((current, ids))
+                    current, ids = empty_context(), []
+                    candidate = {**current, field: [item]}
+                    if measure(make(probe, candidate, [record_id]))["request_bytes"] > initial_cap:
+                        raise RunFailure("One exact Clinical context record exceeds the initial "
+                                         "Market byte budget", code="market_request_budget")
+                current, ids = candidate, [*ids, record_id]
+        if ids:
+            contexts.append((current, ids))
+    if measure(make([], contexts[0][0], contexts[0][1]))["request_bytes"] > initial_cap:
         raise RunFailure("Market schema/case/clinical/audit context exceeds the initial byte budget; "
                          "reduce the context before calling the model", code="market_request_budget")
-    batches, current = [], []
-    for evidence in payload["evidence"]:
-        if measure(make([*current, evidence]))["request_bytes"] > initial_cap:
-            if current:
-                batches.append(make(current))
-                current = []
-            if measure(make([evidence]))["request_bytes"] > initial_cap:
-                raise RunFailure("One exact Market excerpt exceeds the initial byte budget; "
-                                 "request a smaller provenance-preserving evidence unit from R3",
-                                 code="market_request_budget")
-        current.append(evidence)
-    if current or not batches:
-        batches.append(make(current))
+    batches = []
+    for context, context_ids in contexts:
+        current = []
+        for evidence in payload["evidence"]:
+            if measure(make([*current, evidence], context, context_ids))["request_bytes"] > initial_cap:
+                if current:
+                    batches.append(make(current, context, context_ids))
+                    current = []
+                if measure(make([evidence], context, context_ids))["request_bytes"] > initial_cap:
+                    raise RunFailure("One exact Market excerpt exceeds the initial byte budget; "
+                                     "request a smaller provenance-preserving evidence unit from R3",
+                                     code="market_request_budget")
+            current.append(evidence)
+        if current or not payload["evidence"]:
+            batches.append(make(current, context, context_ids))
     for batch in batches:
         batch["coverage"]["partial_batch"] = len(batches) > 1
         sizes = measure(batch)
@@ -338,8 +378,8 @@ def plan_market_batches(payload, clinical, task, ctx):
     return batches
 
 
-def namespace_pass(result, task):
-    """Stable task/key/evidence IDs, independent of batch number and model text.
+def namespace_pass(result, task, context_ids=None, evidence_ids=None):
+    """Stable task/key/evidence/context IDs, independent of batch number and Market text.
 
     Same key and evidence with different contents is a collision, never overwrite.
     Distinct evidence supporting contradictory facts retains separate claims.
@@ -352,7 +392,10 @@ def namespace_pass(result, task):
         if old in claims and claims[old] != claim:
             raise ValueError("Conflicting claim ID within Market pass")
         claims[old] = claim
-        digest = hashlib.sha256(json.dumps(sorted(set(claim["evidence_ids"]))).encode()).hexdigest()[:12]
+        identity = sorted(set(claim["evidence_ids"]))
+        if context_ids is not None:
+            identity = [identity, sorted(context_ids)]
+        digest = hashlib.sha256(json.dumps(identity).encode()).hexdigest()[:12]
         mapping[old] = f"market.{prefix}_{old.removeprefix('market.')}_{digest}"
     def walk(value):
         if isinstance(value, dict):
@@ -370,7 +413,10 @@ def namespace_pass(result, task):
     for claim in data["claims"]:
         claim["id"] = mapping[claim["id"]]
     for risk in data["risks"]:
-        digest = hashlib.sha256(json.dumps(sorted(risk["claim_ids"])).encode()).hexdigest()[:12]
+        identity = sorted(risk["claim_ids"])
+        if context_ids is not None:
+            identity = [identity, sorted(context_ids), sorted(evidence_ids or [])]
+        digest = hashlib.sha256(json.dumps(identity).encode()).hexdigest()[:12]
         risk["id"] = f"market.risk.{prefix}_{risk['id'].removeprefix('market.risk.')}_{digest}"
     data["claims"] = _unique(data["claims"])
     return type(result).model_validate(data)
@@ -485,15 +531,33 @@ def merge_market_results(competitive, commercial):
 async def run_market_pass(task, batches, ctx):
     results = []
     for batch in batches:
-        raw = await ctx.model.generate_structured(task, batch, PASS_MODELS[task], ctx)
-        result = raw if isinstance(raw, PASS_MODELS[task]) else PASS_MODELS[task].model_validate(raw)
-        visible_ids = {e["id"] for e in batch["evidence"]}
-        if any(not set(c.evidence_ids) <= visible_ids for c in result.claims):
-            raise ValueError("Market pass cited evidence outside its batch")
-        if isinstance(result, CompetitiveAnalysis):
-            if set(result.competitive_coverage) != set(Category.__args__):
-                raise ValueError("Market pass must cover all six competitor categories")
-        results.append(namespace_pass(result, task))
+        call_ctx = ctx
+        for attempt in range(2):
+            raw = await ctx.model.generate_structured(task, batch, PASS_MODELS[task], call_ctx)
+            result = raw if isinstance(raw, PASS_MODELS[task]) else PASS_MODELS[task].model_validate(raw)
+            visible_ids = {e["id"] for e in batch["evidence"]}
+            try:
+                if any(not set(c.evidence_ids) <= visible_ids for c in result.claims):
+                    raise ValueError("Market pass cited evidence outside its batch")
+                if isinstance(result, CompetitiveAnalysis):
+                    if set(result.competitive_coverage) != set(Category.__args__):
+                        raise ValueError("Market pass must cover all six competitor categories")
+                    names = {c.name for c in result.competitors}
+                    if any(d.comparator not in names for d in result.differentiation):
+                        raise ValueError("Differentiation must reference a listed comparator; "
+                                         "use an empty differentiation list when no comparator is known")
+                normalized = namespace_pass(result, task, batch["coverage"].get("clinical_context_ids"), visible_ids)
+            except ValueError as exc:
+                if attempt:
+                    raise
+                # Fresh corrective request avoids replaying a large invalid output.
+                # All original evidence/context and existing audit feedback survive.
+                feedback = {**ctx.feedback, "market": [*ctx.feedback.get("market", []), str(exc)]}
+                call_ctx = replace(ctx, feedback=feedback)
+                ctx.trace.log(RunStage.ANALYZE, f"{task} bounded reference repair")
+            else:
+                results.append(normalized)
+                break
     return results
 
 

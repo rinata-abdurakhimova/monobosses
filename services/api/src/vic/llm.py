@@ -205,10 +205,13 @@ def structured_request(prompt_id, payload, response_model, ctx):
     return prompt, system, messages
 
 
-def request_sizes(system, messages, *, model="placeholder-model", max_tokens=4096):
+def request_sizes(system, messages, *, model="placeholder-model", max_tokens=4096, reasoning_effort=None):
     """UTF-8 bytes/characters, not token estimates; includes message envelopes."""
-    wire = json.dumps({"model": model, "messages": [{"role": "system", "content": system}, *messages],
-                       "max_completion_tokens": max_tokens, "stream": False},
+    body = {"model": model, "messages": [{"role": "system", "content": system}, *messages],
+            "max_completion_tokens": max_tokens, "stream": False}
+    if reasoning_effort is not None:
+        body["reasoning_effort"] = reasoning_effort
+    wire = json.dumps(body,
                       ensure_ascii=False, separators=(",", ":"))
     prompt, _, schema = system.partition("\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
                                         "that validates against this JSON Schema:\n")
@@ -236,15 +239,18 @@ class StructuredLlm:
 
     def structured_request_size(self, prompt_id, payload, response_model, ctx):
         _, system, messages = structured_request(prompt_id, payload, response_model, ctx)
-        sizes = request_sizes(system, messages, model=self._s.llm_model,
-                              max_tokens=self._s.llm_max_output_tokens)
-        if prompt_id in {"clinical", "clinical_design", "clinical_development"} and isinstance(
-                self._provider, OpenAICompatibleProvider) and self._s.clinical_reasoning_effort:
-            extra = len(json.dumps({"reasoning_effort": self._s.clinical_reasoning_effort},
-                                   separators=(",", ":"))) - 1
-            sizes["request_bytes"] += extra
-            sizes["request_chars"] += extra
-        return sizes
+        return request_sizes(system, messages, model=self._s.llm_model,
+                             max_tokens=self._s.llm_max_output_tokens,
+                             reasoning_effort=self._reasoning_effort(prompt_id))
+
+    def _reasoning_effort(self, prompt_id):
+        if not isinstance(self._provider, OpenAICompatibleProvider):
+            return None
+        if prompt_id in {"clinical", "clinical_design", "clinical_development"}:
+            return self._s.clinical_reasoning_effort
+        if prompt_id in MARKET_PROMPTS:
+            return self._s.market_reasoning_effort
+        return None
 
     def cost_limit_enforceable(self) -> bool:
         return (self._s.llm_price_input_per_mtok is not None
@@ -273,7 +279,8 @@ class StructuredLlm:
                     messages: list[dict[str, str]], ctx: RunContext) -> ProviderResponse:
         if prompt_id in MARKET_PROMPTS:
             sizes = request_sizes(system, messages, model=self._s.llm_model,
-                                  max_tokens=self._s.llm_max_output_tokens)
+                                  max_tokens=self._s.llm_max_output_tokens,
+                                  reasoning_effort=self._reasoning_effort(prompt_id))
             ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} request sizes {sizes}; "
                           f"budget_bytes={self.market_request_budget}")
             if sizes["request_bytes"] > self.market_request_budget:
@@ -287,9 +294,9 @@ class StructuredLlm:
             started = time.monotonic()
             try:
                 options = {}
-                if prompt_id in {"clinical", "clinical_design", "clinical_development"} and isinstance(
-                        self._provider, OpenAICompatibleProvider) and self._s.clinical_reasoning_effort:
-                    options["reasoning_effort"] = self._s.clinical_reasoning_effort
+                effort = self._reasoning_effort(prompt_id)
+                if effort is not None:
+                    options["reasoning_effort"] = effort
                 response = await asyncio.wait_for(
                     self._provider.complete(system=system, messages=messages, model=self._s.llm_model,
                                             max_tokens=self._s.llm_max_output_tokens, timeout=timeout,

@@ -519,7 +519,7 @@ async def test_full_market_outputs_survive_assembly():
     assert Decimal(commercial["scenario_ranges"][0]["minimum"]) == 10000
     assert Decimal(commercial["scenario_ranges"][0]["maximum"]) == 20000
     assert commercial["diligence_questions"][0]["evidence_needed"]
-    assert result.section_content[0].structured_data["prompt_version"] == "2.0.0"
+    assert result.section_content[0].structured_data["prompt_version"] == "2.1.0"
 
 
 def test_ranges_keep_contexts_separate_and_preserve_zero():
