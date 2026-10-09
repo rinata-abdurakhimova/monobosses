@@ -18,7 +18,7 @@ from test_failure_miner import output as failure_output
 from test_investment import plan_output, explanation_output
 from test_investment_threshold import output as threshold_output
 from test_ip_licensing import fixture as ip_fixture
-from test_market import fixture as market_fixture
+from test_market import fixture as market_fixture, split_output
 from test_partnerships import output as partnerships_output
 from tests.vic.agents.science.test_translation import _analysis as translation_output
 from tests.vic.agents.science.test_clinical import _clinical_analysis as clinical_output
@@ -42,8 +42,8 @@ def response(prompt_id, payload):
         raw["risks"] = []
         raw["historical_analogues"] = []
         return raw
-    if prompt_id == "market":
-        return market_fixture()[2]
+    if prompt_id in ("market_competitive", "market_commercial"):
+        return split_output(market_fixture()[2], prompt_id)
     if prompt_id == "ip_licensing":
         return ip_fixture()[2]
     if prompt_id == "partnerships":
@@ -128,8 +128,19 @@ def test_http_runs_all_real_nodes_and_preserves_rich_results(tmp_path, monkeypat
             "science", "translation", "clinical", "market", "investment", "ip_licensing",
             "partnerships", "investment_threshold", "failure_miner", "chair", "audit"}
         assert len(report.sections) == 11
+        market = next(r for r in report.roles if r.role_id == "market")
+        assert [s.key for s in market.section_content] == ["competitive_landscape", "commercial_opportunity"]
+        commercial = market.section_content[1].structured_data
+        assert set(commercial) >= {"target_population", "pricing_analogues", "pricing_unknowns",
+            "access", "commercial_value", "scenarios", "scenario_ranges", "addressable_patients",
+            "source_requests", "diligence_questions"}
+        competitive = market.section_content[0].structured_data
+        assert len(competitive["coverage"]) == 6
+        assert all(set(c.evidence_ids) <= {e.id for e in report.evidence} for c in market.claims)
         payloads = dict(model.calls)
         assert all(payloads["chair"]["context_availability"].values())
+        assert "market" not in payloads and set(payloads) >= {"market_competitive", "market_commercial"}
+        assert payloads["investment_plan"]["upstream_context"]["market"]["role_id"] == "market"
         assert payloads["investment_plan"]["upstream_context"]["partnerships"] is not None
         assert payloads["investment_plan"]["upstream_context"]["ip_licensing"] is not None
         chair = next(r for r in report.roles if r.role_id == "chair")

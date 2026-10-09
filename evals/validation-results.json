@@ -285,19 +285,5 @@
     "Market payload character counts exclude prompt, schema, clinical context and retries; these are not token counts or gateway-fit guarantees.",
     "Authored expectations await R3/R4/R5 review; holdout has not been used for tuning.",
     "Direct numeric probes are caller-reviewed fixtures; the integrated runner does not pass MarketScenario arguments."
-  ],
-  "validated_on": "2026-10-09",
-  "code_baseline": "a060c26a7c992d5d48db616b90e5643b2cd0b670",
-  "test_results": {
-    "dataset_validator_tests": {
-      "passed": 11,
-      "failed": 0,
-      "command": "python -m pytest evals/test_cases.py -q -p no:cacheprovider"
-    },
-    "existing_backend_regression_tests": {
-      "passed": 970,
-      "failed": 0,
-      "command": "python -m pytest services/api/tests -q -p no:cacheprovider"
-    }
-  }
+  ]
 }

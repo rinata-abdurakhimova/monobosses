@@ -31,7 +31,14 @@ partnerships, ip_licensing, chair; їхній внесок у фінальний
 За збереженим [validation-results.json](../evals/validation-results.json), 2026-10-09:
 21 case пройшов schema/import/provenance/retrieval checks; 8 numeric probes
 перевірили 24 точні значення та 3 очікувані відхилення неправильних inputs;
-11 тестів валідатора й 970 backend-тестів пройшли. Model calls у валідаторі: 0.
+Model calls у валідаторі: 0.
+
+Після переходу Market на два паралельні виклики пройшли **984 backend-тести
+та 11 evaluation-тестів — разом 995**. Попередні 970 backend-тестів були
+результатом підготовки dataset до цієї зміни. Також пройшли 40 frontend-тестів,
+TypeScript, перевірка frontend-контрактів і підключення вузлів та промптів.
+Деталі й розміри синтетичних запитів: [Market handoff](r5-market-request-budget.md).
+Це офлайн-перевірки; реальний mentor gateway після зміни ще не перевірений.
 Ці результати не додаємо до метрик якості реальної LLM нижче.
 
 ## 3. Узгодження очікувань

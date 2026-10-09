@@ -17,6 +17,8 @@ ALIASES: dict[str, list[str]] = {
     "translation": ["translation"],
     "clinical": ["clinical"],
     "market": ["market"],
+    "market_competitive": ["market_competitive"],
+    "market_commercial": ["market_commercial"],
     "investment": ["investment"],
     "chair": ["chair", "committee"],
     "audit": ["audit", "auditor"],

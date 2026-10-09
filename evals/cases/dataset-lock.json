@@ -81,8 +81,11 @@
     "rubric.md": "02fcce3d6ac04af2b473eca9be1e98a86712d85b769c77dd6b0803f97425bbca"
   },
   "code_baseline": {
-    "origin_main": "a060c26a7c992d5d48db616b90e5643b2cd0b670",
-    "local_head": "3643c8ca328496a51079dc8a6a2f82268643c707",
+    "origin_main": "68ece19479130862cc4ceeb957af3c5326c880f8",
+    "local_head": "68ece19479130862cc4ceeb957af3c5326c880f8",
+    "working_tree_branch": "codex/r5-market-request-budget",
+    "uncommitted_changes": true,
+    "review_status": "offline_compatibility_checked; semantic_R3_R4_R5_review_still_pending",
     "files": {
       "evals/run.py": "9ac06bb31c3f566a313771874c49f460b7eab82f2a6b3077273537577aa9ebf5",
       "services/api/src/vic/agents/business/__init__.py": "02bb84f6f2f5c6237458147c0c21536f3346c8158f7fd2638edb337345d5c302",
@@ -94,7 +97,7 @@
       "services/api/src/vic/agents/business/investment_preparation.py": "07e33cdcf03096fb3cd93365f337e6284921cc53163fbab256d78781dcd42ffc",
       "services/api/src/vic/agents/business/investment_threshold.py": "1fe4a66389cadb5b8d5a2fd6a63d1a2e5ff565c53687f59d79f51a3e193b95d1",
       "services/api/src/vic/agents/business/ip_licensing.py": "b1d3575d63d3bcdd042409856fd396759ee76de9772b6b41c3b096ddf8bfacaa",
-      "services/api/src/vic/agents/business/market.py": "8bb3afd30c3c94a6e676bdbeffaa58c96c05576aec16a5482fcffca8aa3ab560",
+      "services/api/src/vic/agents/business/market.py": "eca048c4a0945d26f92cff11b654a9c0d21dd2dcfbb20863e15aa7cfdb94ab2e",
       "services/api/src/vic/agents/business/partnerships.py": "64abdcb082f4f39ffb464c4a8ae6710acc2756ba4f735bf78710de6397bad6dd",
       "services/api/src/vic/agents/business/prompts/chair.md": "86e52f32eb2ca80a5f73a20e429f29a0e6058d113b425824479fbaeca97dafd0",
       "services/api/src/vic/agents/business/prompts/failure_miner.md": "e3c5a08faaf149a54da433903b2cbce0716cc6a20ce70e1695c19d01d5483fef",
@@ -103,16 +106,57 @@
       "services/api/src/vic/agents/business/prompts/investment_threshold.md": "a72fbbb5f1eef7cbaa12d13d7346cc0d8e14ebda26be17bea4074a5f44de4df7",
       "services/api/src/vic/agents/business/prompts/ip_licensing.md": "b217ef120f98193f7c24a98ad9735e66ffd03699d718cc5fc69e8a609f0b72ef",
       "services/api/src/vic/agents/business/prompts/market.md": "08ecc2114e1ff452347beb98ff2c11ebd8726728746474f9835ed7c85805334c",
+      "services/api/src/vic/agents/business/prompts/market_commercial.md": "e5d08dc5218d919b7e16f7c5e90901fe40cd89a2f2a76e81f765b3ac6a4996f6",
+      "services/api/src/vic/agents/business/prompts/market_competitive.md": "3608ce2034f742ae4898cb98aef2f31ca0b712827bdc0ff5b975543b53942f32",
       "services/api/src/vic/agents/business/prompts/partnerships.md": "008bca7bb7f817a35d7cc44ed648c064dbed8e1a9ccd6d15278ff8d2a5143784",
+      "services/api/src/vic/config.py": "5e2a413d43750c2f55bce1b528ac4a0cbade35807f448c2bda07f3b92c4e918e",
       "services/api/src/vic/contracts.py": "5b8a04274ecfe8042291e478961a637724b7a5252d0b0b7c412020fc4e19e4a3",
       "services/api/src/vic/evidence/importer.py": "c8dc91b2cad7d7c2ffedc30f96fe0491dd1b0dd97bb7c8d7a8625666284dade2",
-      "services/api/src/vic/llm.py": "0a579bf9ad84d915303b45b15c82831c2c4428b75d8a4444535b098fc2bd6566",
+      "services/api/src/vic/llm.py": "a3474fbd61d8c61482297acf8b6ce3db583cb524b4ec5f83734d6617cc5dc8b4",
       "services/api/src/vic/modules.py": "0d814c599b81c833d16037702f618120ddd1fa918dac53290e886edb4608878b",
-      "services/api/src/vic/pipeline.py": "a0225c00131d520ce72ab757524de7dca7da413b78bb0ea91e2f464f3673e0c4"
+      "services/api/src/vic/pipeline.py": "a0225c00131d520ce72ab757524de7dca7da413b78bb0ea91e2f464f3673e0c4",
+      "services/api/src/vic/prompts.py": "a34827bb697dca598665fd75f9ec5e3bb1bc631a730428276d8377fd9930506d"
     }
   },
   "limitations": [
     "Content baseline only; no model/config or holdout outcomes frozen.",
     "No expert labels or live LLM-quality scores."
+  ],
+  "code_baseline_history": [
+    {
+      "reason": "Market v2 split; content/expectations unchanged; offline revalidation required",
+      "recorded_on": "2026-10-09",
+      "baseline": {
+        "origin_main": "a060c26a7c992d5d48db616b90e5643b2cd0b670",
+        "local_head": "3643c8ca328496a51079dc8a6a2f82268643c707",
+        "files": {
+          "evals/run.py": "9ac06bb31c3f566a313771874c49f460b7eab82f2a6b3077273537577aa9ebf5",
+          "services/api/src/vic/agents/business/__init__.py": "02bb84f6f2f5c6237458147c0c21536f3346c8158f7fd2638edb337345d5c302",
+          "services/api/src/vic/agents/business/calculations.py": "f5ece7beb68da6a43bd69a2f19378bdd597502238255a86c81cbe368bd5b58b2",
+          "services/api/src/vic/agents/business/chair.py": "0cf95ec5c026978a597ab69871f4f937c85c1a7040e4e73245aa0ebea457dc54",
+          "services/api/src/vic/agents/business/failure_miner.py": "295124ef8499e2e887114b9a9f6bc64b3c2c962426469b03a0a13c26a707e138",
+          "services/api/src/vic/agents/business/investment.py": "6861879da060564e1d5e170924c625e4b7a2a8960c09e58f4726fa623dd3c4c5",
+          "services/api/src/vic/agents/business/investment_calculations.py": "d6afd856b49075230b6a45345c345f32e3c661c495dda6c193adcf020524728f",
+          "services/api/src/vic/agents/business/investment_preparation.py": "07e33cdcf03096fb3cd93365f337e6284921cc53163fbab256d78781dcd42ffc",
+          "services/api/src/vic/agents/business/investment_threshold.py": "1fe4a66389cadb5b8d5a2fd6a63d1a2e5ff565c53687f59d79f51a3e193b95d1",
+          "services/api/src/vic/agents/business/ip_licensing.py": "b1d3575d63d3bcdd042409856fd396759ee76de9772b6b41c3b096ddf8bfacaa",
+          "services/api/src/vic/agents/business/market.py": "8bb3afd30c3c94a6e676bdbeffaa58c96c05576aec16a5482fcffca8aa3ab560",
+          "services/api/src/vic/agents/business/partnerships.py": "64abdcb082f4f39ffb464c4a8ae6710acc2756ba4f735bf78710de6397bad6dd",
+          "services/api/src/vic/agents/business/prompts/chair.md": "86e52f32eb2ca80a5f73a20e429f29a0e6058d113b425824479fbaeca97dafd0",
+          "services/api/src/vic/agents/business/prompts/failure_miner.md": "e3c5a08faaf149a54da433903b2cbce0716cc6a20ce70e1695c19d01d5483fef",
+          "services/api/src/vic/agents/business/prompts/investment.md": "1ede1f2f6dc1d15b97818f498c16c594526853dcdcb8f4dbe64564950a269fa9",
+          "services/api/src/vic/agents/business/prompts/investment_plan.md": "fccfc2094918b38b564087ba4911471b2ef41c7d12986a30ee281adcbc50f430",
+          "services/api/src/vic/agents/business/prompts/investment_threshold.md": "a72fbbb5f1eef7cbaa12d13d7346cc0d8e14ebda26be17bea4074a5f44de4df7",
+          "services/api/src/vic/agents/business/prompts/ip_licensing.md": "b217ef120f98193f7c24a98ad9735e66ffd03699d718cc5fc69e8a609f0b72ef",
+          "services/api/src/vic/agents/business/prompts/market.md": "08ecc2114e1ff452347beb98ff2c11ebd8726728746474f9835ed7c85805334c",
+          "services/api/src/vic/agents/business/prompts/partnerships.md": "008bca7bb7f817a35d7cc44ed648c064dbed8e1a9ccd6d15278ff8d2a5143784",
+          "services/api/src/vic/contracts.py": "5b8a04274ecfe8042291e478961a637724b7a5252d0b0b7c412020fc4e19e4a3",
+          "services/api/src/vic/evidence/importer.py": "c8dc91b2cad7d7c2ffedc30f96fe0491dd1b0dd97bb7c8d7a8625666284dade2",
+          "services/api/src/vic/llm.py": "0a579bf9ad84d915303b45b15c82831c2c4428b75d8a4444535b098fc2bd6566",
+          "services/api/src/vic/modules.py": "0d814c599b81c833d16037702f618120ddd1fa918dac53290e886edb4608878b",
+          "services/api/src/vic/pipeline.py": "a0225c00131d520ce72ab757524de7dca7da413b78bb0ea91e2f464f3673e0c4"
+        }
+      }
+    }
   ]
 }
