@@ -1,0 +1,213 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "hold-03-license-restriction",
+  "title": "Дослідницька ліцензія не дає права продажу",
+  "evaluator_only_marker": "R5_EXPECTATIONS_ONLY_hold-03-license-restriction",
+  "label_status": "author_defined_pending_R3_R4_R5_review",
+  "scope": "integrated_pipeline_all_R5_roles",
+  "focus_roles": [
+    "ip_licensing",
+    "partnerships"
+  ],
+  "required_facts": [
+    {
+      "id": "hold-03-license-restriction-fact-01",
+      "document": "license-terms",
+      "assertion": "The license is research-only and prohibits commercial sale, transfer and sublicensing without consent.",
+      "importance": "critical",
+      "source_id": "src-ee2dd335447c",
+      "evidence_ids": [
+        "ev-ee2dd335447c-001"
+      ]
+    },
+    {
+      "id": "hold-03-license-restriction-fact-02",
+      "document": "license-terms",
+      "assertion": "Licensor retains title and the patent is pending, not granted.",
+      "importance": "major",
+      "source_id": "src-ee2dd335447c",
+      "evidence_ids": [
+        "ev-ee2dd335447c-001"
+      ]
+    }
+  ],
+  "required_risks": [
+    {
+      "id": "hold-03-license-restriction-risk-01",
+      "requirement": "Commercial and transfer rights are a material unresolved barrier.",
+      "importance": "critical"
+    }
+  ],
+  "required_unknowns": [
+    "Consent/commercial license availability",
+    "FTO",
+    "Expiry/enforceability"
+  ],
+  "forbidden_assertions": [
+    "Research license permits commercial sale",
+    "Sponsor owns title",
+    "Sublicensing is unrestricted",
+    "Patent is granted"
+  ],
+  "allowed_recommendations": [
+    "Conditional"
+  ],
+  "recommendation_rationale": "Rights restriction requires explicit consent/rights diligence before a commercial path can be supported.",
+  "role_expectations": {
+    "market": [
+      {
+        "requirement": "Describe evidence coverage for all six competitor categories; absence of evidence is not absence of competitors.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Preserve unknown pricing/population/access domains; do not infer a numerical opportunity without caller-reviewed calculated_scenarios.",
+        "importance": "critical"
+      }
+    ],
+    "investment": [
+      {
+        "requirement": "Preserve missing capital/time inputs as unknown; distinguish a known subtotal from a complete budget.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "State milestone/work, three financing paths and stress kinds with explicit gaps rather than invented deals or numbers.",
+        "importance": "major"
+      }
+    ],
+    "failure_miner": [
+      {
+        "requirement": "Review every upstream domain and dispose of every supplied risk; missing knowledge is not a demonstrated failure.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Describe material failure chains and concrete checks with positive/negative/inconclusive handling.",
+        "importance": "major"
+      }
+    ],
+    "chair": [
+      {
+        "requirement": "Use all nine upstream roles plus audit and preserve critical risks/unknowns in the final decision.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Provide arguments, reasoned decision, actionable conditions/questions and review of contradictions.",
+        "importance": "major"
+      }
+    ],
+    "investment_threshold": [
+      {
+        "requirement": "Relate gates for now/next_stage to criteria, available evidence, gaps and checks.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Do not label an unobserved criterion not_met or a criterion without support met.",
+        "importance": "critical"
+      }
+    ],
+    "partnerships": [
+      {
+        "requirement": "Portfolio fit or a partner category does not prove interest, financing, agreement or deal readiness.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Assess all four collaboration formats for each candidate, with explicit prerequisites and IP dependencies.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Licensing/acquisition routes require consent; do not offer rights not controlled.",
+        "importance": "critical"
+      }
+    ],
+    "ip_licensing": [
+      {
+        "requirement": "State unsearched rights, territories and limitations; FTO remains unresolved or potential_barriers, never legal clearance.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Do not invent ownership, expiry dates, license terms or deal prices.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Distinguish licensed research use from commercial/transfer rights.",
+        "importance": "critical"
+      }
+    ]
+  },
+  "rubric_ids": [
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05",
+    "Q06",
+    "Q07",
+    "Q08",
+    "Q09",
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M05",
+    "I01",
+    "I02",
+    "I03",
+    "I04",
+    "I05",
+    "I06",
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "T01",
+    "T02",
+    "T03",
+    "T04",
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "L01",
+    "L02",
+    "L03",
+    "L04",
+    "R04",
+    "R05"
+  ],
+  "rubric_na": {
+    "Q10": "No adversarial instruction unless explicitly part of this case.",
+    "R01": "Not a paired variant unless revision field is present.",
+    "R02": "Not a decisive pair unless revision field requests it.",
+    "R03": "Not a non-decisive pair unless revision field requests it."
+  },
+  "review_owners": {
+    "evidence": "R3",
+    "science_clinical": "R4",
+    "business_decision": "R5",
+    "runtime": "R2"
+  },
+  "automated_checks": [
+    "CaseInput schema",
+    "R3 document parsing and excerpt provenance",
+    "full Report integrity after an actual run"
+  ],
+  "manual_review_required": [
+    "claim/excerpt semantic support",
+    "scientific applicability",
+    "business rationale",
+    "material omissions",
+    "legal interpretation where relevant"
+  ],
+  "document_map": {
+    "license-terms": {
+      "source_id": "src-ee2dd335447c",
+      "evidence_ids": [
+        "ev-ee2dd335447c-001"
+      ]
+    }
+  }
+}

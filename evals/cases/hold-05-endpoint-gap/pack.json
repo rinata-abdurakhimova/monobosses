@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — biomarker-only",
+      "text": "Synthetic candidate V changed a blood biomarker in a small uncontrolled human study. Symptoms, function, quality of life and survival were not measured, and no validated relationship between this biomarker and clinical benefit was supplied. Exposure safety at the intended chronic dose is unknown.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic candidate V changed a blood biomarker in a small uncontrolled human study. Symptoms, function, quality of life and survival were not measured, and no validated relationship between this biomarker and clinical benefit was supplied. Exposure safety at the intended chronic dose is unknown.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

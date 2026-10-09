@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — sparse-description",
+      "text": "Synthetic approach K is proposed for inflammatory disease. No experimental results, trial plan, competitors, patient counts, prices, budget, patent search or partner commitments were supplied.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic approach K is proposed for inflammatory disease. No experimental results, trial plan, competitors, patient counts, prices, budget, patent search or partner commitments were supplied.",
+          "scope": "approach",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

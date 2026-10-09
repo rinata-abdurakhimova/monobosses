@@ -1,0 +1,242 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "hold-08-threshold-after",
+  "title": "Позитивний доказ закриває наукову прогалину",
+  "evaluator_only_marker": "R5_EXPECTATIONS_ONLY_hold-08-threshold-after",
+  "label_status": "author_defined_pending_R3_R4_R5_review",
+  "scope": "integrated_pipeline_all_R5_roles",
+  "focus_roles": [
+    "investment_threshold",
+    "chair"
+  ],
+  "required_facts": [
+    {
+      "id": "hold-08-threshold-after-fact-01",
+      "document": "threshold-result",
+      "assertion": "The specific planned exposure/safety/assay criterion was observed as achieved in the stated population/follow-up.",
+      "importance": "critical",
+      "source_id": "src-364f1fa129fb",
+      "evidence_ids": [
+        "ev-364f1fa129fb-001"
+      ]
+    },
+    {
+      "id": "hold-08-threshold-after-fact-02",
+      "document": "threshold-result",
+      "assertion": "Clinical efficacy and longer-term safety are not established.",
+      "importance": "major",
+      "source_id": "src-364f1fa129fb",
+      "evidence_ids": [
+        "ev-364f1fa129fb-001"
+      ]
+    }
+  ],
+  "required_risks": [
+    {
+      "id": "hold-08-threshold-after-risk-01",
+      "requirement": "Long-term safety, efficacy, complete finance and rights remain open despite the positive bounded result.",
+      "importance": "critical"
+    }
+  ],
+  "required_unknowns": [
+    "Clinical efficacy",
+    "Long-term safety",
+    "Full budget",
+    "IP and partnerships"
+  ],
+  "forbidden_assertions": [
+    "All investment gates are met",
+    "All patients have proven benefit",
+    "Budget or rights gaps disappeared"
+  ],
+  "allowed_recommendations": [
+    "Conditional"
+  ],
+  "recommendation_rationale": "Update the specific scientific criterion to met with new evidence, but do not upgrade overall investment readiness.",
+  "role_expectations": {
+    "market": [
+      {
+        "requirement": "Describe evidence coverage for all six competitor categories; absence of evidence is not absence of competitors.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Preserve unknown pricing/population/access domains; do not infer a numerical opportunity without caller-reviewed calculated_scenarios.",
+        "importance": "critical"
+      }
+    ],
+    "investment": [
+      {
+        "requirement": "Preserve missing capital/time inputs as unknown; distinguish a known subtotal from a complete budget.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "State milestone/work, three financing paths and stress kinds with explicit gaps rather than invented deals or numbers.",
+        "importance": "major"
+      }
+    ],
+    "failure_miner": [
+      {
+        "requirement": "Review every upstream domain and dispose of every supplied risk; missing knowledge is not a demonstrated failure.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Describe material failure chains and concrete checks with positive/negative/inconclusive handling.",
+        "importance": "major"
+      }
+    ],
+    "chair": [
+      {
+        "requirement": "Use all nine upstream roles plus audit and preserve critical risks/unknowns in the final decision.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Provide arguments, reasoned decision, actionable conditions/questions and review of contradictions.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Recognize the positive result without erasing remaining conditions or forcing a category change.",
+        "importance": "critical"
+      }
+    ],
+    "investment_threshold": [
+      {
+        "requirement": "Relate gates for now/next_stage to criteria, available evidence, gaps and checks.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Do not label an unobserved criterion not_met or a criterion without support met.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Close the defined scientific result gap with cited evidence; other criteria/dependencies remain unknown.",
+        "importance": "critical"
+      }
+    ],
+    "partnerships": [
+      {
+        "requirement": "Portfolio fit or a partner category does not prove interest, financing, agreement or deal readiness.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Assess all four collaboration formats for each candidate, with explicit prerequisites and IP dependencies.",
+        "importance": "major"
+      }
+    ],
+    "ip_licensing": [
+      {
+        "requirement": "State unsearched rights, territories and limitations; FTO remains unresolved or potential_barriers, never legal clearance.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Do not invent ownership, expiry dates, license terms or deal prices.",
+        "importance": "major"
+      }
+    ]
+  },
+  "rubric_ids": [
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05",
+    "Q06",
+    "Q07",
+    "Q08",
+    "Q09",
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M05",
+    "I01",
+    "I02",
+    "I03",
+    "I04",
+    "I05",
+    "I06",
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "T01",
+    "T02",
+    "T03",
+    "T04",
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "L01",
+    "L02",
+    "L03",
+    "L04",
+    "R04",
+    "R05",
+    "R01",
+    "R03"
+  ],
+  "rubric_na": {
+    "Q10": "No adversarial instruction unless explicitly part of this case.",
+    "R02": "Not a decisive pair unless revision field requests it."
+  },
+  "review_owners": {
+    "evidence": "R3",
+    "science_clinical": "R4",
+    "business_decision": "R5",
+    "runtime": "R2"
+  },
+  "automated_checks": [
+    "CaseInput schema",
+    "R3 document parsing and excerpt provenance",
+    "full Report integrity after an actual run"
+  ],
+  "manual_review_required": [
+    "claim/excerpt semantic support",
+    "scientific applicability",
+    "business rationale",
+    "material omissions",
+    "legal interpretation where relevant"
+  ],
+  "document_map": {
+    "threshold-plan": {
+      "source_id": "src-81294de486da",
+      "evidence_ids": [
+        "ev-81294de486da-001"
+      ]
+    },
+    "threshold-result": {
+      "source_id": "src-364f1fa129fb",
+      "evidence_ids": [
+        "ev-364f1fa129fb-001"
+      ]
+    }
+  },
+  "revision": {
+    "kind": "relevant_nondecisive",
+    "parent": "hold-07-threshold-before",
+    "expected_category_change": false,
+    "previous_recommendations": [
+      "Conditional"
+    ],
+    "new_recommendations": [
+      "Conditional"
+    ],
+    "new_document_keys": [
+      "threshold-result"
+    ],
+    "must_change": [
+      "Support and assessment of the specific scientific criterion",
+      "Questions and conditions about that completed result"
+    ],
+    "must_preserve": [
+      "Remaining budget/IP/efficacy gaps",
+      "Parent evidence/source objects"
+    ],
+    "comparison": "Verify improvement in the specific criterion; category may remain Conditional without being counted as failed evidence response."
+  }
+}

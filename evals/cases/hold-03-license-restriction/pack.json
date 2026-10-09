@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — license-terms",
+      "text": "Synthetic candidate LICENSE-L is covered by a research-only, nonexclusive license in territory South. Licensor Fictional Institute L retains title. The agreement explicitly prohibits commercial sale, transfer and sublicensing without written consent. No consent or commercial license is documented. A related patent is pending, not granted; no expiry or enforceability determination is supplied.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic candidate LICENSE-L is covered by a research-only, nonexclusive license in territory South. Licensor Fictional Institute L retains title. The agreement explicitly prohibits commercial sale, transfer and sublicensing without written consent. No consent or commercial license is documented. A related patent is pending, not granted; no expiry or enforceability determination is supplied.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}

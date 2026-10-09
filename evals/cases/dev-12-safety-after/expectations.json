@@ -1,0 +1,247 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "dev-12-safety-after",
+  "title": "Новий доказ робить конкретний кандидат неприйнятним",
+  "evaluator_only_marker": "R5_EXPECTATIONS_ONLY_dev-12-safety-after",
+  "label_status": "author_defined_pending_R3_R4_R5_review",
+  "scope": "integrated_pipeline_all_R5_roles",
+  "focus_roles": [
+    "chair",
+    "failure_miner",
+    "investment_threshold"
+  ],
+  "required_facts": [
+    {
+      "id": "dev-12-safety-after-fact-01",
+      "document": "safety-decisive",
+      "assertion": "Severe irreversible toxicity at required exposure was observed and confirmed for SAFETY-S.",
+      "importance": "critical",
+      "source_id": "src-92b098f5a0a1",
+      "evidence_ids": [
+        "ev-92b098f5a0a1-001"
+      ]
+    },
+    {
+      "id": "dev-12-safety-after-fact-02",
+      "document": "safety-decisive",
+      "assertion": "Lower exposure failed engagement and no feasible candidate-specific mitigation was found.",
+      "importance": "critical",
+      "source_id": "src-92b098f5a0a1",
+      "evidence_ids": [
+        "ev-92b098f5a0a1-001"
+      ]
+    }
+  ],
+  "required_risks": [
+    {
+      "id": "dev-12-safety-after-risk-01",
+      "requirement": "Confirmed unmitigable active-exposure toxicity is a critical candidate-level investment blocker.",
+      "importance": "critical"
+    }
+  ],
+  "required_unknowns": [
+    "Generalization to other target-K candidates"
+  ],
+  "forbidden_assertions": [
+    "The candidate remains safe",
+    "Only administrative information changed",
+    "Every target-K approach is unsafe"
+  ],
+  "allowed_recommendations": [
+    "Do Not Invest"
+  ],
+  "recommendation_rationale": "Unlike absent evidence, the new observed severe unmitigable candidate-specific harm supports rejection.",
+  "role_expectations": {
+    "market": [
+      {
+        "requirement": "Describe evidence coverage for all six competitor categories; absence of evidence is not absence of competitors.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Preserve unknown pricing/population/access domains; do not infer a numerical opportunity without caller-reviewed calculated_scenarios.",
+        "importance": "critical"
+      }
+    ],
+    "investment": [
+      {
+        "requirement": "Preserve missing capital/time inputs as unknown; distinguish a known subtotal from a complete budget.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "State milestone/work, three financing paths and stress kinds with explicit gaps rather than invented deals or numbers.",
+        "importance": "major"
+      }
+    ],
+    "failure_miner": [
+      {
+        "requirement": "Review every upstream domain and dispose of every supplied risk; missing knowledge is not a demonstrated failure.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Describe material failure chains and concrete checks with positive/negative/inconclusive handling.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Preserve a critical safety blocker, not a low-priority generic gap.",
+        "importance": "critical"
+      }
+    ],
+    "chair": [
+      {
+        "requirement": "Use all nine upstream roles plus audit and preserve critical risks/unknowns in the final decision.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Provide arguments, reasoned decision, actionable conditions/questions and review of contradictions.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Change Conditional to Do Not Invest with cited new evidence and a documented adverse rationale.",
+        "importance": "critical"
+      }
+    ],
+    "investment_threshold": [
+      {
+        "requirement": "Relate gates for now/next_stage to criteria, available evidence, gaps and checks.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Do not label an unobserved criterion not_met or a criterion without support met.",
+        "importance": "critical"
+      }
+    ],
+    "partnerships": [
+      {
+        "requirement": "Portfolio fit or a partner category does not prove interest, financing, agreement or deal readiness.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Assess all four collaboration formats for each candidate, with explicit prerequisites and IP dependencies.",
+        "importance": "major"
+      }
+    ],
+    "ip_licensing": [
+      {
+        "requirement": "State unsearched rights, territories and limitations; FTO remains unresolved or potential_barriers, never legal clearance.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Do not invent ownership, expiry dates, license terms or deal prices.",
+        "importance": "major"
+      }
+    ]
+  },
+  "rubric_ids": [
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05",
+    "Q06",
+    "Q07",
+    "Q08",
+    "Q09",
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M05",
+    "I01",
+    "I02",
+    "I03",
+    "I04",
+    "I05",
+    "I06",
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "T01",
+    "T02",
+    "T03",
+    "T04",
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "L01",
+    "L02",
+    "L03",
+    "L04",
+    "R04",
+    "R05",
+    "R01",
+    "R02"
+  ],
+  "rubric_na": {
+    "Q10": "No adversarial instruction unless explicitly part of this case.",
+    "R03": "Not a non-decisive pair unless revision field requests it."
+  },
+  "review_owners": {
+    "evidence": "R3",
+    "science_clinical": "R4",
+    "business_decision": "R5",
+    "runtime": "R2"
+  },
+  "automated_checks": [
+    "CaseInput schema",
+    "R3 document parsing and excerpt provenance",
+    "full Report integrity after an actual run"
+  ],
+  "manual_review_required": [
+    "claim/excerpt semantic support",
+    "scientific applicability",
+    "business rationale",
+    "material omissions",
+    "legal interpretation where relevant"
+  ],
+  "document_map": {
+    "safety-baseline": {
+      "source_id": "src-1b848ae61f96",
+      "evidence_ids": [
+        "ev-1b848ae61f96-001"
+      ]
+    },
+    "admin-only": {
+      "source_id": "src-dd2af1821a10",
+      "evidence_ids": [
+        "ev-dd2af1821a10-001"
+      ]
+    },
+    "safety-decisive": {
+      "source_id": "src-92b098f5a0a1",
+      "evidence_ids": [
+        "ev-92b098f5a0a1-001"
+      ]
+    }
+  },
+  "revision": {
+    "kind": "decisive",
+    "parent": "dev-11-admin-after",
+    "expected_category_change": true,
+    "previous_recommendations": [
+      "Conditional"
+    ],
+    "new_recommendations": [
+      "Do Not Invest"
+    ],
+    "new_document_keys": [
+      "safety-decisive"
+    ],
+    "must_change": [
+      "Safety support status",
+      "Critical safety risk",
+      "Decision rationale and recommendation"
+    ],
+    "must_preserve": [
+      "Parent evidence and source objects",
+      "Candidate-level scope"
+    ],
+    "comparison": "Compare actual Report revision, changed_claims, new_evidence_ids and source navigation."
+  }
+}

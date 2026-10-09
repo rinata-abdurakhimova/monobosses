@@ -1,0 +1,226 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "dev-11-admin-after",
+  "title": "Адміністративний документ не змінює рішення",
+  "evaluator_only_marker": "R5_EXPECTATIONS_ONLY_dev-11-admin-after",
+  "label_status": "author_defined_pending_R3_R4_R5_review",
+  "scope": "integrated_pipeline_all_R5_roles",
+  "focus_roles": [
+    "chair"
+  ],
+  "required_facts": [
+    {
+      "id": "dev-11-admin-after-fact-01",
+      "document": "admin-only",
+      "assertion": "The update concerns archive contact details only.",
+      "importance": "major",
+      "source_id": "src-dd2af1821a10",
+      "evidence_ids": [
+        "ev-dd2af1821a10-001"
+      ]
+    }
+  ],
+  "required_risks": [
+    {
+      "id": "dev-11-admin-after-risk-01",
+      "requirement": "Higher-exposure safety remains unresolved, as in the baseline.",
+      "importance": "critical"
+    }
+  ],
+  "required_unknowns": [
+    "Higher-exposure safety",
+    "Clinical benefit",
+    "Finance/IP/partners"
+  ],
+  "forbidden_assertions": [
+    "Contact change demonstrates safety",
+    "No further diligence is needed",
+    "The update justifies a new severe-risk conclusion"
+  ],
+  "allowed_recommendations": [
+    "Conditional"
+  ],
+  "recommendation_rationale": "New snapshot/document is not a reason to change the investment position or conditions.",
+  "role_expectations": {
+    "market": [
+      {
+        "requirement": "Describe evidence coverage for all six competitor categories; absence of evidence is not absence of competitors.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Preserve unknown pricing/population/access domains; do not infer a numerical opportunity without caller-reviewed calculated_scenarios.",
+        "importance": "critical"
+      }
+    ],
+    "investment": [
+      {
+        "requirement": "Preserve missing capital/time inputs as unknown; distinguish a known subtotal from a complete budget.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "State milestone/work, three financing paths and stress kinds with explicit gaps rather than invented deals or numbers.",
+        "importance": "major"
+      }
+    ],
+    "failure_miner": [
+      {
+        "requirement": "Review every upstream domain and dispose of every supplied risk; missing knowledge is not a demonstrated failure.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Describe material failure chains and concrete checks with positive/negative/inconclusive handling.",
+        "importance": "major"
+      }
+    ],
+    "chair": [
+      {
+        "requirement": "Use all nine upstream roles plus audit and preserve critical risks/unknowns in the final decision.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Provide arguments, reasoned decision, actionable conditions/questions and review of contradictions.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Keep recommendation, safety conditions and key questions substantively stable; wording may vary.",
+        "importance": "critical"
+      }
+    ],
+    "investment_threshold": [
+      {
+        "requirement": "Relate gates for now/next_stage to criteria, available evidence, gaps and checks.",
+        "importance": "major"
+      },
+      {
+        "requirement": "Do not label an unobserved criterion not_met or a criterion without support met.",
+        "importance": "critical"
+      }
+    ],
+    "partnerships": [
+      {
+        "requirement": "Portfolio fit or a partner category does not prove interest, financing, agreement or deal readiness.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Assess all four collaboration formats for each candidate, with explicit prerequisites and IP dependencies.",
+        "importance": "major"
+      }
+    ],
+    "ip_licensing": [
+      {
+        "requirement": "State unsearched rights, territories and limitations; FTO remains unresolved or potential_barriers, never legal clearance.",
+        "importance": "critical"
+      },
+      {
+        "requirement": "Do not invent ownership, expiry dates, license terms or deal prices.",
+        "importance": "major"
+      }
+    ]
+  },
+  "rubric_ids": [
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05",
+    "Q06",
+    "Q07",
+    "Q08",
+    "Q09",
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M05",
+    "I01",
+    "I02",
+    "I03",
+    "I04",
+    "I05",
+    "I06",
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "T01",
+    "T02",
+    "T03",
+    "T04",
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "L01",
+    "L02",
+    "L03",
+    "L04",
+    "R04",
+    "R05",
+    "R01",
+    "R03"
+  ],
+  "rubric_na": {
+    "Q10": "No adversarial instruction unless explicitly part of this case.",
+    "R02": "Not a decisive pair unless revision field requests it."
+  },
+  "review_owners": {
+    "evidence": "R3",
+    "science_clinical": "R4",
+    "business_decision": "R5",
+    "runtime": "R2"
+  },
+  "automated_checks": [
+    "CaseInput schema",
+    "R3 document parsing and excerpt provenance",
+    "full Report integrity after an actual run"
+  ],
+  "manual_review_required": [
+    "claim/excerpt semantic support",
+    "scientific applicability",
+    "business rationale",
+    "material omissions",
+    "legal interpretation where relevant"
+  ],
+  "document_map": {
+    "safety-baseline": {
+      "source_id": "src-1b848ae61f96",
+      "evidence_ids": [
+        "ev-1b848ae61f96-001"
+      ]
+    },
+    "admin-only": {
+      "source_id": "src-dd2af1821a10",
+      "evidence_ids": [
+        "ev-dd2af1821a10-001"
+      ]
+    }
+  },
+  "revision": {
+    "kind": "irrelevant",
+    "parent": "dev-10-safety-before",
+    "expected_category_change": false,
+    "previous_recommendations": [
+      "Conditional"
+    ],
+    "new_recommendations": [
+      "Conditional"
+    ],
+    "new_document_keys": [
+      "admin-only"
+    ],
+    "must_change": [
+      "New evidence/source inventory and revision metadata"
+    ],
+    "must_preserve": [
+      "Recommendation",
+      "Substantive safety conditions and critical questions",
+      "Parent evidence/source objects"
+    ],
+    "comparison": "Compare substantive meaning, not literal wording or IDs of newly generated questions."
+  }
+}

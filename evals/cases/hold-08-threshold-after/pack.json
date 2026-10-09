@@ -1,0 +1,34 @@
+{
+  "documents": [
+    {
+      "title": "Synthetic evaluation document — threshold-plan",
+      "text": "Synthetic candidate G is seeking funding for a confirmatory human exposure/safety study. The reviewed clinical plan defines a scientific gate: achieve the pre-specified target exposure in the stated adult population, with no severe treatment-related event during the stated follow-up and a reproducible assay result. The study is feasible at the current stage; recruitment and assay access are documented as available. No study outcome has yet been reported. Prices, full budget, patent rights and partner commitments are not supplied. This is a necessary scientific gate, not a complete investment approval criterion.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic candidate G is seeking funding for a confirmatory human exposure/safety study. The reviewed clinical plan defines a scientific gate: achieve the pre-specified target exposure in the stated adult population, with no severe treatment-related event during the stated follow-up and a reproducible assay result. The study is feasible at the current stage; recruitment and assay access are documented as available. No study outcome has yet been reported. Prices, full budget, patent rights and partner commitments are not supplied. This is a necessary scientific gate, not a complete investment approval criterion.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Synthetic evaluation document — threshold-result",
+      "text": "Synthetic candidate G follow-up confirms the exact population, target exposure, assay reproducibility and follow-up from the reviewed gate plan. The pre-specified target exposure was achieved, assay replication was successful, and no severe treatment-related event occurred during the specified follow-up. Independent reviewers of this fictional study verified the result against the pre-specified criteria. The findings are limited to this population and follow-up; clinical efficacy, longer-term safety, full budget and commercial/IP readiness remain unestablished.",
+      "published_at": "2026-10-08",
+      "synthetic": true,
+      "evidence": [
+        {
+          "excerpt": "Synthetic candidate G follow-up confirms the exact population, target exposure, assay reproducibility and follow-up from the reviewed gate plan. The pre-specified target exposure was achieved, assay replication was successful, and no severe treatment-related event occurred during the specified follow-up. Independent reviewers of this fictional study verified the result against the pre-specified criteria. The findings are limited to this population and follow-up; clinical efficacy, longer-term safety, full budget and commercial/IP readiness remain unestablished.",
+          "scope": "program",
+          "limitations": [
+            "Entirely fictional evidence; no real investment or clinical conclusion."
+          ]
+        }
+      ]
+    }
+  ]
+}
