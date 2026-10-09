@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     llm_max_repairs: int = Field(default=1, ge=0)
     llm_request_timeout_seconds: float = Field(default=120.0, gt=0)
     llm_max_output_tokens: int = Field(default=4096, gt=0)
+    clinical_reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] | None = "low"
     # Provisional application cap, NOT a measured mentor gateway limit.
     market_request_max_bytes: int = Field(default=18000, gt=0)
     llm_price_input_per_mtok: float | None = None    # USD per 1M input tokens
@@ -60,7 +61,7 @@ class Settings(BaseSettings):
         return value.rstrip("/")
 
     @field_validator("max_run_cost_usd", "llm_price_input_per_mtok", "llm_price_output_per_mtok",
-                     "llm_price_date", mode="before")
+                     "llm_price_date", "clinical_reasoning_effort", mode="before")
     @classmethod
     def _empty_to_none(cls, value):
         return None if isinstance(value, str) and not value.strip() else value
@@ -89,6 +90,7 @@ class Settings(BaseSettings):
             "llm_max_retries": self.llm_max_retries, "llm_max_repairs": self.llm_max_repairs,
             "llm_request_timeout_seconds": self.llm_request_timeout_seconds,
             "llm_max_output_tokens": self.llm_max_output_tokens,
+            "clinical_reasoning_effort": self.clinical_reasoning_effort,
             "market_request_max_bytes": self.market_request_max_bytes,
             "llm_price_input_per_mtok": self.llm_price_input_per_mtok,
             "llm_price_output_per_mtok": self.llm_price_output_per_mtok,

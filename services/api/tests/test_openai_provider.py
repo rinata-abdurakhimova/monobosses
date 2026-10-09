@@ -4,7 +4,6 @@ import json
 import httpx
 import pytest
 from pydantic import BaseModel, ValidationError
-
 from vic.config import Settings
 from vic.contracts import RunBudget, RunContext, RunMode
 from vic.failures import ProviderAuthError, ProviderError, ProviderTimeout
@@ -160,3 +159,29 @@ def test_shared_adapter_retries_repairs_and_records_usage(monkeypatch):
     assert [item["outcome"] for item in ctx.trace.usage] == ["provider_error", "ok", "ok"]
     assert ctx.trace.usage[-1]["model"] == "gpt-6-luna"
     assert KEY not in json.dumps(ctx.trace.usage)
+
+
+@pytest.mark.parametrize("prompt_id", ["clinical", "clinical_design", "clinical_development", "science"])
+@pytest.mark.parametrize("effort", ["low", None])
+def test_reasoning_effort_is_limited_to_clinical_requests(prompt_id, effort):
+    class Out(BaseModel):
+        answer: str
+
+    bodies = []
+
+    def handler(request):
+        bodies.append(json.loads(request.content))
+        return httpx.Response(200, json=reply())
+
+    config = settings(clinical_reasoning_effort=effort)
+    adapter = StructuredLlm(OpenAICompatibleProvider(config, transport=httpx.MockTransport(handler)), config)
+    ctx = RunContext("c", "r", None, None, RunMode.EVIDENCE_ONLY)
+    sizes = adapter.structured_request_size(prompt_id, {}, Out, ctx)
+    asyncio.run(adapter.generate_structured(prompt_id, {}, Out, ctx))
+    if prompt_id.startswith("clinical") and effort:
+        assert bodies[0]["reasoning_effort"] == effort
+    else:
+        assert "reasoning_effort" not in bodies[0]
+    encoded = json.dumps(bodies[0], ensure_ascii=False, separators=(",", ":"))
+    assert sizes["request_bytes"] == len(encoded.encode("utf-8"))
+    assert config.public_config()["clinical_reasoning_effort"] == effort

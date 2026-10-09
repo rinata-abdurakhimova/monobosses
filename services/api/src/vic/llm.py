@@ -18,8 +18,8 @@ from vic.failures import (
     ModuleNotReady,
     ProviderAuthError,
     ProviderError,
-    RunFailure,
     ProviderTimeout,
+    RunFailure,
     RunTimeout,
 )
 from vic.prompts import load_prompt
@@ -94,7 +94,8 @@ class OpenAICompatibleProvider:
         self._base_url = settings.llm_base_url
         self._transport = transport
 
-    async def complete(self, *, system, messages, model, max_tokens, timeout) -> ProviderResponse:
+    async def complete(self, *, system, messages, model, max_tokens, timeout,
+                       reasoning_effort=None) -> ProviderResponse:
         if not self._api_key.strip():
             raise ProviderAuthError("LLM_API_KEY is empty")
         if not self._base_url:
@@ -104,6 +105,8 @@ class OpenAICompatibleProvider:
         headers = {"Authorization": f"Bearer {self._api_key}"}
         body = {"model": model, "messages": [{"role": "system", "content": system}, *messages],
                 "max_completion_tokens": max_tokens, "stream": False}
+        if reasoning_effort is not None:
+            body["reasoning_effort"] = reasoning_effort
         try:
             # HTTPX has no implicit retries; redirects must not forward credentials.
             async with httpx.AsyncClient(transport=self._transport, follow_redirects=False) as client:
@@ -192,7 +195,8 @@ def structured_request(prompt_id, payload, response_model, ctx):
     messages = [{"role": "user", "content": json.dumps(payload, ensure_ascii=False,
                                   default=str, separators=(",", ":"))}]
     owner = "investment" if prompt_id == "investment_plan" else (
-        "market" if prompt_id in MARKET_PROMPTS else prompt_id)
+        "market" if prompt_id in MARKET_PROMPTS else
+        "clinical" if prompt_id in {"clinical_design", "clinical_development"} else prompt_id)
     feedback = ctx.feedback.get(owner)
     if feedback:
         messages.append({"role": "user", "content": "Correct the audit/completeness findings: "
@@ -232,8 +236,15 @@ class StructuredLlm:
 
     def structured_request_size(self, prompt_id, payload, response_model, ctx):
         _, system, messages = structured_request(prompt_id, payload, response_model, ctx)
-        return request_sizes(system, messages, model=self._s.llm_model,
-                             max_tokens=self._s.llm_max_output_tokens)
+        sizes = request_sizes(system, messages, model=self._s.llm_model,
+                              max_tokens=self._s.llm_max_output_tokens)
+        if prompt_id in {"clinical", "clinical_design", "clinical_development"} and isinstance(
+                self._provider, OpenAICompatibleProvider) and self._s.clinical_reasoning_effort:
+            extra = len(json.dumps({"reasoning_effort": self._s.clinical_reasoning_effort},
+                                   separators=(",", ":"))) - 1
+            sizes["request_bytes"] += extra
+            sizes["request_chars"] += extra
+        return sizes
 
     def cost_limit_enforceable(self) -> bool:
         return (self._s.llm_price_input_per_mtok is not None
@@ -275,9 +286,14 @@ class StructuredLlm:
             timeout = self._timeout(ctx)
             started = time.monotonic()
             try:
+                options = {}
+                if prompt_id in {"clinical", "clinical_design", "clinical_development"} and isinstance(
+                        self._provider, OpenAICompatibleProvider) and self._s.clinical_reasoning_effort:
+                    options["reasoning_effort"] = self._s.clinical_reasoning_effort
                 response = await asyncio.wait_for(
                     self._provider.complete(system=system, messages=messages, model=self._s.llm_model,
-                                            max_tokens=self._s.llm_max_output_tokens, timeout=timeout),
+                                            max_tokens=self._s.llm_max_output_tokens, timeout=timeout,
+                                            **options),
                     timeout=timeout + 5)
             except TimeoutError:
                 error: ProviderError = ProviderTimeout("The model provider timed out")
@@ -327,7 +343,7 @@ class StructuredLlm:
 
 def build_llm(settings: Settings) -> StructuredLlm:
     return StructuredLlm(make_provider(settings), settings)
-PROMPT_IDS = ("science", "translation", "clinical", "market", "market_competitive", "market_commercial", "investment_plan", "investment",
+PROMPT_IDS = ("science", "translation", "clinical", "clinical_design", "clinical_development", "market", "market_competitive", "market_commercial", "investment_plan", "investment",
               "chair", "audit", "ip_licensing", "partnerships", "investment_threshold", "failure_miner")
 
 
