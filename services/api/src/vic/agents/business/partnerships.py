@@ -306,6 +306,53 @@ def qualify_missing_claim_basis(analysis: PartnershipsAnalysis) -> PartnershipsA
         'position': 'insufficient_data'})
 
 
+def qualify_inconsistent_hypotheses(analysis: PartnershipsAnalysis) -> PartnershipsAnalysis:
+    """Keep source claims intact; expose invalid inferred findings as unresolved."""
+    data = analysis.model_dump(mode='python')
+    claims = {c.id: c for c in analysis.claims}
+    gaps = []
+    def walk(value, path='partnerships'):
+        if isinstance(value, dict):
+            if value.get('basis') == 'hypothesis':
+                ids = value.get('claim_ids', [])
+                # Dangling references remain a validation error, not a silent correction.
+                if all(cid in claims for cid in ids) and (
+                        not value.get('assumptions') or any(
+                            claims[cid].support_status not in ('unknown', 'unverified') for cid in ids)):
+                    gap = (f"Unresolved hypothesis at {path}: {value.get('value')}. "
+                        "The model omitted assumptions or linked claims incompatible with hypothesis status. "
+                        f"Original claim references: {ids}. Verify the inference before relying on it.")
+                    value.update(basis='unknown', value=None,
+                        unknowns=[*value.get('unknowns', []), gap])
+                    gaps.append(gap)
+            for key, child in value.items():
+                walk(child, f'{path}.{key}')
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                walk(child, f'{path}[{index}]')
+    walk(data)
+    if not gaps:
+        return analysis
+    retained = []
+    for candidate in data['candidates']:
+        if candidate['identity']['basis'] == 'unknown':
+            gaps.append(f"Candidate {candidate['id']} excluded from shortlist: identity/category remains unresolved.")
+            continue
+        timing = candidate['timing']
+        if timing['readiness'] == 'conditional' and timing['milestone']['basis'] == 'unknown':
+            timing['readiness'] = 'insufficient_data'
+        retained.append(candidate)
+    data['candidates'] = retained
+    data['position'] = 'insufficient_data'
+    data['unknowns'].extend(gaps)
+    if not retained:
+        data['candidate_search_unknowns'].append('No candidate with a consistent identity was retained; verify the original hypotheses.')
+    warning = 'Partial Partnerships result: inconsistent hypotheses are shown as unresolved findings, not verified partner fit.'
+    data['limitations'].append(warning)
+    data['summary'] = warning + ' ' + data['summary']
+    return PartnershipsAnalysis.model_validate(data)
+
+
 async def analyze_partnerships(case: CaseInput, pack: EvidencePack, ctx: RunContext,
                                *, market: RoleResult | None = None,
                                ip_licensing: RoleResult | dict | None = None,
@@ -318,6 +365,7 @@ async def analyze_partnerships(case: CaseInput, pack: EvidencePack, ctx: RunCont
     raw = await ctx.model.generate_structured(PROMPT_ID, payload, PartnershipsAnalysis, ctx)
     analysis = PartnershipsAnalysis.model_validate(raw)
     analysis = qualify_missing_claim_basis(analysis)
+    analysis = qualify_inconsistent_hypotheses(analysis)
     validate_partnerships_result(analysis, case, pack)
     gaps = identify_partnerships_gaps(analysis)
     for name, available in payload["context_availability"].items():
