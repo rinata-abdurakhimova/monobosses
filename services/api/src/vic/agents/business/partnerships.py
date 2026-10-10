@@ -6,8 +6,7 @@ Uses the shared RoleResult for both output and upstream context.
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-
+from pydantic import BaseModel, ConfigDict, Field
 from vic.contracts import (
     CaseInput,
     Claim,
@@ -20,7 +19,7 @@ from vic.contracts import (
 from vic.integrity import assert_pack
 
 PROMPT_ID = "partnerships"
-PROMPT_VERSION = "1.0.1"
+PROMPT_VERSION = "1.0.0"
 PROMPT_PATH = Path(__file__).parent / "prompts" / "partnerships.md"
 Text = Annotated[str, Field(min_length=1, pattern=r"\S")]
 Format = Literal["joint_research", "co_development", "licensing", "acquisition"]
@@ -32,19 +31,6 @@ class StrictOutput(BaseModel):
 
 class PartnershipClaim(Claim):
     id: str = Field(max_length=128, pattern=r"^partnerships\.[a-z][a-z0-9_]*$")
-    assumptions: list[str] = Field(default_factory=list, description=(
-        "Unknown/unverified claims require at least one explicit nonblank assumption or missing-data gap. "
-        "Do not invent facts to fill a gap."))
-
-    @model_validator(mode="after")
-    def require_uncertainty_basis(self):
-        # Validate while the shared adapter still owns its bounded repair loop,
-        # including when claims are generated as a standalone component.
-        if self.support_status in ("unknown", "unverified") and not any(
-                text.strip() for text in self.assumptions):
-            raise ValueError(f"{self.id}: unknown/unverified claim requires a nonblank "
-                             "assumptions entry stating its assumption or missing-data gap")
-        return self
 
 
 class Finding(StrictOutput):
@@ -136,28 +122,6 @@ class PartnershipsAnalysis(StrictOutput):
     next_checks: list[PartnershipCheck] = Field(min_length=1)
     change_conditions: list[Text]
     limitations: list[Text]
-
-    @model_validator(mode="after")
-    def validate_hypothesis_links(self):
-        statuses = {claim.id: claim.support_status.value for claim in self.claims}
-
-        def visit(value, path):
-            if isinstance(value, Finding) and value.basis == "hypothesis":
-                linked = {key: statuses.get(key, "missing") for key in value.claim_ids}
-                if not value.assumptions or not linked or any(
-                        status not in {"unknown", "unverified"} for status in linked.values()):
-                    raise ValueError(f"{path}: hypothesis requires nonempty assumptions and "
-                                     f"unknown/unverified claims; linked statuses={linked}. "
-                                     "Correct the finding using supplied claims; do not invent facts.")
-            if isinstance(value, BaseModel):
-                for key in type(value).model_fields:
-                    visit(getattr(value, key), f"{path}.{key}" if path else key)
-            elif isinstance(value, list):
-                for index, item in enumerate(value):
-                    visit(item, f"{path}[{index}]")
-
-        visit(self, "")
-        return self
 
 
 def _walk(value):
@@ -319,6 +283,29 @@ def identify_partnerships_gaps(analysis: PartnershipsAnalysis) -> list[str]:
     return list(dict.fromkeys(gaps))
 
 
+def qualify_missing_claim_basis(analysis: PartnershipsAnalysis) -> PartnershipsAnalysis:
+    """Expose missing model qualifications without inventing a factual assumption."""
+    claims, gaps = [], []
+    for claim in analysis.claims:
+        if claim.support_status in ('unknown', 'unverified') and not any(
+                assumption.strip() for assumption in claim.assumptions):
+            gap = (f"Unverified basis for {claim.id}: the model supplied no assumptions or supporting "
+                "rationale. Treat this claim as unresolved; obtain evidence before relying on it.")
+            claims.append(claim.model_copy(update={'assumptions': [gap]}))
+            gaps.append(gap)
+        else:
+            claims.append(claim)
+    if not gaps:
+        return analysis
+    warning = ('Partial Partnerships result: some unverified claims lacked a stated basis; '
+        'explicit verification gaps were added. Partner fit, interest and deal readiness are not confirmed.')
+    return analysis.model_copy(update={'claims': claims,
+        'unknowns': [*analysis.unknowns, *gaps],
+        'limitations': [*analysis.limitations, warning],
+        'summary': warning + ' ' + analysis.summary,
+        'position': 'insufficient_data'})
+
+
 async def analyze_partnerships(case: CaseInput, pack: EvidencePack, ctx: RunContext,
                                *, market: RoleResult | None = None,
                                ip_licensing: RoleResult | dict | None = None,
@@ -330,6 +317,7 @@ async def analyze_partnerships(case: CaseInput, pack: EvidencePack, ctx: RunCont
         raise RuntimeError("R2 model adapter with generate_structured is required")
     raw = await ctx.model.generate_structured(PROMPT_ID, payload, PartnershipsAnalysis, ctx)
     analysis = PartnershipsAnalysis.model_validate(raw)
+    analysis = qualify_missing_claim_basis(analysis)
     validate_partnerships_result(analysis, case, pack)
     gaps = identify_partnerships_gaps(analysis)
     for name, available in payload["context_availability"].items():

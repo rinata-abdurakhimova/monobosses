@@ -27,32 +27,6 @@ from vic.prompts import load_prompt
 T = TypeVar("T", bound=BaseModel)
 
 
-class DuplicateClaimOutput(ValueError):
-    """Ambiguous output identities must be corrected before downstream assembly."""
-
-
-def validate_output_claim_identities(data):
-    if not isinstance(data, dict):
-        return
-    # Each collection owns its namespace; citations and upstream references may
-    # legitimately repeat and are deliberately not deduplicated here.
-    for collection, identity in (("claims", "id"), ("claims", "key"),
-                                  ("additional_claims", "key"), ("verdicts", "claim_id")):
-        seen = set()
-        duplicates = set()
-        for row in data.get(collection, []) if isinstance(data.get(collection, []), list) else []:
-            value = row.get(identity) if isinstance(row, dict) else None
-            if not isinstance(value, str):
-                continue  # Output schema handles malformed types and missing fields.
-            if value in seen:
-                duplicates.add(value)
-            seen.add(value)
-        if duplicates:
-            raise DuplicateClaimOutput(f"{collection}: duplicate {identity}: "
-                + ", ".join(sorted(duplicates))
-                + "; return one entry per identity, preserving conflicting evidence and uncertainty")
-
-
 @dataclass
 class ProviderResponse:
     text: str
@@ -324,17 +298,9 @@ class StructuredLlm:
                 if inverse:
                     from vic.request_protocol import translate, validate_component_references
                     data = translate(json.loads(_extract_json(response.text)), inverse)
-                    validate_output_claim_identities(data)
                     validate_component_references(prompt_id, payload, data, inverse)
                     return response_model.model_validate(data)
-                output_json = _extract_json(response.text)
-                try:
-                    output_data = json.loads(output_json)
-                except json.JSONDecodeError:
-                    # Keep the existing schema JSON error and repair behavior.
-                    return response_model.model_validate_json(output_json)
-                validate_output_claim_identities(output_data)
-                return response_model.model_validate_json(output_json)
+                return response_model.model_validate_json(_extract_json(response.text))
             except ValueError as exc:  # pydantic.ValidationError is a ValueError
                 if hasattr(exc, "errors"):
                     locations = [{"type": error["type"], "loc": error["loc"]}
@@ -347,7 +313,7 @@ class StructuredLlm:
                         f"The model output for '{prompt_id}' did not match the required schema "
                         f"after {repairs} repair attempt(s)") from None
                 repairs += 1
-                if compact or isinstance(exc, DuplicateClaimOutput) or prompt_id in {"context_brief", "science", "translation", "partnerships", *MARKET_PROMPTS}:
+                if compact or prompt_id in {"context_brief", "science", "translation", *MARKET_PROMPTS}:
                     if hasattr(exc, "errors"):
                         # Collapse repeated array failures and exclude invalid values.
                         defects = list(dict.fromkeys(
