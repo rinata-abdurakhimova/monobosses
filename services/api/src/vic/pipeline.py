@@ -38,9 +38,9 @@ from vic.contracts import (
     SupportStatus,
     Usage,
 )
-from vic.failures import ProviderAuthError, RunFailure, RunTimeout, SourceOutage, ValidationFailed
+from vic.failures import MalformedModelOutput, ProviderAuthError, RunFailure, RunTimeout, SourceOutage, ValidationFailed
 from vic.modules import STUB_ORIGIN, Modules, call_audit, call_clinical, call_investment
-from vic.report_builder import build_report
+from vic.report_builder import SECTION_OWNERS, build_report
 from vic.storage import ReportExistsError, Repository, new_id
 from vic.tracing import config_version, scrub
 
@@ -343,7 +343,21 @@ class Pipeline:
 
     async def _agent(self, role: RoleId, factory) -> RoleResult:
         async def invoke():
-            result = await self._module(f"{role.value} analysis", factory)
+            try:
+                result = await self._module(f"{role.value} analysis", factory)
+            except RunFailure as exc:
+                recoverable = isinstance(exc, MalformedModelOutput) or isinstance(exc.__cause__, ValueError)
+                if not self.settings.continue_on_node_validation_error or not recoverable:
+                    raise
+                message = f"{role.value} analysis unavailable: output failed validation. No conclusions from the rejected output were retained."
+                self.ctx.warnings.append(message)
+                self.ctx.trace.log(RunStage.ANALYZE, f"{role.value} validation recovery: {exc.code}")
+                result = RoleResult(role_id=role, position='insufficient_data', summary=message,
+                    unknowns=[message, 'Rerun this specialist after correcting its output; downstream conclusions require review.'],
+                    section_content=[SectionContent(key=key, summary=message,
+                        limitations=[message], structured_data={'node_recovery': {
+                            'role': role.value, 'status': 'analysis_unavailable', 'error_code': exc.code}})
+                        for key in ([k for k, owner in SECTION_OWNERS.items() if owner == role] or ['critical_unknowns'])])
             if not isinstance(result, RoleResult):
                 raise RunFailure(f"The {role.value} analysis returned an invalid result", code="agent_error")
             if result.role_id != role:
@@ -588,7 +602,13 @@ class Pipeline:
             decision = decision.model_copy(update={"additional_claims": extra})
             self._unresolved |= {c.id for c in extra if c.id in blocked and c.importance == Importance.CRITICAL}
             ctx.warnings.append("Chair claims set to 'unverified' after the audit: " + ", ".join(sorted(blocked)))
-        if self._unresolved and decision.recommendation == Recommendation.INVEST:
+        unavailable = [r.value for r, result in results.items() if any(
+            (section.structured_data or {}).get('node_recovery', {}).get('status') == 'analysis_unavailable'
+            for section in result.section_content)]
+        if unavailable:
+            decision = decision.model_copy(update={'conditions': [*decision.conditions,
+                'Required specialist analyses unavailable: ' + ', '.join(unavailable) + '. Complete them before acting on this assessment.']})
+        if (self._unresolved or unavailable) and decision.recommendation == Recommendation.INVEST:
             decision = decision.model_copy(update={
                 "recommendation": Recommendation.CONDITIONAL,
                 "conditions": [*decision.conditions, "Recommendation lowered to Conditional: critical claims "

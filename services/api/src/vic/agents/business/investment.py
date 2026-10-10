@@ -667,6 +667,30 @@ def assemble_investment_analysis(plan: PreparedInvestmentPlan,
     return InvestmentAnalysis.model_validate(data)
 
 
+def qualify_incomplete_plan_findings(plan: PreparedInvestmentPlan) -> PreparedInvestmentPlan:
+    data = plan.model_dump(mode='python')
+    gaps = []
+    def walk(value, path='investment_plan'):
+        if isinstance(value, dict):
+            if value.get('basis') in ('documented', 'hypothesis') and (
+                    value.get('value') is None or not value.get('claim_ids')):
+                gap = (f"Incomplete finding at {path}: original value={value.get('value')!r}; "
+                    "the model supplied no value or no supporting claim references. "
+                    "This planning input remains unknown and requires evidence.")
+                value.update(basis='unknown', value=None, unknowns=[*value.get('unknowns', []), gap])
+                gaps.append(gap)
+            for key, child in value.items():
+                walk(child, f'{path}.{key}')
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                walk(child, f'{path}[{index}]')
+    walk(data)
+    if gaps:
+        data['unknowns'].extend(gaps)
+        data['limitations'].append('Partial Investment plan: incomplete findings were marked unknown; no missing values or supporting claims were invented.')
+    return PreparedInvestmentPlan.model_validate(data)
+
+
 async def analyze_investment(case: CaseInput, pack: EvidencePack, ctx: RunContext, *,
         clinical: RoleResult | dict | None = None, market: RoleResult | dict | None = None,
         partnerships: RoleResult | dict | None = None, ip_licensing: RoleResult | dict | None = None,
@@ -682,6 +706,7 @@ async def analyze_investment(case: CaseInput, pack: EvidencePack, ctx: RunContex
     raw_plan = await ctx.model.generate_structured(PLAN_PROMPT_ID, deepcopy(payload), PreparedInvestmentPlan, ctx)
     plan = PreparedInvestmentPlan.model_validate(
         raw_plan.model_dump(mode="json") if isinstance(raw_plan, BaseModel) else raw_plan)
+    plan = qualify_incomplete_plan_findings(plan)
     generated, generated_stresses, bindings = resolve_numeric_inputs(
         plan.scenario_blueprints, plan.stress_blueprints, plan.numeric_bindings, pack)
     caller = payload["caller_numeric_inputs"]
