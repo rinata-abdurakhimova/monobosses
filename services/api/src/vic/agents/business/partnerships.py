@@ -6,8 +6,7 @@ Uses the shared RoleResult for both output and upstream context.
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-
+from pydantic import BaseModel, ConfigDict, Field
 from vic.contracts import (
     CaseInput,
     Claim,
@@ -20,7 +19,7 @@ from vic.contracts import (
 from vic.integrity import assert_pack
 
 PROMPT_ID = "partnerships"
-PROMPT_VERSION = "1.0.1"
+PROMPT_VERSION = "1.0.0"
 PROMPT_PATH = Path(__file__).parent / "prompts" / "partnerships.md"
 Text = Annotated[str, Field(min_length=1, pattern=r"\S")]
 Format = Literal["joint_research", "co_development", "licensing", "acquisition"]
@@ -32,19 +31,6 @@ class StrictOutput(BaseModel):
 
 class PartnershipClaim(Claim):
     id: str = Field(max_length=128, pattern=r"^partnerships\.[a-z][a-z0-9_]*$")
-    assumptions: list[str] = Field(default_factory=list, description=(
-        "Unknown/unverified claims require at least one explicit nonblank assumption or missing-data gap. "
-        "Do not invent facts to fill a gap."))
-
-    @model_validator(mode="after")
-    def require_uncertainty_basis(self):
-        # Validate while the shared adapter still owns its bounded repair loop,
-        # including when claims are generated as a standalone component.
-        if self.support_status in ("unknown", "unverified") and not any(
-                text.strip() for text in self.assumptions):
-            raise ValueError(f"{self.id}: unknown/unverified claim requires a nonblank "
-                             "assumptions entry stating its assumption or missing-data gap")
-        return self
 
 
 class Finding(StrictOutput):

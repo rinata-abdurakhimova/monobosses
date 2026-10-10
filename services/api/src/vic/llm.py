@@ -313,7 +313,7 @@ class StructuredLlm:
                         f"The model output for '{prompt_id}' did not match the required schema "
                         f"after {repairs} repair attempt(s)") from None
                 repairs += 1
-                if compact or prompt_id in {"context_brief", "science", "translation", "partnerships", *MARKET_PROMPTS}:
+                if compact or prompt_id in {"context_brief", "science", "translation", *MARKET_PROMPTS}:
                     if hasattr(exc, "errors"):
                         # Collapse repeated array failures and exclude invalid values.
                         defects = list(dict.fromkeys(
