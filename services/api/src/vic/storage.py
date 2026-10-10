@@ -5,19 +5,32 @@ transaction. Durability requires DATABASE_URL to point at a persistent volume.
 """
 import hashlib
 import json
-from dataclasses import asdict
 import sqlite3
 import uuid
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from datetime import date, datetime, timezone
+from dataclasses import asdict
+from datetime import UTC, date, datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Callable, Iterator, Protocol
+from typing import Protocol
 
 from vic import synthetic
 from vic.config import get_settings
-from vic.contracts import (CaseInput, ErrorBody, Evidence, EvidenceCreate, EvidenceCreated,
-                           EvidencePack, Report, Run, RunStatus, Source)
+from vic.contracts import (
+    CaseInput,
+    ErrorBody,
+    Evidence,
+    EvidenceCreate,
+    EvidenceCreated,
+    EvidencePack,
+    NodeOutput,
+    Report,
+    RoleId,
+    Run,
+    RunStatus,
+    Source,
+)
 
 _SEED_RUN_IDS = ("run-synthetic-running", "run-synthetic-failed")
 
@@ -28,6 +41,9 @@ CREATE TABLE IF NOT EXISTS runs(
   id TEXT PRIMARY KEY, case_id TEXT NOT NULL, status TEXT NOT NULL, data TEXT NOT NULL,
   trace TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
+CREATE TABLE IF NOT EXISTS run_nodes(
+  run_id TEXT NOT NULL, role_id TEXT NOT NULL, data TEXT NOT NULL,
+  PRIMARY KEY(run_id, role_id));
 CREATE TABLE IF NOT EXISTS snapshots(
   id TEXT PRIMARY KEY, case_id TEXT NOT NULL, data TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS reports(
@@ -54,7 +70,7 @@ def new_id(prefix: str) -> str:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class ReportExistsError(ValueError):
@@ -72,6 +88,8 @@ class Repository(Protocol):
     def get_case(self, case_id: str) -> CaseInput | None: ...
     def create_run(self, run: Run) -> None: ...
     def get_run(self, run_id: str) -> Run | None: ...
+    def save_node(self, run_id: str, node: NodeOutput) -> None: ...
+    def get_nodes(self, run_id: str) -> list[NodeOutput]: ...
     def update_run(self, run: Run) -> None: ...
     def save_trace(self, run_id: str, trace: dict) -> None: ...
     def get_trace(self, run_id: str) -> dict | None: ...
@@ -196,6 +214,20 @@ class SqliteRepository:
             row = c.execute("SELECT data FROM runs WHERE id=?", (run_id,)).fetchone()
         return Run.model_validate_json(row[0]) if row else None
 
+    def save_node(self, run_id: str, node: NodeOutput) -> None:
+        with self._tx(immediate=True) as c:
+            if not c.execute("SELECT 1 FROM runs WHERE id=?", (run_id,)).fetchone():
+                raise ValueError("Node output requires an existing run")
+            c.execute("INSERT INTO run_nodes(run_id,role_id,data) VALUES(?,?,?) "
+                      "ON CONFLICT(run_id,role_id) DO UPDATE SET data=excluded.data",
+                      (run_id, node.role_id.value, node.model_dump_json()))
+
+    def get_nodes(self, run_id: str) -> list[NodeOutput]:
+        with self._tx() as c:
+            rows = c.execute("SELECT data FROM run_nodes WHERE run_id=?", (run_id,)).fetchall()
+        saved = {node.role_id: node for row in rows for node in [NodeOutput.model_validate_json(row[0])]}
+        return [saved.get(role, NodeOutput(role_id=role)) for role in RoleId]
+
     def update_run(self, run: Run) -> None:
         with self._tx(immediate=True) as c:
             cur = c.execute("UPDATE runs SET status=?, data=?, updated_at=? WHERE id=?",
@@ -300,7 +332,7 @@ class SqliteRepository:
             source_id, evidence_id = new_id("src"), new_id("ev")
             digest = hashlib.sha256(payload.text.encode("utf-8")).hexdigest()
             source = Source(id=source_id, title=payload.title, url=None, type="user_upload",
-                            published_at=payload.published_at, retrieved_at=datetime.now(timezone.utc),
+                            published_at=payload.published_at, retrieved_at=datetime.now(UTC),
                             content_hash=f"sha256:{digest}", synthetic=payload.synthetic)
             evidence = Evidence(id=evidence_id, source_id=source_id, excerpt=payload.text,
                                 locator="text", scope=case.scope, limitations=[])

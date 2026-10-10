@@ -56,7 +56,7 @@ export async function proxyBackend(
       ? path === "cases" ||
         new RegExp(`^cases/${id}/(runs|evidence|documents)$`).test(path)
       : request.method === "GET" &&
-        (new RegExp(`^runs/${id}$`).test(path) ||
+        (new RegExp(`^runs/${id}(/outputs)?$`).test(path) ||
           new RegExp(`^cases/${id}/reports/[1-9][0-9]*$`).test(path));
   const fail = (
     status: number,

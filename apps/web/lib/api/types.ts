@@ -28,6 +28,7 @@ export interface EvidenceClient {
 }
 export type CreatedCase = { case_id: string };
 export type StartedRun = { run_id: string };
+export type RunOutputs = Contract.RunOutputs;
 export type Run = {
   id: string;
   case_id: string;
@@ -48,6 +49,7 @@ export interface ApiClient<T = unknown> {
   createCase(input: CaseInput, options?: RequestOptions): Promise<CreatedCase>;
   startRun(caseId: string, options?: StartRunOptions): Promise<StartedRun>;
   getRun(runId: string, options?: RequestOptions): Promise<Run>;
+  getRunOutputs?(runId: string, options?: RequestOptions): Promise<RunOutputs>;
   getReport(
     caseId: string,
     version: number,

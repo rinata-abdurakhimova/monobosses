@@ -3,9 +3,9 @@
 Every role imports its types from here. Any change to this file must be agreed with R2
 and the consumers (R1 UI, R3 evidence, R4 science, R5 business) before merging.
 """
+import time
 from dataclasses import dataclass, field
 from datetime import date, datetime
-import time
 from enum import Enum
 from typing import Annotated, Any, Literal, Protocol, TypeVar
 
@@ -359,6 +359,31 @@ class Run(VicModel):
 
 
 # ------------------------------------------------------------------ API bodies
+class NodeOutput(VicModel):
+    role_id: RoleId
+    status: Literal["not_started", "running", "completed", "failed", "interrupted", "stale"] = "not_started"
+    attempt: int = Field(default=0, ge=0)
+    stage: RunStage | None = None
+    result: RoleResult | None = None
+    error: ErrorBody | None = None
+    stale: bool = False
+
+    @model_validator(mode="after")
+    def _output_role(self) -> "NodeOutput":
+        if self.result is not None and self.result.role_id != self.role_id:
+            raise ValueError("Node result must belong to its role")
+        if self.status == "completed" and self.result is None:
+            raise ValueError("Completed node requires an output")
+        return self
+
+
+class RunOutputs(VicModel):
+    run_id: Id
+    case_id: Id
+    status: RunStatus
+    nodes: list[NodeOutput]
+
+
 class RunCreate(VicModel):
     mode: RunMode
     parent_report_id: Id | None = None

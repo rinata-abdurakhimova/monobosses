@@ -20,8 +20,10 @@ from vic.contracts import (
     CaseInput,
     Claim,
     CommitteeDecision,
+    ErrorBody,
     EvidencePack,
     Importance,
+    NodeOutput,
     Recommendation,
     Report,
     RoleId,
@@ -195,7 +197,13 @@ class Pipeline:
         await self._enter(RunStage.AUDIT)
         audit = await self._audit_and_repair(case, pack, modules, results)
         await self._enter(RunStage.SYNTHESIZE)
-        decision = await self._synthesize(case, pack, modules, results, audit)
+        decision = await self._track(RoleId.CHAIR,
+            lambda: self._synthesize(case, pack, modules, results, audit),
+            lambda decision: results.get(RoleId.CHAIR) or RoleResult(role_id=RoleId.CHAIR,
+                summary="Committee synthesis output", position=decision.recommendation.value,
+                section_content=[SectionContent(key="recommendation",
+                    summary="Committee synthesis output",
+                    structured_data={"synthesis": decision.model_dump(mode="json")})]))
         await self._enter(RunStage.FINALIZE)
         await self._finalize(case, pack, parent, results, decision)
 
@@ -296,11 +304,44 @@ class Pipeline:
             raise RunFailure(f"The {name} step failed ({type(exc).__name__})", code=code) from exc
 
     async def _agent(self, role: RoleId, factory) -> RoleResult:
-        result = await self._module(f"{role.value} analysis", factory)
-        if not isinstance(result, RoleResult):
-            raise RunFailure(f"The {role.value} analysis returned an invalid result", code="agent_error")
-        if result.role_id != role:
-            raise ValidationFailed(f"The {role.value} analysis returned role_id '{result.role_id.value}'")
+        async def invoke():
+            result = await self._module(f"{role.value} analysis", factory)
+            if not isinstance(result, RoleResult):
+                raise RunFailure(f"The {role.value} analysis returned an invalid result", code="agent_error")
+            if result.role_id != role:
+                raise ValidationFailed(f"The {role.value} analysis returned role_id '{result.role_id.value}'")
+            return result
+        return await self._track(role, invoke)
+
+    async def _save_node(self, role, status, *, result=None, error=None):
+        if not hasattr(self, "_node_states"):
+            self._node_states = {}
+        previous = self._node_states.get(role, NodeOutput(role_id=role))
+        node = previous.model_copy(update={"status": status, "stage": self._stage,
+            "attempt": previous.attempt + (1 if status == "running" else 0),
+            "result": result if result is not None else previous.result, "error": error,
+            "stale": False if status == "completed" else previous.result is not None})
+        await self._io(self.repo.save_node, self.run.id, node)
+        self._node_states[role] = node
+
+    async def _track(self, role, factory, serialize=lambda result: result):
+        await self._save_node(role, "running")
+        try:
+            result = await factory()
+            output = serialize(result)
+        except asyncio.CancelledError:
+            await self._save_node(role, "interrupted", error=ErrorBody(
+                code="node_interrupted", message="This node stopped before completing.", retryable=True))
+            raise
+        except Exception as exc:
+            error = (ErrorBody(code=exc.code, message=str(exc), retryable=exc.retryable)
+                     if isinstance(exc, RunFailure) else ErrorBody(code="node_error",
+                         message=f"The {role.value} node failed ({type(exc).__name__})."))
+            error = error.model_copy(update={"message": scrub(error.message,
+                secrets=[self.settings.llm_api_key, self.settings.api_shared_secret])})
+            await self._save_node(role, "failed", error=error)
+            raise
+        await self._save_node(role, "completed", result=output)
         return result
 
     async def _gather(self, coros: list):
@@ -388,6 +429,19 @@ class Pipeline:
         return found & ids
 
     async def _audit(self, claims: list[Claim], pack: EvidencePack, modules: Modules) -> AuditResult:
+        def serialize(audit):
+            summary = f"Audit returned {len(audit.findings)} findings."
+            return RoleResult(role_id=RoleId.AUDIT, summary=summary,
+                position="Audit output; review may still be required", unknowns=audit.warnings,
+                section_content=[SectionContent(key="sources", summary=summary,
+                    structured_data={"findings": [finding.model_dump(mode="json")
+                        for finding in self._audit_findings.values()],
+                        "unresolved_critical_claim_ids": sorted(set(audit.unresolved_critical_claim_ids) | self._unresolved),
+                        "warnings": audit.warnings})])
+        return await self._track(RoleId.AUDIT,
+            lambda: self._audit_untracked(claims, pack, modules), serialize)
+
+    async def _audit_untracked(self, claims, pack, modules):
         documents = await self._io(self.repo.list_documents, self.run.case_id)
         async def invoke():
             return await call_audit(modules.audit_claims, claims, pack, self.ctx, documents=documents)
@@ -416,7 +470,12 @@ class Pipeline:
                 self.ctx.feedback[role.value] = [f for f in audit.findings if f.claim_id in
                                                  {c.id for c in results[role].claims}]
             self.ctx.trace.log(RunStage.AUDIT, f"repair round for roles {sorted(r.value for r in owners)}")
-            await self._run_roles(_expand(owners), results, case, pack, modules)
+            affected = _expand(owners)
+            await self._save_node(RoleId.AUDIT, "stale")
+            for role in affected:
+                if role in results:
+                    await self._save_node(role, "stale")
+            await self._run_roles(affected, results, case, pack, modules)
             claims = self._collect_claims(results, pack)
             ids = {c.id for c in claims}
             audit = await self._audit(claims, pack, modules)
@@ -427,6 +486,8 @@ class Pipeline:
             self._unresolved |= {c.id for c in claims if c.id in remaining and c.importance == Importance.CRITICAL}
             self.ctx.warnings.append("These claims could not be verified by the audit and were set to "
                                      "'unverified': " + ", ".join(sorted(remaining)))
+        for role, result in results.items():
+            await self._save_node(role, "completed", result=result)
         return audit
 
     # ------------------------------------------------------------------ chair

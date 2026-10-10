@@ -90,6 +90,22 @@ export type HealthStatus = {
 
 export type Importance = "critical" | "major" | "minor";
 
+export type NodeOutput = {
+  attempt?: number;
+  error?: ErrorBody | null;
+  result?: RoleResult | null;
+  role_id: RoleId;
+  stage?: RunStage | null;
+  stale?: boolean;
+  status?:
+    | "not_started"
+    | "running"
+    | "completed"
+    | "failed"
+    | "interrupted"
+    | "stale";
+};
+
 export type Provenance = "source" | "user" | "ai";
 
 export type Recommendation = "Invest" | "Conditional" | "Do Not Invest";
@@ -187,6 +203,13 @@ export type RunCreated = {
 };
 
 export type RunMode = "live" | "evidence_only";
+
+export type RunOutputs = {
+  case_id: string;
+  nodes: Array<NodeOutput>;
+  run_id: string;
+  status: RunStatus;
+};
 
 export type RunStage =
   "validate" | "retrieve" | "analyze" | "audit" | "synthesize" | "finalize";

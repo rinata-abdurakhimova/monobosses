@@ -31,13 +31,13 @@ export function AnalysisDetails({
   onClaim,
 }: {
   value: unknown;
-  report: Report;
-  onClaim: (claim: Claim) => void;
+  report?: Report;
+  onClaim?: (claim: Claim) => void;
 }) {
   if (value === null || value === undefined) return <span>Unknown</span>;
   if (typeof value === "string") {
-    const claim = report.claims.find((item) => item.id === value);
-    return claim ? (
+    const claim = report?.claims.find((item) => item.id === value);
+    return claim && onClaim ? (
       <button
         type="button"
         className="claim-button"

@@ -1,6 +1,8 @@
 import { ApiError, throwIfAborted } from "./errors.ts";
 import { decodeRun, identifier, object, version } from "./decode.ts";
 import type { ApiClient, EvidenceClient, RequestOptions } from "./types";
+import type { RunOutputs } from "./types";
+import { validateContract } from "../contracts/validate.ts";
 
 /** Same-origin proxy client.
  * mapReport converts the authoritative wire report into a UI model when supplied.
@@ -212,6 +214,29 @@ export function createHttpApiClient(
           "The response belongs to a different run.",
         );
       return run;
+    },
+    async getRunOutputs(runId, requestOptions) {
+      const raw = await request(
+        `/runs/${encodeURIComponent(runId)}/outputs`,
+        "GET",
+        undefined,
+        requestOptions,
+      );
+      try {
+        validateContract("RunOutputs", raw);
+      } catch {
+        throw new ApiError(
+          "INVALID_RESPONSE",
+          "The API returned invalid node outputs.",
+        );
+      }
+      const outputs = raw as RunOutputs;
+      if (outputs.run_id !== runId)
+        throw new ApiError(
+          "INVALID_RESPONSE",
+          "The node outputs belong to a different run.",
+        );
+      return outputs;
     },
     async getReport(caseId, requestedVersion, requestOptions) {
       version(requestedVersion);
