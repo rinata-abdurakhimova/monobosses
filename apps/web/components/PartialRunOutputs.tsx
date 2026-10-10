@@ -1,3 +1,4 @@
+import { isVisibleRole } from "@/lib/visible-roles";
 import { analysisStatus, visibleFindings } from "@/lib/analysis-status";
 import type { RunOutputs } from "@/lib/api/types";
 import { AnalysisDetails } from "@/components/AnalysisDetails";
@@ -19,9 +20,9 @@ const names: Record<string, string> = {
 export function PartialRunOutputs({ outputs }: { outputs: RunOutputs }) {
   const hasAttempts = outputs.nodes.some((node) => (node.attempt ?? 0) > 0);
   const order = Object.keys(names);
-  const nodes = [...outputs.nodes].sort(
-    (a, b) => order.indexOf(a.role_id) - order.indexOf(b.role_id),
-  );
+  const nodes = outputs.nodes
+    .filter((node) => isVisibleRole(node.role_id))
+    .sort((a, b) => order.indexOf(a.role_id) - order.indexOf(b.role_id));
   return (
     <section
       className="panel partial-run-outputs"

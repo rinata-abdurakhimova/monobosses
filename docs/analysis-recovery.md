@@ -90,3 +90,40 @@ distinct; duplicate input IDs remain invalid. A risk without claim references is
 retained verbatim as an unvalidated proposal in unknowns, including impact and
 next check, rather than assigned fabricated support or allowed to invalidate all
 other findings. Unknown nonempty claim references still require correction.
+
+
+Uncertain Investment claims without assumptions are retained with an explicit
+model-omitted-rationale verification gap before plan and explanation validation.
+Existing text, evidence references and support status remain unchanged. No source
+support or domain assumption is invented. Empty/whitespace-only rationale is
+handled; repeated qualification is idempotent. This prevents a missing explanatory
+field from discarding an otherwise valid assessment while exposing its limitation.
+
+
+## Short committee pipeline
+
+SHORT_COMMITTEE=true is now the default. Science, Translation, Clinical, Market,
+IP/Licensing, Partnerships and Investment run, then a separate concise Chair
+synthesizes a one- or two-sentence rationale. Investment Threshold, Failure Miner
+and Semantic Audit are not invoked or required, and do not enter Chair input.
+Their source files remain available. No audit call is made on Chair claims; the
+short Chair creates no new factual claims and can only reference existing IDs.
+Its recommendation is Invest, Conditional or Do Not Invest, explicitly preliminary.
+The three excluded nodes do not block Invest. Unresolved critical claims or an
+unavailable specialist analysis in the seven included nodes require Conditional
+instead of Invest.
+The usual report schema, seven expert sections, evidence links and immutable
+versions remain. Five diligence questions are assembled from specialist gaps to
+retain report compatibility, separate from the short recommendation.
+
+The website hides these three role cards in live progress, saved reports and
+synthetic previews, with corrected perspective counts. The API outputs endpoint
+also omits disabled nodes in short mode. Short-mode resume can reuse the completed
+seven specialists of a run that previously failed at Threshold; it skips the old
+Threshold/Failure Miner/audit results and goes to short synthesis.
+
+Deploy API and web from this branch, set SHORT_COMMITTEE=true (or leave the default),
+restart services, and start a new assessment or resume a eligible failed run.
+SHORT_COMMITTEE=false retains the full backend pipeline for later use. Website
+role visibility remains reduced. This change does not replace evidence validation
+or prove a successful real-provider run; local integration uses labelled stubs.

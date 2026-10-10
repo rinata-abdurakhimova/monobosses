@@ -1,5 +1,7 @@
 "use client";
 
+import { isVisibleRole } from "@/lib/visible-roles";
+
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { RecommendationCard } from "@/components/RecommendationCard";
@@ -19,6 +21,7 @@ export function ReportView({
     const section = document.getElementById(`section-${key}`);
     if (section instanceof HTMLDetailsElement) section.open = true;
   }
+  const visibleRoles = report.roles.filter((role) => isVisibleRole(role.id));
   return (
     <div className="page-container report-page">
       <div className="page-heading">
@@ -183,7 +186,7 @@ export function ReportView({
               <div>
                 <dt>Committee</dt>
                 <dd>
-                  <span className="metric-count">{report.roles.length}</span>{" "}
+                  <span className="metric-count">{visibleRoles.length}</span>{" "}
                   <span className="metric-description">
                     {report.synthetic
                       ? "AI perspectives in fixture"
@@ -268,7 +271,7 @@ export function ReportView({
           not establish that a claim is true.
         </p>
         <div className="role-grid">
-          {report.roles.map((role) => (
+          {visibleRoles.map((role) => (
             <RoleCard
               key={role.id}
               role={role}

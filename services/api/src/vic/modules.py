@@ -10,8 +10,9 @@ import asyncio
 import importlib
 import inspect
 import pkgutil
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from vic.config import Settings
 from vic.failures import ModuleNotReady
@@ -138,8 +139,8 @@ def discover() -> dict[str, list[tuple[str, Callable[..., Any]]]]:
         items.sort(key=lambda it: getattr(it[1], "__module__", "") != it[0])  # defined here first
     # Explicit adapters select the semantic audit and bridge the rich Chair API.
     try:
-        from vic.evidence.audit_semantic import audit_claims_semantic
         from vic.committee import synthesize_committee
+        from vic.evidence.audit_semantic import audit_claims_semantic
         found["audit_claims"].insert(0, ("vic.evidence.audit_semantic", audit_claims_semantic))
         found["synthesize_committee"] = [("vic.committee", synthesize_committee)]
     except ImportError as exc:
@@ -147,14 +148,14 @@ def discover() -> dict[str, list[tuple[str, Callable[..., Any]]]]:
     return found
 
 
-def resolve_real() -> Modules:
+def resolve_real(required=None) -> Modules:
     found = discover()
     mods = Modules()
     for name, items in found.items():
         if items:
             setattr(mods, name, items[0][1])
             mods.origin[name] = items[0][0]
-    missing = mods.missing()
+    missing = [name for name in (REQUIRED if required is None else required) if getattr(mods, name) is None]
     if missing:
         detail = "; ".join(f"{k}: {v}" for k, v in IMPORT_ERRORS.items())
         raise ModuleNotReady("Required functions are not available yet: " + ", ".join(missing)
@@ -163,8 +164,10 @@ def resolve_real() -> Modules:
 
 
 def get_modules(settings: Settings) -> Modules:
+    excluded = {'analyze_investment_threshold', 'analyze_failure_miner', 'audit_claims', 'synthesize_committee'} if settings.short_committee else set()
+    required = [name for name in REQUIRED if name not in excluded]
     if not settings.dev_stubs:
-        return resolve_real()
+        return resolve_real(required)
     from vic.stubs import make_stub_modules
 
     wanted = settings.stub_module_set  # empty = stub everything
@@ -172,7 +175,7 @@ def get_modules(settings: Settings) -> Modules:
     stubs = make_stub_modules(use_r3_fixtures=real_agents)
     found = discover() if wanted else {}
     mods, missing = Modules(), []
-    for name in REQUIRED:
+    for name in required:
         if not wanted or name in wanted:
             setattr(mods, name, getattr(stubs, name))
             mods.origin[name] = STUB_ORIGIN

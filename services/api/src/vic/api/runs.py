@@ -3,6 +3,7 @@ import asyncio
 from fastapi import APIRouter, Depends
 
 from vic.api.deps import errors, get_repo
+from vic.config import get_settings
 from vic.contracts import Run, RunCreated, RunOutputs
 from vic.errors import ApiError
 from vic.storage import Repository
@@ -34,6 +35,9 @@ async def get_run_outputs(run_id: str, repo: Repository = Depends(get_repo)) -> 
     if run is None:
         raise ApiError(404, "not_found", f"Run '{run_id}' not found")
     nodes = await asyncio.to_thread(repo.get_nodes, run_id)
+    if get_settings().short_committee:
+        nodes = [node for node in nodes if node.role_id.value not in
+            {'investment_threshold', 'failure_miner', 'audit'}]
     if run.status.value == "failed":
         nodes = [node.model_copy(update={"status": "interrupted", "error": run.error})
                  if node.status == "running" else node for node in nodes]

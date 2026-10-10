@@ -93,6 +93,7 @@ class Pipeline:
     def __init__(self, repo: Repository, settings: Settings, modules_factory: Callable[[], Modules],
                  llm_factory: Callable[[], Any]):
         self.repo, self.settings = repo, settings
+        self.role_order = ROLE_ORDER[:7] if settings.short_committee else ROLE_ORDER
         self._modules_factory, self._llm_factory = modules_factory, llm_factory
         self.run: Run
         self.ctx: RunContext
@@ -222,7 +223,7 @@ class Pipeline:
             self._node_states = {n.role_id: n for n in nodes}
             results = {}
             scope_recovered = set()
-            for role in ROLE_ORDER:
+            for role in self.role_order:
                 node = self._node_states[role]
                 if node.status != 'completed' or node.stale or node.result is None:
                     break
@@ -233,7 +234,7 @@ class Pipeline:
             # Cached dependent outputs were produced from the now-rejected input.
             for role in _expand(scope_recovered) - scope_recovered:
                 results.pop(role, None)
-            remaining = set(ROLE_ORDER) - results.keys()
+            remaining = set(self.role_order) - results.keys()
             for role in [*remaining, RoleId.AUDIT, RoleId.CHAIR]:
                 old = self._node_states[role]
                 reset = NodeOutput(role_id=role, attempt=old.attempt)
@@ -248,8 +249,12 @@ class Pipeline:
             pack = await self._retrieve(case, parent, modules)
             await self._enter(RunStage.ANALYZE)
             results = await self._analyze_all(case, pack, modules)
-        await self._enter(RunStage.AUDIT)
-        audit = await self._audit_and_repair(case, pack, modules, results)
+        if self.settings.short_committee:
+            audit = AuditResult(warnings=['Short assessment: semantic audit, investment threshold and failure miner were not run.'])
+            self.ctx.warnings.extend(audit.warnings)
+        else:
+            await self._enter(RunStage.AUDIT)
+            audit = await self._audit_and_repair(case, pack, modules, results)
         await self._enter(RunStage.SYNTHESIZE)
         decision = await self._track(RoleId.CHAIR,
             lambda: self._synthesize(case, pack, modules, results, audit),
@@ -569,14 +574,14 @@ class Pipeline:
 
     async def _analyze_all(self, case, pack, modules) -> dict[RoleId, RoleResult]:
         results: dict[RoleId, RoleResult] = {}
-        await self._run_roles(set(ROLE_ORDER), results, case, pack, modules)
+        await self._run_roles(set(self.role_order), results, case, pack, modules)
         self._collect_claims(results, pack)  # fail fast on dangling evidence / duplicate claims
         return results
 
     def _collect_claims(self, results: dict[RoleId, RoleResult], pack: EvidencePack) -> list[Claim]:
         evidence_ids = {e.id for e in pack.evidence}
         merged: dict[str, Claim] = {}
-        for role in ROLE_ORDER:
+        for role in self.role_order:
             for c in (results[role].claims if role in results else []):
                 if c.id in merged and merged[c.id] != c:
                     raise ValidationFailed(f"Claim '{c.id}' was produced twice with different content",
@@ -681,6 +686,12 @@ class Pipeline:
 
     async def _synthesize(self, case, pack, modules, results, audit) -> CommitteeDecision:
         ctx = self.ctx
+        if self.settings.short_committee:
+            from vic.short_committee import synthesize_short_committee
+            decision, chair = await synthesize_short_committee(
+                case, pack, [results[r] for r in self.role_order if r in results], ctx)
+            results[RoleId.CHAIR] = chair
+            return decision
         ordered = [results[r] for r in ROLE_ORDER if r in results]
         known = {c.id for res in ordered for c in res.claims}
 
@@ -768,14 +779,15 @@ class Pipeline:
         audited_claims = [claim for claim in claims if claim.id in self._audit_findings]
         findings = [self._audit_findings[claim.id].model_dump(mode="json") for claim in audited_claims]
         audit_summary = f"Checked {len(audited_claims)} claims; {len(self._unresolved)} unresolved critical claims."
-        roles.append(RoleResult(role_id=RoleId.AUDIT, summary=audit_summary,
-            position="Review required" if self._unresolved else "Audit completed with limitations",
-            claims=audited_claims, unknowns=list(dict.fromkeys(self._audit_warnings)),
-            section_content=[SectionContent(key="sources", summary=audit_summary,
-                claim_ids=[claim.id for claim in audited_claims],
-                limitations=["Automated audit is not independent expert verification."],
-                structured_data={"findings": findings,
-                                 "unresolved_critical_claim_ids": sorted(self._unresolved)})]))
+        if not self.settings.short_committee:
+            roles.append(RoleResult(role_id=RoleId.AUDIT, summary=audit_summary,
+                position="Review required" if self._unresolved else "Audit completed with limitations",
+                claims=audited_claims, unknowns=list(dict.fromkeys(self._audit_warnings)),
+                section_content=[SectionContent(key="sources", summary=audit_summary,
+                    claim_ids=[claim.id for claim in audited_claims],
+                    limitations=["Automated audit is not independent expert verification."],
+                    structured_data={"findings": findings,
+                                     "unresolved_critical_claim_ids": sorted(self._unresolved)})]))
         report_id = new_id("rep")
 
         def make(version: int) -> Report:
