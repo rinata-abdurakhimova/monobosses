@@ -97,3 +97,33 @@ def test_noncritical_prior_claims_are_scoped_but_critical_risks_and_gaps_are_sha
     assert not any(row.get('id') == claim.id for row in population)
     assert any(row.get('id') == claim.id for row in safety)
     assert all(any(row.get('id') == risk.id for row in population) for risk in translation.risks)
+
+
+@pytest.mark.asyncio
+async def test_duplicate_clinical_claim_is_repaired_in_its_subtask_before_merge():
+    class DuplicateProvider(Provider):
+        def __init__(self):
+            super().__init__()
+            self.duplicated = False
+
+        async def complete(self, **kwargs):
+            response = await super().complete(**kwargs)
+            data = json.loads(kwargs['messages'][0]['content'])
+            if data['claim_keys'] == sorted(TASKS['clinical_population'][1]) and not self.duplicated:
+                self.duplicated = True
+                raw = json.loads(response.text)
+                assert raw['claims']
+                duplicate = {**raw['claims'][0], 'reasoning': 'A second assessment of the same key'}
+                raw['claims'].append(duplicate)
+                return ProviderResponse(json.dumps(raw), 10, 10)
+            return response
+
+    provider = DuplicateProvider()
+    adapter = StructuredLlm(provider, Settings(_env_file=None))
+    ctx = RunContext('case', 'run', 'snap', None, RunMode.EVIDENCE_ONLY, model=adapter)
+    result = await analyze_clinical(_case(), _pack(), _scientific_result(), _translation_result(), ctx)
+    assert result.claims
+    assert len({c.id for c in result.claims}) == len(result.claims)
+    assert len(provider.calls) == 5  # only the faulty subtask is regenerated
+    assert 'clinical claim keys must be unique' in provider.calls[1][2][-1]['content']
+    assert 'repeated keys:' in provider.calls[1][2][-1]['content']

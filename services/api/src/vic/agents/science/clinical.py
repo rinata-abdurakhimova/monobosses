@@ -172,7 +172,8 @@ class ClinicalPlanAnalysis(BaseModel):
     def reject_duplicate_claim_keys(self) -> ClinicalPlanAnalysis:
         keys = [claim.key for claim in self.claims]
         if len(keys) != len(set(keys)):
-            raise ValueError("clinical claim keys must be unique")
+            raise ValueError("clinical claim keys must be unique; repeated keys: "
+                + ", ".join(sorted({key for key in keys if keys.count(key) > 1})))
         return self
 
 
@@ -192,7 +193,15 @@ _DESIGN_CLAIMS = {"clinical.target_population", "clinical.primary_endpoint",
 def _pass_model(name: str, fields: set[str], keys: set[str]) -> type[BaseModel]:
     claim_model = create_model(name + "Claim", __base__=_ClaimOutput,
                                key=(Literal[tuple(sorted(keys))], ...))
-    return create_model(name, __config__=ConfigDict(extra="forbid", strict=True), **{
+    def validate_claim_keys(value):
+        keys = [claim.key for claim in value.claims]
+        duplicates = sorted({key for key in keys if keys.count(key) > 1})
+        if duplicates:
+            raise ValueError("clinical claim keys must be unique; repeated keys: " + ", ".join(duplicates))
+        return value
+
+    return create_model(name, __config__=ConfigDict(extra="forbid", strict=True),
+        __validators__={"validate_claim_keys": model_validator(mode="after")(validate_claim_keys)}, **{
         key: (list[claim_model] if key == "claims" else field.annotation, field)
         for key, field in ClinicalPlanAnalysis.model_fields.items()
         if key in fields | _COMMON_FIELDS

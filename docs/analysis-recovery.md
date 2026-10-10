@@ -47,3 +47,19 @@ findings, without expanding details. All remaining claims stay available. Saved
 Clinical/Market/Partnerships results get the same presentation when they meet
 these criteria; saved report data is not rewritten. Specific licensing, safety
 and pricing gaps remain visible.
+
+
+## Clinical duplicate-claim repair
+
+Clinical subtask models enforce unique claim keys before their outputs are merged.
+Previously, two differently worded claims with the same key could pass a subtask
+schema and fail the whole ClinicalPlanAnalysis root validator only at assembly.
+The shared schema repair now receives the duplicate keys and regenerates the
+faulty subtask; other completed subtasks are retained. Conflicting duplicates are
+not silently discarded or relabeled. If repair fails, normal recovery still applies.
+
+Root validation diagnostics include the rule message and a <root> location, with
+input/context omitted and configured secrets scrubbed. A displayed : value_error
+alone does not prove which rule failed in a historical run. This duplicate-claim
+failure has been reproduced with a test provider; confirmation for a production
+run requires its original traceback/trace or a new run with the improved diagnostics.

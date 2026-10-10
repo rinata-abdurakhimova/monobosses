@@ -360,7 +360,8 @@ class Pipeline:
     def _validation_reason(self, exc: RunFailure) -> str:
         cause = exc.__cause__ or exc
         if isinstance(cause, ValidationError):
-            detail = '; '.join('.'.join(str(part) for part in e['loc']) + ': ' + e['type']
+            detail = '; '.join(('.'.join(str(part) for part in e['loc']) or '<root>')
+                + ': ' + e['type'] + ': ' + e['msg']
                 for e in cause.errors(include_input=False, include_context=False))
         else:
             detail = str(cause)
