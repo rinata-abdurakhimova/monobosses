@@ -313,9 +313,11 @@ class StructuredLlm:
                         defects = list(dict.fromkeys(
                             ".".join("*" if isinstance(part, int) else str(part)
                                      for part in error["loc"]) + ":" + error["type"]
-                            + (":" + error["msg"] if error["type"] == "value_error" else "")
+                            + (":" + error["msg"] if error["type"] in {"value_error", "string_too_long", "string_too_short"} else "")
                             for error in exc.errors(include_input=False, include_context=False)))
                         feedback = json.dumps(defects, ensure_ascii=True)[:350]
+                        if any(error["type"] == "string_too_long" for error in exc.errors()):
+                            feedback = "Shorten the indicated field to its character limit; preserve safety gaps and contradictions. " + feedback
                         if any("record_ids" in error["loc"] for error in exc.errors()):
                             feedback = ("record_ids: supplied record IDs only, never claims; [] if absent. "
                                         "Put upstream claims in upstream_claim_ids. " + feedback)
