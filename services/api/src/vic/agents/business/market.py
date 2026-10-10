@@ -569,6 +569,70 @@ def merge_market_results(competitive, commercial):
         pricing_unknowns=_unique([u for p in commercial for u in p.pricing_unknowns]), **common)
 
 
+class CompetitorStatusConflict(ValueError):
+    """A model's competitor classification is internally inconsistent."""
+
+
+def _validate_competitor_status(competitor):
+    status_tags = {'approved', 'clinical_stage', 'discontinued'}
+    conflicts = [tag for tag in competitor.categories
+                 if tag in status_tags and tag != competitor.development_status]
+    if conflicts:
+        raise CompetitorStatusConflict(
+            f"Competitor category conflicts with development status: {competitor.name!r}; "
+            f"categories={competitor.categories}; development_status={competitor.development_status!r}. "
+            "Use only the status tag matching the evidence-backed development_status; "
+            "same_target, alternative_mechanism and standard_of_care may overlap. "
+            "If status cannot be established, use unknown and omit status tags.")
+    if competitor.development_status in status_tags and competitor.development_status not in competitor.categories:
+        raise CompetitorStatusConflict(
+            f"Competitor status must have matching category: {competitor.name!r}; "
+            f"add {competitor.development_status!r} only if supported by the supplied evidence.")
+
+
+def _quarantine_competitor_conflicts(result, ctx):
+    """Keep unresolved classifications as visible gaps, never guess a true status."""
+    retained, rejected, gaps = [], [], []
+    for competitor in result.competitors:
+        try:
+            _validate_competitor_status(competitor)
+        except CompetitorStatusConflict:
+            rejected.append(competitor)
+            gaps.append(f"Unresolved competitor classification for {competitor.name}: "
+                f"model categories={competitor.categories}, development_status={competitor.development_status}. "
+                "This inconsistent entry was excluded from the classified landscape; "
+                "verify current development status against the original evidence. "
+                f"Claim references: {competitor.claim_ids}.")
+        else:
+            retained.append(competitor)
+    if not rejected:
+        return result
+    retained_names = {c.name for c in retained}
+    differentiation = []
+    for item in result.differentiation:
+        if item.comparator in retained_names:
+            differentiation.append(item)
+        else:
+            gaps.append(f"Differentiation for {item.comparator} remains unresolved: {item.assessment}")
+    coverage = dict(result.competitive_coverage)
+    affected = {tag for c in rejected for tag in c.categories}
+    for category in affected:
+        finding = coverage[category]
+        if not any(category in c.categories for c in retained):
+            coverage[category] = CoverageFinding(status='insufficient_data', claim_ids=[],
+                unknowns=[*finding.unknowns, 'Competitor classification unresolved after correction; no verified entry retained.'])
+    warning = ('Partial Market result: inconsistent competitor classifications remained after correction. '
+        'Excluded entries and related comparisons are recorded as gaps; retained claims still require evidence audit.')
+    ctx.trace.log(RunStage.ANALYZE, f'market_competitive partial result: unresolved competitors={len(rejected)}')
+    return result.model_copy(update={
+        'competitors': retained, 'differentiation': differentiation,
+        'competitive_coverage': coverage, 'position': 'insufficient_data',
+        'summary': warning + ' ' + result.summary,
+        'unknowns': [*result.unknowns, *gaps],
+        'limitations': [*result.limitations, warning],
+        'change_conditions': [*result.change_conditions, 'Verify unresolved competitor classifications and rerun Market.']})
+
+
 async def run_market_pass(task, batches, ctx):
     results = []
     for batch in batches:
@@ -580,6 +644,9 @@ async def run_market_pass(task, batches, ctx):
             raw = await ctx.model.generate_structured(task, batch, PASS_MODELS[task], call_ctx)
             result = raw if isinstance(raw, PASS_MODELS[task]) else PASS_MODELS[task].model_validate(raw)
             visible_ids = {e["id"] for e in batch["evidence"]}
+            context_ids = batch["coverage"].get("clinical_context_ids")
+            if batch["coverage"].get("audit_feedback_batch_id"):
+                context_ids = [*(context_ids or []), "audit:" + batch["coverage"]["audit_feedback_batch_id"]]
             try:
                 if any(not set(c.evidence_ids) <= visible_ids for c in result.claims):
                     raise ValueError("Market pass cited evidence outside its batch")
@@ -589,22 +656,29 @@ async def run_market_pass(task, batches, ctx):
                 if isinstance(result, CompetitiveAnalysis):
                     if set(result.competitive_coverage) != set(Category.__args__):
                         raise ValueError("Market pass must cover all six competitor categories")
+                    for competitor in result.competitors:
+                        _validate_competitor_status(competitor)
                     names = {c.name for c in result.competitors}
                     if any(d.comparator not in names for d in result.differentiation):
                         raise ValueError("Differentiation must reference a listed comparator; "
                                          "use an empty differentiation list when no comparator is known")
-                context_ids = batch["coverage"].get("clinical_context_ids")
-                if batch["coverage"].get("audit_feedback_batch_id"):
-                    context_ids = [*(context_ids or []), "audit:" + batch["coverage"]["audit_feedback_batch_id"]]
                 normalized = namespace_pass(result, task, context_ids, visible_ids)
             except ValueError as exc:
                 if attempt:
+                    if isinstance(exc, CompetitorStatusConflict):
+                        partial = _quarantine_competitor_conflicts(result, ctx)
+                        # Repeat remaining checks and namespace validation on the partial result.
+                        names = {c.name for c in partial.competitors}
+                        if any(d.comparator not in names for d in partial.differentiation):
+                            raise ValueError("Differentiation must reference a listed comparator")
+                        results.append(namespace_pass(partial, task, context_ids=context_ids, evidence_ids=visible_ids))
+                        break
                     raise
                 # Fresh corrective request avoids replaying a large invalid output.
                 # All original evidence/context and existing audit feedback survive.
                 feedback = {**call_ctx.feedback, "market": [*call_ctx.feedback.get("market", []), str(exc)]}
                 call_ctx = replace(ctx, feedback=feedback)
-                ctx.trace.log(RunStage.ANALYZE, f"{task} bounded reference repair")
+                ctx.trace.log(RunStage.ANALYZE, f"{task} reference/domain repair: {str(exc)[:1500]}")
             else:
                 results.append(normalized)
                 break
@@ -757,11 +831,7 @@ def validate_market_result(analysis: MarketAnalysis, case: CaseInput, pack: Evid
     if len({r.id for r in analysis.risks}) != len(analysis.risks):
         raise ValueError("Duplicate risk IDs")
     for c in analysis.competitors:
-        for tag in ("approved", "clinical_stage", "discontinued"):
-            if tag in c.categories and c.development_status != tag:
-                raise ValueError("Competitor category conflicts with development status")
-        if c.development_status in ("approved", "clinical_stage", "discontinued") and c.development_status not in c.categories:
-            raise ValueError("Competitor status must have matching category")
+        _validate_competitor_status(c)
     required_categories = set(Category.__args__)
     if set(analysis.competitive_coverage) != required_categories:
         raise ValueError("Coverage must explain every competitor category")

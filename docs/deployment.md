@@ -177,3 +177,15 @@ connector timeouts, and finite error/repair retries remain. These protect data
 correctness and transport behavior; they are not LLM input-size budgets. Provider
 and hosting limits can still reject requests. No local run cost/time ceiling
 means runs can last longer and incur more provider charges.
+
+## Market competitor status recovery
+
+Market checks competitor status/category consistency before merging responses.
+A conflict receives one targeted correction with the full original input and
+audit feedback. If that same conflict remains, the inconsistent competitor entries
+and their dependent comparisons become explicit gaps in a partial Market result.
+Affected coverage becomes insufficient_data where no valid entry remains. The
+summary and limitations disclose the partial result, while commercial output and
+evidence-backed claims remain available for subsequent audit. Other validation
+failures still surface normally. Saved failed runs are not rewritten: deploy the
+change and start a new assessment.
