@@ -11,7 +11,7 @@ from tests.vic.agents.science.test_clinical import (
     _translation_result,
 )
 from vic.agents.science.clinical import _COMMON_FIELDS, analyze_clinical
-from vic.clinical_requests import TASKS, scoped_records
+from vic.clinical_requests import TASKS, CombinedContextReview, ContextReview, scoped_records
 from vic.config import Settings
 from vic.contracts import Importance, RunContext, RunMode
 from vic.failures import RunFailure
@@ -99,3 +99,38 @@ def test_noncritical_prior_claims_are_scoped_but_critical_risks_and_gaps_are_sha
     assert not any(row.get('id') == claim.id for row in population)
     assert any(row.get('id') == claim.id for row in safety)
     assert all(any(row.get('id') == risk.id for row in population) for risk in translation.risks)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("schema, limit", [(ContextReview, 400), (CombinedContextReview, 1000)])
+async def test_review_length_repair_names_exact_limit_and_preserves_safety(schema, limit):
+    class LongReviewProvider(Provider):
+        async def complete(self, *, system, messages, model, max_tokens, timeout):
+            self.calls.append((system, messages, max_tokens))
+            if len(self.calls) == 1:
+                return ProviderResponse(json.dumps({
+                    'observations': 'Limited evidence.',
+                    'gaps_and_conflicts': 'Unresolved safety. ' * limit}), 10, 10)
+            assert 'Shorten' in messages[-1]['content']
+            assert f'at most {limit} characters' in messages[-1]['content']
+            return ProviderResponse(json.dumps({
+                'observations': 'Limited evidence.',
+                'gaps_and_conflicts': 'Safety concern unresolved; opposing findings require review.'}), 10, 10)
+
+    provider = LongReviewProvider()
+    adapter = StructuredLlm(provider, Settings(_env_file=None))
+    ctx = RunContext('case', 'run', 'snap', None, RunMode.EVIDENCE_ONLY, model=adapter)
+    result = await adapter._generate_direct('clinical_population', {'exact_input_segment': 'Safety concern.'},
+        schema, ctx, compact=True)
+    assert 'Safety concern unresolved' in result.gaps_and_conflicts
+    assert len(provider.calls) == 2
+    for system, messages, max_tokens in provider.calls:
+        assert request_sizes(system, messages)['request_bytes'] <= 10000
+        assert max_tokens == 4096
+        assert all(message['role'] != 'assistant' for message in messages)
+
+
+def test_combined_review_retains_more_conflicts_than_segment_review():
+    text = 'Safety gap and contradictory results. ' * 20
+    result = CombinedContextReview(observations='Limited evidence.', gaps_and_conflicts=text)
+    assert result.gaps_and_conflicts == text

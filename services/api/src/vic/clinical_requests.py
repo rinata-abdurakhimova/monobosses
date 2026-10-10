@@ -15,6 +15,11 @@ class ContextReview(BaseModel):
     gaps_and_conflicts: str = Field(min_length=1, max_length=400)
 
 
+class CombinedContextReview(ContextReview):
+    observations: str = Field(min_length=1, max_length=1000)
+    gaps_and_conflicts: str = Field(min_length=1, max_length=1000)
+
+
 TASKS = {
     'clinical_population': ({'target_population', 'comparator', 'standard_of_care', 'unmet_need'},
         {'clinical.target_population', 'clinical.comparator_choice', 'clinical.standard_of_care', 'clinical.unmet_need'},
@@ -158,7 +163,10 @@ async def _generate_task(adapter, case, pack, science, translation, ctx, task, p
                      for record in records if 'id' in record]
         payload = {**base, 'record_catalogue': catalogue, 'ai_context_reviews': reviews,
                    'reviewed_characters': offset, 'partial_upstream_projection': True}
-        merge_prompt = instructions + '\nMerge ALL provided adjacent reviews; preserve their opposing findings and uncertainty.'
+        merge_prompt = instructions.replace(
+            'observations <=600 characters and gaps_and_conflicts <=400 characters',
+            'observations <=1000 characters and gaps_and_conflicts <=1000 characters'
+        ) + '\nMerge ALL provided adjacent reviews; preserve their opposing findings and uncertainty.'
         while size(payload) > limit - reserve and len(reviews) > 1:
             merged = []
             for index in range(0, len(reviews), 2):
@@ -166,7 +174,7 @@ async def _generate_task(adapter, case, pack, science, translation, ctx, task, p
                 if len(group) == 1:
                     merged.extend(group)
                     continue
-                note = await call({**base, 'adjacent_reviews': group}, ContextReview, merge_prompt)
+                note = await call({**base, 'adjacent_reviews': group}, CombinedContextReview, merge_prompt)
                 merged.append({'start': group[0]['start'], 'end': group[-1]['end'], **note.model_dump()})
             reviews = merged
             payload['ai_context_reviews'] = reviews
