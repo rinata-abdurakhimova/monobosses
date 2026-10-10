@@ -84,6 +84,14 @@ export type EvidenceCreated = {
   source_id: string;
 };
 
+export type EvidencePack = {
+  evidence: Array<Evidence>;
+  retrieval_warnings?: Array<string>;
+  snapshot_id: string;
+  sources: Array<Source>;
+  synthetic: boolean;
+};
+
 export type HealthStatus = {
   status: "ok";
 };
@@ -219,7 +227,7 @@ export type RunStatus = "queued" | "running" | "completed" | "failed";
 export type ScienceTestResult = {
   error?: ErrorBody | null;
   events?: Array<Record<string, unknown>>;
-  evidence_excerpt: string;
+  evidence_pack?: EvidencePack | null;
   external_retrieval?: boolean;
   result?: RoleResult | null;
   status: "completed" | "failed";

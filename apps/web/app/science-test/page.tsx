@@ -6,6 +6,8 @@ import Link from "next/link";
 export default function ScienceTestPage() {
   const [busy, setBusy] = useState(false);
   const [output, setOutput] = useState<unknown>(null);
+  const [indication, setIndication] = useState("");
+  const [mechanism, setMechanism] = useState("");
   async function run() {
     setBusy(true);
     setOutput(null);
@@ -13,7 +15,7 @@ export default function ScienceTestPage() {
       const response = await fetch("/api/backend/diagnostics/science", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: "{}",
+        body: JSON.stringify({ indication, mechanism, scope: "approach" }),
       });
       setOutput(await response.json());
     } catch {
@@ -27,28 +29,44 @@ export default function ScienceTestPage() {
   }
   return (
     <div className="page-container">
-      <h1>Science connection test</h1>
+      <h1>Science test with real evidence</h1>
       <p>
-        This calls the configured model with fictional evidence. It runs only
-        Science, without external source search, and does not create a committee
-        report.
+        Enter your real indication and mechanism. This searches PubMed,
+        ClinicalTrials.gov and Open Targets, then runs only Science. The
+        returned evidence and warnings are shown with the diagnostics. No
+        committee report is created.
       </p>
       <p>
-        <strong>Indication:</strong> Synthetic disease X<br />
-        <strong>Mechanism:</strong> Inhibition of synthetic target Y
+        <label>
+          Indication{" "}
+          <input
+            value={indication}
+            onChange={(event) => setIndication(event.target.value)}
+            disabled={busy}
+          />
+        </label>
+        <br />
+        <label>
+          Mechanism{" "}
+          <input
+            value={mechanism}
+            onChange={(event) => setMechanism(event.target.value)}
+            disabled={busy}
+          />
+        </label>
       </p>
       <p>
-        Fictional test: target Y inhibition reduced a disease-X marker in one
-        mouse experiment. No human data or independent replication is available.
+        Retrieval uses up to 3 PubMed records and 4 trial records per query.
+        Complete retrieved excerpts are retained; this is a limited search.
       </p>
       <button
         type="button"
-        disabled={busy}
+        disabled={busy || !indication.trim() || !mechanism.trim()}
         onClick={run}
       >
         {busy
-          ? "Testing Science (up to two minutes)…"
-          : "Run live Science test"}
+          ? "Testing Science (up to four minutes)…"
+          : "Run Science with real evidence"}
       </button>
       <p>
         <Link href="/">Back to assessment</Link>
