@@ -23,7 +23,6 @@ const stages: RunStage[] = [
   "validate",
   "retrieve",
   "analyze",
-  "audit",
   "synthesize",
   "finalize",
 ];

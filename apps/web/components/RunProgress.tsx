@@ -16,7 +16,6 @@ export function RunProgress({
             "Validate input",
             "Retrieve evidence",
             "Analyze",
-            "Audit claims",
             "Synthesize decision",
             "Save report",
           ]
@@ -24,7 +23,7 @@ export function RunProgress({
             "Validate mock request",
             "Load fictional evidence",
             "Simulate analysis",
-            "Simulate audit",
+            "Check example structure",
             "Simulate synthesis",
             "Complete the saved report",
           ];
