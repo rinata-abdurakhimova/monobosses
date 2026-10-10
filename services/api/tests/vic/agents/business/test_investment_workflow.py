@@ -286,3 +286,71 @@ def test_incomplete_plan_finding_becomes_unknown_without_inventing_claims():
     assert fixed.claims == plan.claims
     assert any(b.basis == 'unknown' and b.value is None and b.unknowns for b in _walk(fixed) if isinstance(b, Finding))
     assert qualify_incomplete_plan_findings(fixed) == fixed
+
+
+@pytest.mark.asyncio
+async def test_explanation_domain_repair_keeps_validated_plan_and_calculations():
+    from vic.config import Settings
+    case, pack, ctx = inputs()
+    bad = explanation_output(True)
+    bad['summary'] = 'Budget increases by 20%.'
+    good = explanation_output(True)
+    ctx.model = SimpleNamespace(_s=Settings(_env_file=None, continue_on_node_validation_error=True),
+        generate_structured=AsyncMock(side_effect=[plan_output(True), bad, good]))
+    result = await analyze_investment(case, pack, ctx)
+    calls = ctx.model.generate_structured.call_args_list
+    assert [c.args[0] for c in calls] == ['investment_plan', 'investment', 'investment']
+    assert calls[1].args[1]['fixed_plan_hash'] == calls[2].args[1]['fixed_plan_hash']
+    assert calls[1].args[1]['calculated_financials'] == calls[2].args[1]['calculated_financials']
+    assert 'Numeric literals are forbidden' in calls[2].args[3].feedback['investment'][-1]
+    assert not ctx.feedback
+    assert result.claims
+    assert result.summary == good['summary']
+
+
+@pytest.mark.asyncio
+async def test_failed_explanation_retains_real_plan_claims_and_python_numbers():
+    from vic.config import Settings
+    case, pack, ctx = inputs()
+    bad = explanation_output(True)
+    bad['summary'] = 'Invented capital is USD 999999999.'
+    ctx.model = SimpleNamespace(_s=Settings(_env_file=None, continue_on_node_validation_error=True),
+        generate_structured=AsyncMock(side_effect=[plan_output(True), bad, bad]))
+    result = await analyze_investment(case, pack, ctx)
+    assert result.position == 'partial_assessment'
+    assert result.claims and result.summary.startswith('Preliminary investment plan:')
+    data = result.section_content[0].structured_data['investment']
+    assert data['calculated_financials']['scenarios'][0]['capital_to_milestone'] == {
+        'minimum': '400000', 'maximum': '700000'}
+    assert data['explanation_recovery']['status'] == 'analysis_unavailable'
+    assert '999999999' not in result.model_dump_json()
+    assert len(ctx.model.generate_structured.call_args_list) == 3
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('defect', ['namespace', 'missing_claims'])
+async def test_malformed_planning_risk_does_not_discard_other_valid_plan_findings(defect):
+    case, pack, ctx = inputs()
+    p = plan_output(True)
+    # Add the concrete risk shape that formerly killed validate_prepared_plan.
+    original = {'id': 'financing_gap', 'description': 'Funding may not cover the proposed work',
+        'priority': 'major', 'claim_ids': [p['claims'][0]['id']],
+        'impact': 'Next milestone may be delayed', 'next_check': 'Verify asset-allocated funding'}
+    if defect == 'missing_claims':
+        original.update(id='investment.financing_gap', claim_ids=[])
+    p['risks'] = [deepcopy(original)]
+    ctx.model = SimpleNamespace(generate_structured=AsyncMock(side_effect=[p, explanation_output(True)]))
+    result = await analyze_investment(case, pack, ctx)
+    assert result.claims
+    data = result.section_content[0].structured_data['investment']
+    assert data['calculated_financials']['scenarios'][0]['capital_to_milestone'] == {
+        'minimum': '400000', 'maximum': '700000'}
+    if defect == 'namespace':
+        risk = next(r for r in result.risks if r.id == 'investment.financing_gap')
+        assert risk.description == original['description']
+        assert risk.claim_ids == original['claim_ids']
+    else:
+        assert not any(r.id == original['id'] for r in result.risks)
+        assert any(original['description'] in gap and original['next_check'] in gap
+            for gap in result.unknowns)
+    assert p['risks'] == [original]  # caller/model response was not mutated

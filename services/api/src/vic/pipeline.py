@@ -360,7 +360,8 @@ class Pipeline:
     def _validation_reason(self, exc: RunFailure) -> str:
         cause = exc.__cause__ or exc
         if isinstance(cause, ValidationError):
-            detail = '; '.join('.'.join(str(part) for part in e['loc']) + ': ' + e['type']
+            detail = '; '.join(('.'.join(str(part) for part in e['loc']) or '<root>')
+                + ': ' + e['type'] + ': ' + e['msg']
                 for e in cause.errors(include_input=False, include_context=False))
         else:
             detail = str(cause)
@@ -729,6 +730,7 @@ class Pipeline:
             ctx.warnings.append("Chair claims set to 'unverified' after the audit: " + ", ".join(sorted(blocked)))
         unavailable = [r.value for r, result in results.items() if any(
             (section.structured_data or {}).get('node_recovery', {}).get('status') == 'analysis_unavailable'
+            or (section.structured_data or {}).get('investment', {}).get('explanation_recovery', {}).get('status') == 'analysis_unavailable'
             for section in result.section_content)]
         if unavailable:
             decision = decision.model_copy(update={'conditions': [*decision.conditions,
