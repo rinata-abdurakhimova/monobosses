@@ -17,6 +17,7 @@ from vic import integrity
 from vic.config import Settings
 from vic.contracts import (
     AuditResult,
+    AuditFinding,
     CaseInput,
     Claim,
     CommitteeDecision,
@@ -497,7 +498,17 @@ class Pipeline:
         documents = await self._io(self.repo.list_documents, self.run.case_id)
         async def invoke():
             return await call_audit(modules.audit_claims, claims, pack, self.ctx, documents=documents)
-        audit = await self._module("claim audit", invoke, code="audit_error")
+        try:
+            audit = await self._module("claim audit", invoke, code="audit_error")
+        except RunFailure as exc:
+            recoverable = isinstance(exc, MalformedModelOutput) or isinstance(exc.__cause__, ValueError)
+            if not self.settings.continue_on_node_validation_error or not recoverable:
+                raise
+            audit = AuditResult(findings=[AuditFinding(claim_id=c.id,
+                verdict=SupportStatus.UNVERIFIED, reason='Audit output failed validation; evidence support remains unverified.',
+                evidence_ids=c.evidence_ids, blocking=True) for c in claims],
+                unresolved_critical_claim_ids=[c.id for c in claims if c.importance == Importance.CRITICAL],
+                warnings=['Semantic audit unavailable: output failed validation. Chair must treat this as an evidence limitation.'])
         if not isinstance(audit, AuditResult):
             raise RunFailure("The claim audit returned an invalid result", code="audit_error")
         self.ctx.warnings.extend(f"Audit: {w}"[:300] for w in audit.warnings)
@@ -516,7 +527,9 @@ class Pipeline:
         ids = {c.id for c in claims}
         audit = await self._audit(claims, pack, modules)
         problem = self._blocking(audit, ids)
-        if problem:  # ONE subject-level repair: only the owners of the blocked claims (+ dependents)
+        if problem and self.settings.continue_on_node_validation_error:
+            self.ctx.trace.log(RunStage.AUDIT, 'Audit blockers retained for Chair; specialist reruns skipped')
+        if problem and not self.settings.continue_on_node_validation_error:  # ONE subject-level repair: only the owners of the blocked claims (+ dependents)
             owners = {r for r, res in results.items() if {c.id for c in res.claims} & problem}
             for role in owners:
                 self.ctx.feedback[role.value] = [f for f in audit.findings if f.claim_id in

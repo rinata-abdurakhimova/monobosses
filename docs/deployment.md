@@ -229,3 +229,17 @@ Investment also marks non-unknown plan findings with a missing value or empty
 claim references as unknown, preserving their original text in visible gaps. It
 does not fabricate financial inputs or supporting claims. Chair domain validation
 receives one corrective model request; an invalid Chair result is not fabricated.
+
+## Chair after audit blockers
+
+With validation recovery enabled, audit blockers no longer trigger an automatic
+specialist repair cascade. The available analyses are preserved, blocked claims
+are marked unverified, and the actual Chair receives the audit findings and gaps.
+Malformed audit output is represented as unavailable verification, never a pass.
+The strict mode still retains its one subject-repair round.
+
+The website keeps polling API runs until completion, failure or navigation away;
+the former ten-minute polling pause is removed. This does not impose a provider
+timeout or guarantee that a provider request will finish. Existing processes use
+the code they started with; deploy and retry an interrupted/failed run to apply
+the new orchestration behavior.
