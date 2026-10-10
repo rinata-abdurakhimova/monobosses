@@ -165,7 +165,7 @@ export function ApiCase({
         }
         const completed = await pollRun(client, runId!, {
           signal: controller.signal,
-          maxWaitMs: flow === "api" ? 600000 : 8000,
+          maxWaitMs: flow === "api" ? null : 8000,
           intervalMs: flow === "api" ? 1500 : 650,
           onUpdate(next) {
             if (next.case_id !== caseId)

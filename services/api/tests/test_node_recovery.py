@@ -59,3 +59,34 @@ def test_shared_recovery_is_enabled_by_default(monkeypatch):
     from vic.config import Settings
     monkeypatch.delenv('CONTINUE_ON_NODE_VALIDATION_ERROR')
     assert Settings(_env_file=None).continue_on_node_validation_error
+
+
+@pytest.mark.parametrize('audit_invalid', [False, True])
+def test_audit_blockers_go_to_chair_without_rerunning_specialists(tmp_path, audit_invalid):
+    from vic.contracts import AuditFinding, AuditResult
+    base = make_stub_modules()
+    calls = {'science': 0, 'audit': 0, 'chair': 0}
+    async def science(*args):
+        calls['science'] += 1
+        return await base.analyze_science(*args)
+    async def audit(claims, pack, ctx):
+        calls['audit'] += 1
+        if audit_invalid:
+            raise ValueError('Invalid audit output')
+        return AuditResult(findings=[AuditFinding(claim_id=c.id, verdict=c.support_status,
+            reason='Unresolved evidence', evidence_ids=c.evidence_ids,
+            blocking=c.id == 'science.target_validation') for c in claims])
+    async def chair(results, audit, ctx):
+        calls['chair'] += 1
+        science_result = next(r for r in results if r.role_id.value == 'science')
+        claim = next(c for c in science_result.claims if c.id == 'science.target_validation')
+        assert claim.support_status.value == 'unverified'
+        return await base.synthesize_committee(results, audit, ctx)
+    env = Env(tmp_path, dataclasses.replace(base, analyze_science=science,
+        audit_claims=audit, synthesize_committee=chair), continue_on_node_validation_error=True)
+    run = env.run()
+    assert run.status.value == 'completed', run.error
+    assert calls == {'science': 1, 'audit': 1, 'chair': 1}
+    nodes = env.repo.get_nodes(run.id)
+    assert all(n.status != 'stale' for n in nodes)
+    assert next(n for n in nodes if n.role_id.value == 'chair').status == 'completed'
