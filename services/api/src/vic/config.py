@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     enforce_node_request_budget: bool = False
     node_initial_request_bytes: int = Field(default=13500, gt=0)
     science_request_target_bytes: int = Field(default=10000, gt=1000)
+    retrieval_pubmed_per_query: int = Field(default=3, ge=1, le=4)
+    retrieval_trials_per_query: int = Field(default=4, ge=1, le=5)
     node_reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] | None = "low"
     # Provisional application cap, NOT a measured mentor gateway limit.
     market_request_max_bytes: int = Field(default=18000, gt=0)
@@ -103,6 +105,8 @@ class Settings(BaseSettings):
             "enforce_node_request_budget": self.enforce_node_request_budget,
             "node_initial_request_bytes": self.node_initial_request_bytes,
             "science_request_target_bytes": self.science_request_target_bytes,
+            "retrieval_pubmed_per_query": self.retrieval_pubmed_per_query,
+            "retrieval_trials_per_query": self.retrieval_trials_per_query,
             "node_reasoning_effort": self.node_reasoning_effort,
             "market_request_max_bytes": self.market_request_max_bytes,
             "llm_price_input_per_mtok": self.llm_price_input_per_mtok,

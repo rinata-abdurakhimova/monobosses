@@ -444,6 +444,51 @@
         "title": "EvidenceCreated",
         "type": "object"
       },
+      "EvidencePack": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Evidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "retrieval_warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Retrieval Warnings",
+            "type": "array"
+          },
+          "snapshot_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/Source"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "sources",
+          "evidence",
+          "snapshot_id",
+          "synthetic"
+        ],
+        "title": "EvidencePack",
+        "type": "object"
+      },
       "HealthStatus": {
         "additionalProperties": false,
         "properties": {
@@ -1155,12 +1200,18 @@
             "title": "Events",
             "type": "array"
           },
-          "evidence_excerpt": {
-            "title": "Evidence Excerpt",
-            "type": "string"
+          "evidence_pack": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidencePack"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "external_retrieval": {
-            "default": false,
+            "default": true,
             "title": "External Retrieval",
             "type": "boolean"
           },
@@ -1183,7 +1234,7 @@
             "type": "string"
           },
           "synthetic": {
-            "default": true,
+            "default": false,
             "title": "Synthetic",
             "type": "boolean"
           },
@@ -1202,8 +1253,7 @@
         },
         "required": [
           "test_id",
-          "status",
-          "evidence_excerpt"
+          "status"
         ],
         "title": "ScienceTestResult",
         "type": "object"
@@ -1812,6 +1862,16 @@
     "/diagnostics/science": {
       "post": {
         "operationId": "science_test_diagnostics_science_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseInput"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
@@ -1822,6 +1882,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Validation error"
           },
           "429": {
             "description": "Test already running"

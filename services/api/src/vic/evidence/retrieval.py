@@ -11,6 +11,7 @@ import hashlib
 
 import httpx
 
+from vic.config import get_settings
 from vic.contracts import CaseInput, EvidencePack, RunContext, RunMode, RunStage
 
 from .connectors.base import ConnectorResult, Sleep
@@ -19,8 +20,6 @@ from .connectors.opentargets import OpenTargetsConnector, TargetResolution
 from .connectors.pubmed import PubMedConnector, build_queries
 from .importer import ParsedDocument, build_pack
 
-PUBMED_RETMAX = 4      # per query -> at most 12 abstracts
-TRIALS_PAGE_SIZE = 5   # per query -> at most 15 registry records
 USER_AGENT = "vic-evidence/0.1 (virtual investment committee hackathon)"
 
 
@@ -56,18 +55,21 @@ async def build_evidence_pack(
         return _finish(extra, warnings, ctx)
 
     as_of = ctx.as_of_date or case.as_of_date
+    settings = get_settings()
+    ctx.trace.log(RunStage.RETRIEVE, f"retrieval caps: PubMed={settings.retrieval_pubmed_per_query}; trials={settings.retrieval_trials_per_query} per query; full excerpts retained")
+    warnings.append(f"Reduced retrieval sample: up to {settings.retrieval_pubmed_per_query} PubMed records and {settings.retrieval_trials_per_query} trial records per query; this is not an exhaustive search.")
     own_client = client is None
     client = client or httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
     try:
         jobs = {
-            "PubMed": PubMedConnector.from_env(client, retmax=PUBMED_RETMAX, sleep=sleep).search(
+            "PubMed": PubMedConnector.from_env(client, retmax=settings.retrieval_pubmed_per_query, sleep=sleep).search(
                 build_queries(case.mechanism, case.indication), as_of=as_of),
-            "ClinicalTrials.gov": ClinicalTrialsConnector(client, page_size=TRIALS_PAGE_SIZE, sleep=sleep).search(
+            "ClinicalTrials.gov": ClinicalTrialsConnector(client, page_size=settings.retrieval_trials_per_query, sleep=sleep).search(
                 condition=case.indication, intervention=case.mechanism, as_of=as_of),
             "Open Targets": OpenTargetsConnector(client, sleep=sleep).resolve(case.mechanism),
         }
         tasks = {name: asyncio.create_task(coro) for name, coro in jobs.items()}
-        done, pending = await asyncio.wait(tasks.values(), timeout=overall_timeout)
+        _done, pending = await asyncio.wait(tasks.values(), timeout=overall_timeout)
         for t in pending:
             t.cancel()
         if pending:
@@ -87,7 +89,7 @@ async def build_evidence_pack(
             continue
         try:
             result = task.result()
-        except Exception as exc:  # a connector bug must not take down the whole run
+        except Exception as exc:  # noqa: BLE001 -- connector failures become explicit source warnings
             warnings.append(f"{name}: unexpected error ({type(exc).__name__}); source skipped.")
             ctx.trace.log(RunStage.RETRIEVE, f"{name}: error {type(exc).__name__}")
             continue
@@ -108,7 +110,9 @@ async def build_evidence_pack(
 
 async def _demo(indication: str, mechanism: str) -> None:
     from vic.contracts import Scope
-    from vic.run_context import RunContext as _  # noqa: F401  (exists in the repo; import checks wiring)
+    from vic.run_context import (
+        RunContext as _,  # noqa: F401  (exists in the repo; import checks wiring)
+    )
 
     case = CaseInput(indication=indication, mechanism=mechanism, scope=Scope.APPROACH)
     ctx = RunContext(case_id="demo", run_id="demo", snapshot_id=None, as_of_date=None, mode=RunMode.LIVE)
@@ -124,4 +128,3 @@ if __name__ == "__main__":
     import sys
 
     asyncio.run(_demo(sys.argv[1], sys.argv[2]))
-    

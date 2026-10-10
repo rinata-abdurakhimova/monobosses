@@ -131,7 +131,7 @@ export async function proxyBackend(
   if (request.signal.aborted) cancel();
   const timer = setTimeout(
     () => controller.abort(),
-    options.timeoutMs ?? (path === "diagnostics/science" ? 130000 : 8000),
+    options.timeoutMs ?? (path === "diagnostics/science" ? 250000 : 8000),
   );
   try {
     let body: string | FormData | undefined;
