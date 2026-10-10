@@ -35,11 +35,38 @@ class RunManager:
             task.add_done_callback(self._tasks.discard)
         return run
 
-    async def _execute(self, run: Run) -> None:
+    async def resume(self, run_id: str) -> Run:
+        repo = get_repository()
+        async with self._lock:
+            run = await asyncio.to_thread(repo.get_run, run_id)
+            if run is None:
+                raise ApiError(404, "not_found", "Run not found")
+            if run.status != RunStatus.FAILED:
+                raise ApiError(409, "resume_unavailable", "Only failed runs can be resumed")
+            if await asyncio.to_thread(repo.count_active_runs, run.case_id):
+                raise ApiError(409, "run_in_progress", "This case already has an active run")
+            if await asyncio.to_thread(repo.count_active_runs) >= self.settings.max_concurrent_runs:
+                raise ApiError(429, "too_many_runs", "Too many active runs", True)
+            trace = await asyncio.to_thread(repo.get_trace, run.id)
+            if not trace or not trace.get('snapshot_id') or not await asyncio.to_thread(repo.get_snapshot, trace['snapshot_id']):
+                raise ApiError(409, "resume_unavailable", "Saved evidence snapshot required; start a new assessment")
+            latest = await asyncio.to_thread(repo.get_latest_report, run.case_id)
+            if latest is not None and latest.id != run.parent_report_id:
+                raise ApiError(409, "resume_unavailable", "A newer report exists; start a new assessment from that report")
+            if run.report_version is not None:
+                raise ApiError(409, "resume_unavailable", "A report was already saved for this run")
+            run = run.model_copy(update={'status': RunStatus.QUEUED, 'error': None})
+            await asyncio.to_thread(repo.update_run, run)
+            task = asyncio.create_task(self._execute(run, resume=True))
+            self._tasks.add(task)
+            task.add_done_callback(self._tasks.discard)
+            return run
+
+    async def _execute(self, run: Run, *, resume: bool = False) -> None:
         pipeline = Pipeline(get_repository(), self.settings,
                             modules_factory=lambda: get_modules(self.settings),
                             llm_factory=lambda: build_llm(self.settings))
-        await pipeline.execute(run)  # records failures itself; only CancelledError escapes
+        await pipeline.execute(run, resume=resume)  # records failures itself; only CancelledError escapes
 
     async def shutdown(self) -> None:
         for task in list(self._tasks):

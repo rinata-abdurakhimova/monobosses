@@ -450,3 +450,30 @@ test("upload body deadline cancels a stalled stream without forwarding", async (
   assert.equal(cancelled, true);
   assert.equal(calls, 0);
 });
+
+test("failed-run resume is an authenticated POST through the proxy", async () => {
+  let requested = "";
+  const response = await proxyBackend(
+    new Request("http://localhost/api/backend/runs/run-1/resume", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    }),
+    ["runs", "run-1", "resume"],
+    {
+      baseUrl,
+      apiSharedSecret: "test-secret",
+      fetcher: async (url, options) => {
+        requested = String(url);
+        assert.equal(options?.method, "POST");
+        assert.equal(
+          new Headers(options?.headers).get("X-API-Key"),
+          "test-secret",
+        );
+        return Response.json({ run_id: "run-1" }, { status: 202 });
+      },
+    },
+  );
+  assert.equal(response.status, 202);
+  assert.equal(requested, "http://python.internal/v1/runs/run-1/resume");
+});
