@@ -7,6 +7,55 @@ import { ApiError } from "../lib/api/errors.ts";
 import { sampleInput } from "../lib/preview.ts";
 import type { MockScenario, Run } from "../lib/api/types.ts";
 
+test("failed run node outputs remain readable and reject a different run", async () => {
+  const outputs = {
+    run_id: "run-1",
+    case_id: "case-1",
+    status: "failed",
+    nodes: [
+      {
+        role_id: "science",
+        status: "completed",
+        attempt: 1,
+        stale: false,
+        error: null,
+        result: {
+          role_id: "science",
+          summary: "Saved science output",
+          position: "insufficient_data",
+        },
+      },
+      {
+        role_id: "market",
+        status: "failed",
+        attempt: 1,
+        result: null,
+        stale: false,
+        error: {
+          code: "agent_error",
+          message: "Market failed",
+          retryable: false,
+        },
+      },
+    ],
+  };
+  let requested = "";
+  const client = createHttpApiClient({
+    fetcher: async (url) => {
+      requested = String(url);
+      return Response.json(outputs);
+    },
+  });
+  const received = await client.getRunOutputs!("run-1");
+  assert.equal(requested, "/api/backend/runs/run-1/outputs");
+  assert.equal(received.nodes[0].result?.summary, "Saved science output");
+  assert.equal(received.nodes[1].error?.message, "Market failed");
+  await assert.rejects(
+    client.getRunOutputs!("run-2"),
+    code("INVALID_RESPONSE"),
+  );
+});
+
 test("HTTP polling accepts nullable stages and preserves terminal failure details", async () => {
   const client = createHttpApiClient({
     fetcher: async () => Response.json({ ...run("failed"), stage: null }),

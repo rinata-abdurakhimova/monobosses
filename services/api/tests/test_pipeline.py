@@ -66,6 +66,51 @@ def test_happy_path_saves_a_valid_report_and_trace(tmp_path):
     assert env.repo.get_snapshot(report.snapshot_id) is not None
 
 
+def test_failed_node_keeps_prior_outputs_after_sqlite_reopen(tmp_path):
+    async def fail_market(*args, **kwargs):
+        raise MalformedModelOutput("Market output did not match its schema")
+
+    env = Env(tmp_path, modules=dataclasses.replace(make_stub_modules(), analyze_market=fail_market))
+    run = env.run()
+    assert run.status == RunStatus.FAILED
+    reopened = SqliteRepository(env.repo.path, seed=False)
+    nodes = {node.role_id.value: node for node in reopened.get_nodes(run.id)}
+    assert nodes["science"].status == nodes["translation"].status == nodes["clinical"].status == "completed"
+    assert nodes["clinical"].result.section_content
+    assert nodes["market"].status == "failed" and nodes["market"].result is None
+    assert nodes["market"].error.code == "malformed_model_output"
+    assert nodes["investment"].status == "not_started"
+    assert reopened.get_latest_report(env.case_id) is None
+
+
+def test_audit_repair_failure_marks_old_dependent_outputs_stale(tmp_path):
+    from vic.contracts import AuditFinding, AuditResult
+    market_calls = 0
+    original = make_stub_modules()
+
+    async def market(*args, **kwargs):
+        nonlocal market_calls
+        market_calls += 1
+        if market_calls > 1:
+            raise MalformedModelOutput("Market repair failed")
+        return await original.analyze_market(*args, **kwargs)
+
+    async def audit(claims, pack, ctx, **kwargs):
+        claim = next(claim for claim in claims if claim.id.startswith("market."))
+        return AuditResult(findings=[AuditFinding(claim_id=claim.id, verdict="unverified",
+            reason="Missing support", evidence_ids=[], blocking=True)])
+
+    env = Env(tmp_path, modules=dataclasses.replace(original, analyze_market=market, audit_claims=audit))
+    run = env.run()
+    nodes = {node.role_id.value: node for node in env.repo.get_nodes(run.id)}
+    assert run.status == RunStatus.FAILED
+    assert nodes["market"].status == "failed" and nodes["market"].stale
+    assert nodes["market"].attempt == 2 and nodes["market"].result is not None
+    assert nodes["investment"].status == "stale" and nodes["investment"].result is not None
+    assert nodes["audit"].status == "stale"
+    assert nodes["science"].status == "completed" and not nodes["science"].stale
+
+
 def test_rerun_with_new_evidence_creates_a_revision_and_keeps_v1(tmp_path):
     env = Env(tmp_path)
     env.run()

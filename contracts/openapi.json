@@ -468,6 +468,73 @@
         "title": "Importance",
         "type": "string"
       },
+      "NodeOutput": {
+        "additionalProperties": false,
+        "properties": {
+          "attempt": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorBody"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoleResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role_id": {
+            "$ref": "#/components/schemas/RoleId"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunStage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stale": {
+            "default": false,
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "status": {
+            "default": "not_started",
+            "enum": [
+              "not_started",
+              "running",
+              "completed",
+              "failed",
+              "interrupted",
+              "stale"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role_id"
+        ],
+        "title": "NodeOutput",
+        "type": "object"
+      },
       "Provenance": {
         "enum": [
           "source",
@@ -1008,6 +1075,43 @@
         ],
         "title": "RunMode",
         "type": "string"
+      },
+      "RunOutputs": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/NodeOutput"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "run_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          }
+        },
+        "required": [
+          "run_id",
+          "case_id",
+          "status",
+          "nodes"
+        ],
+        "title": "RunOutputs",
+        "type": "object"
       },
       "RunStage": {
         "enum": [
@@ -1726,6 +1830,73 @@
           }
         ],
         "summary": "Get Run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/runs/{run_id}/outputs": {
+      "get": {
+        "operationId": "get_run_outputs_runs__run_id__outputs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunOutputs"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Missing or invalid API key"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Get Run Outputs",
         "tags": [
           "runs"
         ]

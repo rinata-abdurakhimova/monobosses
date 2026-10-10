@@ -11,10 +11,11 @@ import {
   ApiError,
 } from "@/lib/api";
 import { asApiError } from "@/lib/api/errors";
-import type { LoadedReport, Run, RunStage } from "@/lib/api/types";
+import type { LoadedReport, Run, RunStage, RunOutputs } from "@/lib/api/types";
 import type { Report } from "@/lib/types";
 import { ReportView } from "@/components/ReportView";
 import { RunProgress } from "@/components/RunProgress";
+import { PartialRunOutputs } from "@/components/PartialRunOutputs";
 
 import { mapApiReport } from "@/lib/contracts/report";
 
@@ -53,6 +54,47 @@ export function ApiCase({
   const [report, setReport] = useState<LoadedReport<Report> | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [pending, setPending] = useState(true);
+  const [outputs, setOutputs] = useState<RunOutputs | null>(null);
+  const [outputsError, setOutputsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOutputs(null);
+    setOutputsError(null);
+    if (flow !== "api" || !runId || requestedVersion || !client.getRunOutputs)
+      return;
+    const controller = new AbortController();
+    const getOutputs = client.getRunOutputs;
+    let busy = false;
+    let terminal = false;
+    async function load() {
+      if (busy || terminal || controller.signal.aborted) return;
+      busy = true;
+      try {
+        const next = await getOutputs(runId!, { signal: controller.signal });
+        if (next.case_id !== caseId)
+          throw new ApiError(
+            "INVALID_RESPONSE",
+            "The node outputs belong to a different case.",
+          );
+        if (!controller.signal.aborted) {
+          setOutputs(next);
+          setOutputsError(null);
+          terminal = next.status === "failed" || next.status === "completed";
+        }
+      } catch (failure) {
+        if (!controller.signal.aborted)
+          setOutputsError(asApiError(failure).message);
+      } finally {
+        busy = false;
+      }
+    }
+    void load();
+    const timer = setInterval(() => void load(), 5000);
+    return () => {
+      clearInterval(timer);
+      controller.abort();
+    };
+  }, [caseId, runId, client, flow, requestedVersion, attempt]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -150,6 +192,11 @@ export function ApiCase({
       </p>
     </div>
   );
+  const partial = outputs ? (
+    <PartialRunOutputs outputs={outputs} />
+  ) : outputsError ? (
+    <p role="status">Saved node outputs could not be loaded: {outputsError}</p>
+  ) : null;
 
   if (report) {
     return (
@@ -204,6 +251,7 @@ export function ApiCase({
               }}
             />
           )}
+          {run?.status === "failed" && partial}
         </div>
         <ReportView
           key={report.content.id}
@@ -218,7 +266,7 @@ export function ApiCase({
       <div className="page-container">
         {notice}
         <section
-          className="panel state-panel"
+          className={`panel state-panel${outputs ? " partial-run-status" : ""}`}
           role="alert"
         >
           <span className="eyebrow">
@@ -231,10 +279,24 @@ export function ApiCase({
               : error.code === "POLL_TIMEOUT"
                 ? "Status checks are paused."
                 : run?.status === "failed"
-                  ? "The assessment failed."
+                  ? "The assessment stopped before completion."
                   : "The request could not finish."}
           </h1>
           <p>{error.message}</p>
+          {!!run?.warnings.length && (
+            <details>
+              <summary>Run warnings ({run.warnings.length})</summary>
+              {run.warnings.map((warning, index) => (
+                <p key={index}>{warning}</p>
+              ))}
+            </details>
+          )}
+          {run?.status === "failed" && (
+            <p>
+              Stopped during {run.stage ?? "startup"}. Completed node outputs
+              remain available below.
+            </p>
+          )}
           <p>
             Refreshing or resuming checks the identifiers in this URL; it does
             not start another run.
@@ -263,6 +325,7 @@ export function ApiCase({
             </Link>
           </div>
         </section>
+        {partial}
       </div>
     );
   }
@@ -273,6 +336,7 @@ export function ApiCase({
         step={run?.stage ? stages.indexOf(run.stage) : 0}
         mode={flow}
       />
+      {partial}
     </div>
   );
 }

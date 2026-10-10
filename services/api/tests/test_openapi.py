@@ -6,6 +6,7 @@ from vic.main import create_app
 OPENAPI = Path(__file__).resolve().parents[3] / "contracts" / "openapi.json"
 
 EXPECTED_PATHS = {"/health", "/cases", "/cases/{case_id}/runs", "/runs/{run_id}",
+                  "/runs/{run_id}/outputs",
                   "/cases/{case_id}/reports/{version}", "/cases/{case_id}/evidence",
                   "/cases/{case_id}/documents"}
 

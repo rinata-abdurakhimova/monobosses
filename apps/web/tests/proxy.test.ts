@@ -3,6 +3,28 @@ import test from "node:test";
 import { proxyBackend } from "../lib/api/backend-proxy.ts";
 
 const baseUrl = "http://python.internal/v1";
+
+test("saved node outputs use the same authenticated read-only proxy", async () => {
+  let requested = "";
+  const response = await proxyBackend(
+    new Request("http://localhost/api/backend/runs/run-1/outputs"),
+    ["runs", "run-1", "outputs"],
+    {
+      baseUrl,
+      apiSharedSecret: "test-secret",
+      fetcher: async (url, options) => {
+        requested = String(url);
+        assert.equal(
+          new Headers(options?.headers).get("X-API-Key"),
+          "test-secret",
+        );
+        return Response.json({ nodes: [] });
+      },
+    },
+  );
+  assert.equal(response.status, 200);
+  assert.equal(requested, "http://python.internal/v1/runs/run-1/outputs");
+});
 test("configured HTTPS origin survives an HTTP hosting proxy without trusting forwarded headers", async () => {
   let calls = 0;
   const options = {
