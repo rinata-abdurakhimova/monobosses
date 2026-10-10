@@ -1,5 +1,7 @@
 "use client";
 
+import { analysisStatus } from "@/lib/analysis-status";
+
 import { useState } from "react";
 import { EvidenceDialog } from "@/components/EvidenceDialog";
 import { AnalysisDetails } from "@/components/AnalysisDetails";
@@ -19,7 +21,10 @@ export function RoleCard({
         <span className="role-initials">{role.initials}</span>
         <h3>{role.name}</h3>
       </div>
-      <span className="role-position">{role.position}</span>
+      <span className="role-position">{analysisStatus(role).label}</span>
+      {analysisStatus(role).explanation && (
+        <p>{analysisStatus(role).explanation}</p>
+      )}
       <p>{role.summary}</p>
       <div className="role-unknown">
         <span>Key unknown</span>

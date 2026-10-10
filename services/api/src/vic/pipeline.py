@@ -16,8 +16,8 @@ from pydantic import ValidationError
 from vic import integrity
 from vic.config import Settings
 from vic.contracts import (
-    AuditResult,
     AuditFinding,
+    AuditResult,
     CaseInput,
     Claim,
     CommitteeDecision,
@@ -39,7 +39,14 @@ from vic.contracts import (
     SupportStatus,
     Usage,
 )
-from vic.failures import MalformedModelOutput, ProviderAuthError, RunFailure, RunTimeout, SourceOutage, ValidationFailed
+from vic.failures import (
+    MalformedModelOutput,
+    ProviderAuthError,
+    RunFailure,
+    RunTimeout,
+    SourceOutage,
+    ValidationFailed,
+)
 from vic.modules import STUB_ORIGIN, Modules, call_audit, call_clinical, call_investment
 from vic.report_builder import SECTION_OWNERS, build_report
 from vic.storage import ReportExistsError, Repository, new_id
@@ -350,6 +357,16 @@ class Pipeline:
                                    "confirmed absence of data") from exc
             raise RunFailure(f"The {name} step failed ({type(exc).__name__})", code=code) from exc
 
+    def _validation_reason(self, exc: RunFailure) -> str:
+        cause = exc.__cause__ or exc
+        if isinstance(cause, ValidationError):
+            detail = '; '.join('.'.join(str(part) for part in e['loc']) + ': ' + e['type']
+                for e in cause.errors(include_input=False, include_context=False))
+        else:
+            detail = str(cause)
+        return scrub(detail, secrets=[self.settings.llm_api_key,
+            self.settings.api_shared_secret])[:500]
+
     def _scope_safe_result(self, role: RoleId, result: RoleResult) -> RoleResult:
         if getattr(self, '_case_scope', None) != 'approach':
             return result
@@ -372,21 +389,67 @@ class Pipeline:
 
     async def _agent(self, role: RoleId, factory) -> RoleResult:
         async def invoke():
+            previous_feedback = self.ctx.feedback.get(role.value)
+            repair_feedback_added = False
             try:
-                result = await self._module(f"{role.value} analysis", factory)
+                for attempt in range(2):
+                    try:
+                        result = await self._module(f"{role.value} analysis", factory)
+                    except RunFailure as exc:
+                        # Domain checks run after schema generation in specialist modules.
+                        # Give their exact defect one bounded correction before recovery.
+                        if (attempt or not self.settings.continue_on_node_validation_error
+                                or not isinstance(exc.__cause__, ValueError)):
+                            raise
+                        detail = self._validation_reason(exc)
+                        self.ctx.trace.log(RunStage.ANALYZE,
+                            f"{role.value} domain repair: {detail}")
+                        self.ctx.feedback[role.value] = [*(previous_feedback or []),
+                            AuditFinding(claim_id=f'{role.value}.output_validation',
+                                verdict=SupportStatus.UNVERIFIED, blocking=True,
+                                reason='Regenerate the analysis correcting this validation error: ' + detail
+                                    + '. Preserve evidence-backed findings, explicit unknowns and all required '
+                                    'schema fields; do not invent evidence or convert unknowns to facts.')]
+                        repair_feedback_added = True
+                        continue
+                    if not isinstance(result, RoleResult) or result.role_id != role:
+                        break
+                    incompatible = [c.id for c in result.claims if c.scope == 'program']
+                    if (attempt or not incompatible or getattr(self, '_case_scope', None) != 'approach'
+                            or not self.settings.continue_on_node_validation_error):
+                        break
+                    self.ctx.trace.log(RunStage.ANALYZE,
+                        f"{role.value} scope repair: regenerate incompatible claims {incompatible}")
+                    self.ctx.feedback[role.value] = [*(previous_feedback or []), *[
+                        AuditFinding(claim_id=cid, verdict=SupportStatus.UNVERIFIED, blocking=True,
+                            reason="This case assesses an approach, not a specific program. Regenerate the analysis "
+                                "at approach scope. Preserve evidence-backed class conclusions and candidate "
+                                "examples with applicability limitations. Express missing candidate PK/PD, "
+                                "exposure and safety as approach-level diligence gaps. Do not relabel "
+                                "candidate-specific conclusions as class facts or invent missing evidence.")
+                        for cid in incompatible]]
+                    repair_feedback_added = True
             except RunFailure as exc:
                 recoverable = isinstance(exc, MalformedModelOutput) or isinstance(exc.__cause__, ValueError)
                 if not self.settings.continue_on_node_validation_error or not recoverable:
                     raise
                 message = f"{role.value} analysis unavailable: output failed validation. No conclusions from the rejected output were retained."
+                detail = self._validation_reason(exc)
                 self.ctx.warnings.append(message)
-                self.ctx.trace.log(RunStage.ANALYZE, f"{role.value} validation recovery: {exc.code}")
+                self.ctx.trace.log(RunStage.ANALYZE, f"{role.value} validation recovery: {exc.code}: {detail}")
                 result = RoleResult(role_id=role, position='insufficient_data', summary=message,
-                    unknowns=[message, 'Rerun this specialist after correcting its output; downstream conclusions require review.'],
+                    unknowns=[message, 'Validation reason: ' + detail, 'Rerun this specialist after correcting its output; downstream conclusions require review.'],
                     section_content=[SectionContent(key=key, summary=message,
                         limitations=[message], structured_data={'node_recovery': {
-                            'role': role.value, 'status': 'analysis_unavailable', 'error_code': exc.code}})
+                            'role': role.value, 'status': 'analysis_unavailable', 'error_code': exc.code,
+                            'validation_reason': detail}})
                         for key in ([k for k, owner in SECTION_OWNERS.items() if owner == role] or ['critical_unknowns'])])
+            finally:
+                if repair_feedback_added:
+                    if previous_feedback is None:
+                        self.ctx.feedback.pop(role.value, None)
+                    else:
+                        self.ctx.feedback[role.value] = previous_feedback
             if not isinstance(result, RoleResult):
                 raise RunFailure(f"The {role.value} analysis returned an invalid result", code="agent_error")
             if result.role_id != role:

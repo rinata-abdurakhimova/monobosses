@@ -1,3 +1,4 @@
+import { analysisStatus } from "@/lib/analysis-status";
 import type { RunOutputs } from "@/lib/api/types";
 import { AnalysisDetails } from "@/components/AnalysisDetails";
 
@@ -63,9 +64,17 @@ export function PartialRunOutputs({ outputs }: { outputs: RunOutputs }) {
             {node.result && (
               <>
                 <p>
-                  <strong>{node.result.position}</strong>
+                  <strong>{analysisStatus(node.result).label}</strong>
                 </p>
+                {analysisStatus(node.result).explanation && (
+                  <p>{analysisStatus(node.result).explanation}</p>
+                )}
                 <p>{node.result.summary}</p>
+                <p>
+                  {node.result.claims?.length ?? 0} claims ·{" "}
+                  {node.result.risks?.length ?? 0} risks ·{" "}
+                  {node.result.unknowns?.length ?? 0} evidence gaps
+                </p>
                 <details>
                   <summary>Claims, risks, gaps and analysis</summary>
                   <AnalysisDetails
