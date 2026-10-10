@@ -56,8 +56,9 @@ export default function ScienceTestPage() {
         </label>
       </p>
       <p>
-        Retrieval uses up to 3 PubMed records and 4 trial records per query.
-        Complete retrieved excerpts are retained; this is a limited search.
+        Retrieval uses a small configurable sample from PubMed and trial
+        registries. Excerpts may be shortened; inspect the returned source
+        warnings for the applied limits and missing evidence.
       </p>
       <button
         type="button"
