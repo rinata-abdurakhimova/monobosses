@@ -335,7 +335,7 @@ class StructuredLlm:
 
     async def _call(self, prompt_id: str, version: str, system: str,
                     messages: list[dict[str, str]], ctx: RunContext) -> ProviderResponse:
-        if prompt_id not in {*MARKET_PROMPTS, "clinical", "clinical_design", "clinical_development"}:
+        if prompt_id not in {*MARKET_PROMPTS, "clinical", "clinical_design", "clinical_development", "clinical_population", "clinical_endpoints", "clinical_safety", "clinical_planning"}:
             sizes = request_sizes(system, messages, model=self._s.llm_model,
                                   max_tokens=self._s.llm_max_output_tokens,
                                   reasoning_effort=self._reasoning_effort(prompt_id))

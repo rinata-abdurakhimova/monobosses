@@ -1,22 +1,18 @@
-# Clinical subtask request budget
+# Clinical API input-limit testing
 
-Clinical now runs four sequential tasks with separate prompts, output schemas and scoped inputs:
+Clinical runs four sequential tasks: population, endpoints, safety, and planning.
+Each sends its complete scoped records and validates the existing Clinical contracts.
+Planning also receives the preceding subtask results. Critical claims, risks, gaps,
+and limitations remain shared; selected evidence excerpts are preserved verbatim.
 
-1. Population, comparator, standard of care and unmet need.
-2. Endpoints, biomarkers and trial-size basis.
-3. Safety requirements and unresolved safety gaps.
-4. Development sequence, regulatory context and overall feasibility, including the preceding task results.
+There is no Clinical application byte budget, repair reserve, segmentation, AI review,
+or review-length cap. CLINICAL_REQUEST_TARGET_BYTES is retired and ignored if still
+present in deployment variables. General node byte enforcement does not apply to
+these four Clinical calls, including schema repairs. The gateway determines whether
+the request fits; provider context-limit failures propagate without summarization or
+smaller retries. Initial and actual request sizes remain recorded in the run trace.
 
-These calls use the configured model. Python assembles their outputs and validates the existing Clinical analysis and RoleResult contracts. Full Science and Translation results remain unchanged. Relevant prior claims are scoped per task; critical claims, risks, gaps and limitations are shared. Exact selected evidence excerpts are available to every task. Retrieval itself is unchanged.
-
-`CLINICAL_REQUEST_TARGET_BYTES=10000` defaults to a 10,000-byte full serialized request budget, including system prompt, schema, feedback and provider envelope. Initial calls reserve 512 bytes for the existing bounded correction (one compact validation error, no replay of an invalid answer). The completion cap remains 4,096 tokens. Existing Clinical reasoning-effort settings apply to all these calls for OpenAI-compatible providers.
-
-Oversized scoped input is serialized and split into measured UTF-8-safe segments. Every segment is reviewed with a bounded review schema. Adjacent reviews are combined through measured calls when necessary. Stable record identifiers, provenance and citation metadata remain in a catalogue. Final task synthesis receives this catalogue and the reviews; its limitations explicitly disclose use of AI reviews. No selected segment is silently dropped. Reviews can nevertheless omit scientific nuance; domain review remains necessary, and schema validation does not establish clinical truth.
-
-The budget is bytes, not tokens. It must be below the gateway's actual input limit. A 5,000-byte gateway may still reject a task whose schema, case metadata or audit feedback alone exceeds that limit. Such requests stop with a controlled `clinical_request_budget` failure rather than truncating metadata or sending an oversized request. A provider context rejection during a direct request or segment review triggers smaller segment budgets. Other provider errors propagate normally.
-
-Tests cover four-task assembly, scoped prior claims, preservation of complete original inputs, Unicode segment coverage, compact repairs under the budget, feedback retention, unchanged completion cap, preflight failure for indivisible oversized metadata, and the scripted HTTP workflow. These are local tests, not a live gateway or deployed Clinical verification. More review calls increase latency and cost.
-
-## Review length correction
-
-Segment reviews retain the 600-character observations / 400-character gaps limits. Combined reviews allow up to 1,000 characters in each field to retain opposing findings from multiple segments. Every merge and subsequent synthesis still passes the full request byte preflight. Compact repairs now include the validator's exact character limit and ask the model to shorten the field while retaining safety gaps and contradictions. Text is never mechanically truncated to satisfy the output schema. One repair attempt remains the limit; another invalid answer still produces a controlled failure.
+Existing output-token caps, request timeouts, retries, run cost/time settings, Market
+and Science budgets, and retrieval sampling settings are unchanged. These are
+separate from the Clinical budgets removed here. Restart the API and use a new run
+for a live provider input-limit test; existing saved traces remain unchanged.
