@@ -203,6 +203,7 @@ class Pipeline:
         await self._enter(RunStage.VALIDATE)
         case, parent, modules = await self._validate()
         self.ctx.as_of_date = case.as_of_date
+        self._case_scope = case.scope
         await self._enter(RunStage.RETRIEVE)
         if self._resume_trace:
             pack = await self._io(self.repo.get_snapshot, self._resume_trace['snapshot_id'])
@@ -213,11 +214,18 @@ class Pipeline:
             nodes = await self._io(self.repo.get_nodes, self.run.id)
             self._node_states = {n.role_id: n for n in nodes}
             results = {}
+            scope_recovered = set()
             for role in ROLE_ORDER:
                 node = self._node_states[role]
                 if node.status != 'completed' or node.stale or node.result is None:
                     break
-                results[role] = node.result
+                results[role] = self._scope_safe_result(role, node.result)
+                if results[role] != node.result:
+                    scope_recovered.add(role)
+                    await self._save_node(role, 'completed', result=results[role])
+            # Cached dependent outputs were produced from the now-rejected input.
+            for role in _expand(scope_recovered) - scope_recovered:
+                results.pop(role, None)
             remaining = set(ROLE_ORDER) - results.keys()
             for role in [*remaining, RoleId.AUDIT, RoleId.CHAIR]:
                 old = self._node_states[role]
@@ -342,6 +350,26 @@ class Pipeline:
                                    "confirmed absence of data") from exc
             raise RunFailure(f"The {name} step failed ({type(exc).__name__})", code=code) from exc
 
+    def _scope_safe_result(self, role: RoleId, result: RoleResult) -> RoleResult:
+        if getattr(self, '_case_scope', None) != 'approach':
+            return result
+        incompatible = [c.id for c in result.claims if c.scope == 'program']
+        if not incompatible:
+            return result
+        if not self.settings.continue_on_node_validation_error:
+            raise ValidationFailed('Program claim expands approach scope', code='scope_mismatch')
+        message = (f"{role.value} analysis unavailable: program-specific claims conflict with this approach-level assessment. "
+            "The assessment scope was not changed; the rejected analysis must be regenerated at the correct scope.")
+        self.ctx.warnings.append(message)
+        self.ctx.trace.log(RunStage.ANALYZE, f'{role.value} scope recovery: incompatible_claim_count={len(incompatible)}')
+        return RoleResult(role_id=role, summary=message, position='insufficient_data',
+            unknowns=[message, 'Incompatible claim IDs: ' + ', '.join(incompatible)],
+            section_content=[SectionContent(key=key, summary=message, limitations=[message],
+                structured_data={'node_recovery': {'role': role.value,
+                    'status': 'analysis_unavailable', 'error_code': 'scope_mismatch',
+                    'rejected_claim_ids': incompatible}})
+                for key in ([k for k, owner in SECTION_OWNERS.items() if owner == role] or ['critical_unknowns'])])
+
     async def _agent(self, role: RoleId, factory) -> RoleResult:
         async def invoke():
             try:
@@ -363,7 +391,7 @@ class Pipeline:
                 raise RunFailure(f"The {role.value} analysis returned an invalid result", code="agent_error")
             if result.role_id != role:
                 raise ValidationFailed(f"The {role.value} analysis returned role_id '{result.role_id.value}'")
-            return result
+            return self._scope_safe_result(role, result)
         return await self._track(role, invoke)
 
     async def _save_node(self, role, status, *, result=None, error=None):
