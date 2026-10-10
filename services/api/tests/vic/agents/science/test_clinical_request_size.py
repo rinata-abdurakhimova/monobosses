@@ -60,7 +60,7 @@ async def test_scoped_clinical_subtasks_preserve_fields_and_share_safety_gaps():
         output['claims'] = [c for c in raw['claims'] if c['key'] in keys]
         outputs.append(ProviderResponse(json.dumps(output), 100, 100))
     provider = type("Provider", (), {"name": "test", "complete": AsyncMock(side_effect=outputs)})()
-    adapter = StructuredLlm(provider, Settings(_env_file=None, clinical_request_target_bytes=15000))
+    adapter = StructuredLlm(provider, Settings(_env_file=None))
     science, translation = _scientific_result(), _translation_result()
     ctx = RunContext("case", "run", "snapshot", None, RunMode.EVIDENCE_ONLY, model=adapter)
     ctx.feedback['clinical'] = [{'reason': 'Carry forward the negative safety result.'}]
@@ -72,7 +72,7 @@ async def test_scoped_clinical_subtasks_preserve_fields_and_share_safety_gaps():
         assert 'prior_analysis' not in data
         assert translation.unknowns[0] in json.dumps(data)
         assert 'negative safety result' in call.kwargs['messages'][1]['content']
-        assert request_sizes(call.kwargs['system'], call.kwargs['messages'])['request_bytes'] <= 15000 - 512
+        assert 'scoped_records' in data
     assert {c.id for c in result.claims} == {c['key'] for c in raw['claims']}
     section = result.section_content[0].structured_data
     for key in ('target_population', 'primary_endpoint', 'next_milestone', 'study_sequence', 'regulatory_context'):

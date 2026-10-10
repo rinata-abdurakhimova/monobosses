@@ -105,6 +105,8 @@ class OpenAICompatibleProvider:
         headers = {"Authorization": f"Bearer {self._api_key}"}
         body = {"model": model, "messages": [{"role": "system", "content": system}, *messages],
                 "max_completion_tokens": max_tokens, "stream": False}
+        if max_tokens is None:
+            body.pop("max_completion_tokens")
         if reasoning_effort is not None:
             body["reasoning_effort"] = reasoning_effort
         try:
@@ -216,6 +218,8 @@ def request_sizes(system, messages, *, model="placeholder-model", max_tokens=409
     """UTF-8 bytes/characters, not token estimates; includes message envelopes."""
     body = {"model": model, "messages": [{"role": "system", "content": system}, *messages],
             "max_completion_tokens": max_tokens, "stream": False}
+    if max_tokens is None:
+        body.pop("max_completion_tokens")
     if reasoning_effort is not None:
         body["reasoning_effort"] = reasoning_effort
     wire = json.dumps(body,
@@ -247,7 +251,7 @@ class StructuredLlm:
     def structured_request_size(self, prompt_id, payload, response_model, ctx):
         _, system, messages = structured_request(prompt_id, payload, response_model, ctx)
         return request_sizes(system, messages, model=self._s.llm_model,
-                             max_tokens=self._s.llm_max_output_tokens,
+                             max_tokens=self._output_limit(),
                              reasoning_effort=self._reasoning_effort(prompt_id))
 
     def _reasoning_effort(self, prompt_id):
@@ -272,6 +276,8 @@ class StructuredLlm:
 
     async def generate_structured(self, prompt_id: str, payload: dict[str, Any],
                                   response_model: type[T], ctx: RunContext) -> T:
+        if self._s.provider_input_limit_test:
+            return await self._generate_direct(prompt_id, payload, response_model, ctx, compact=True)
         if prompt_id == "science" and isinstance(payload.get("evidence_items"), str):
             from vic.science_requests import generate_science
             return await generate_science(self, payload, response_model, ctx)
@@ -335,14 +341,17 @@ class StructuredLlm:
 
     async def _call(self, prompt_id: str, version: str, system: str,
                     messages: list[dict[str, str]], ctx: RunContext) -> ProviderResponse:
-        if prompt_id not in {*MARKET_PROMPTS, "clinical", "clinical_design", "clinical_development"}:
+        sizes = request_sizes(system, messages, model=self._s.llm_model,
+            max_tokens=self._output_limit(), reasoning_effort=self._reasoning_effort(prompt_id))
+        ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} actual request sizes {sizes}; provider_input_limit_test={self._s.provider_input_limit_test}")
+        if not self._s.provider_input_limit_test and prompt_id not in {*MARKET_PROMPTS, "clinical", "clinical_design", "clinical_development", "clinical_population", "clinical_endpoints", "clinical_safety", "clinical_planning"}:
             sizes = request_sizes(system, messages, model=self._s.llm_model,
                                   max_tokens=self._s.llm_max_output_tokens,
                                   reasoning_effort=self._reasoning_effort(prompt_id))
             ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} request sizes {sizes}; budget_bytes={self._s.node_request_max_bytes}; enforced={self._s.enforce_node_request_budget}")
             if self._s.enforce_node_request_budget and sizes["request_bytes"] > self._s.node_request_max_bytes:
                 raise RunFailure("Node request exceeds the configured byte budget", code="node_request_budget")
-        if prompt_id in MARKET_PROMPTS:
+        if not self._s.provider_input_limit_test and prompt_id in MARKET_PROMPTS:
             sizes = request_sizes(system, messages, model=self._s.llm_model,
                                   max_tokens=self._s.llm_max_output_tokens,
                                   reasoning_effort=self._reasoning_effort(prompt_id))
@@ -364,9 +373,9 @@ class StructuredLlm:
                     options["reasoning_effort"] = effort
                 response = await asyncio.wait_for(
                     self._provider.complete(system=system, messages=messages, model=self._s.llm_model,
-                                            max_tokens=self._s.llm_max_output_tokens, timeout=timeout,
+                                            max_tokens=self._output_limit(), timeout=timeout,
                                             **options),
-                    timeout=timeout + 5)
+                    timeout=None if timeout is None else timeout + 5)
             except TimeoutError:
                 error: ProviderError = ProviderTimeout("The model provider timed out")
             except ProviderError as exc:
@@ -380,7 +389,15 @@ class StructuredLlm:
             attempt += 1
             await self._sleep(min(0.5 * 2 ** attempt, 8.0))
 
-    def _timeout(self, ctx: RunContext) -> float:
+    def _output_limit(self) -> int | None:
+        # Anthropic requires max_tokens; OpenAI-compatible gateways accept omission.
+        if self._s.provider_input_limit_test and self._provider.name != "anthropic":
+            return None
+        return self._s.llm_max_output_tokens
+
+    def _timeout(self, ctx: RunContext) -> float | None:
+        if self._s.provider_input_limit_test:
+            return None
         remaining = ctx.budget.remaining_seconds()
         if remaining is not None and remaining <= 0:
             raise RunTimeout("The run time limit was reached")
@@ -388,6 +405,8 @@ class StructuredLlm:
         return base if remaining is None else max(1.0, min(base, remaining))
 
     def _check_budget(self, ctx: RunContext) -> None:
+        if self._s.provider_input_limit_test:
+            return
         remaining = ctx.budget.remaining_seconds()
         if remaining is not None and remaining <= 0:
             raise RunTimeout("The run time limit was reached")

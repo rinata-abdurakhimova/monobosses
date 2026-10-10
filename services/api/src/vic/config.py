@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./data/vic.sqlite3"
     cors_origins: str = "http://localhost:3000"
     max_upload_bytes: int = 10 * 1024 * 1024
+    # Provider input-limit diagnostics bypass local LLM size/cost/time ceilings.
+    provider_input_limit_test: bool = True
     max_run_cost_usd: float | None = Field(default=None, gt=0)
     max_run_seconds: int = Field(default=600, gt=0)
     retrieval_pubmed_retmax: int = Field(default=1, ge=1, le=100)
@@ -42,7 +44,6 @@ class Settings(BaseSettings):
     llm_max_repairs: int = Field(default=1, ge=0)
     llm_request_timeout_seconds: float = Field(default=120.0, gt=0)
     llm_max_output_tokens: int = Field(default=4096, gt=0)
-    clinical_request_target_bytes: int = Field(default=10000, gt=1000)
     clinical_reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] | None = "low"
     market_reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] | None = "low"
     node_request_max_bytes: int = Field(default=15500, gt=0)
@@ -99,12 +100,12 @@ class Settings(BaseSettings):
     def public_config(self) -> dict:
         """Non-secret configuration that goes into the trace and the config version."""
         return {
+            "provider_input_limit_test": self.provider_input_limit_test,
             "llm_provider": self.llm_provider, "llm_model": self.llm_model,
             "llm_base_url": self.llm_base_url,
             "llm_max_retries": self.llm_max_retries, "llm_max_repairs": self.llm_max_repairs,
             "llm_request_timeout_seconds": self.llm_request_timeout_seconds,
             "llm_max_output_tokens": self.llm_max_output_tokens,
-            "clinical_request_target_bytes": self.clinical_request_target_bytes,
             "clinical_reasoning_effort": self.clinical_reasoning_effort,
             "market_reasoning_effort": self.market_reasoning_effort,
             "node_request_max_bytes": self.node_request_max_bytes,

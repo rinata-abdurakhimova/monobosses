@@ -22,6 +22,8 @@ def new_client() -> TestClient:
 def _isolated_env(tmp_path, monkeypatch):
     """Every test gets its own database and a clean environment (a developer .env must not leak in)."""
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{(tmp_path / 'vic.sqlite3').as_posix()}")
+    # Legacy bounded-mode regressions opt in; diagnostic-mode tests override explicitly.
+    monkeypatch.setenv("PROVIDER_INPUT_LIMIT_TEST", "false")
     monkeypatch.setenv("RUN_BACKEND", "mock")
     monkeypatch.setenv("API_SHARED_SECRET", "")
     monkeypatch.setenv("APP_ENV", "development")

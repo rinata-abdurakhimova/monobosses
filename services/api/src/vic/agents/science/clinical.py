@@ -530,7 +530,8 @@ async def _legacy_analysis(case, pack, scientific_result, translation_result, ct
         sizes = measure(PROMPT_ID, payload, ClinicalPlanAnalysis, ctx)
         if isinstance(sizes, dict):
             ctx.trace.log(RunStage.ANALYZE, f"clinical request sizes {sizes}")
-            split = sizes["request_bytes"] > CLINICAL_REQUEST_SPLIT_BYTES
+            split = (not getattr(getattr(ctx.model, "_s", None), "provider_input_limit_test", False)
+                     and sizes["request_bytes"] > CLINICAL_REQUEST_SPLIT_BYTES)
     if split:
         raw_analysis = await _split_analysis(payload, ctx)
     else:

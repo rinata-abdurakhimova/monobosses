@@ -109,12 +109,14 @@ class Pipeline:
         self.ctx = RunContext(
             case_id=run.case_id, run_id=run.id, snapshot_id=None, as_of_date=None,
             mode=run.mode or RunMode.LIVE, model=None,
-            budget=RunBudget(max_cost_usd=s.max_run_cost_usd, max_seconds=s.max_run_seconds,
-                             deadline=time.monotonic() + s.max_run_seconds))
+            budget=RunBudget() if s.provider_input_limit_test else RunBudget(
+                max_cost_usd=s.max_run_cost_usd, max_seconds=s.max_run_seconds,
+                deadline=time.monotonic() + s.max_run_seconds))
         started = time.monotonic()
         failure: RunFailure | None = None
         try:
-            await asyncio.wait_for(self._body(), timeout=s.max_run_seconds)
+            await asyncio.wait_for(self._body(),
+                timeout=None if s.provider_input_limit_test else s.max_run_seconds)
         except TimeoutError:
             failure = RunTimeout(f"The run exceeded the time limit of {s.max_run_seconds} seconds")
         except RunFailure as exc:
