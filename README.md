@@ -2,6 +2,9 @@
 
 Віртуальний інвестиційний комітет для biotech underwriting. Стек реалізації: Next.js + Python. Незалежна frontend-частина R1-01 реалізована у `apps/web` на явно позначеному синтетичному прикладі. Python API та всі експертні вузли підключено в спільний pipeline; офлайн-інтеграцію перевірено. Повний успішний live LLM-аналіз ще не підтверджено.
 
+## Deploy
+https://investment-committee-monobosses.up.railway.app/
+
 ## Запуск frontend preview
 
 Потрібні Node.js 22.18+ та npm (перевірено на Node 24):
