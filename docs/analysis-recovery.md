@@ -28,3 +28,22 @@ this repair. Imported evidence requires an explicit new/review run.
 
 Recovery improves correctness and diagnostics; it does not create absent clinical,
 commercial or IP evidence or establish live-model quality. Genuine unknowns remain.
+
+
+## Preliminary conclusions with partial evidence
+
+Clinical, Market and Partnerships outputs with an insufficient_data overall
+position and at least one supported, mixed or contradicted claim with evidence
+references become partial_assessment at the shared RoleResult boundary. The
+original position is retained in assessment_coverage metadata; summaries, claim
+support statuses, risks, unknowns and conditions are unchanged. This describes
+usable partial output, not established readiness, attractive economics or partner
+interest. Empty/unknown-only and rejected outputs retain their existing status.
+
+Prompts require substantive summaries distinguishing established findings,
+conditional implications and specific next diligence steps. The website shows
+preliminary conclusions and the first four claims, prioritizing evidence-linked
+findings, without expanding details. All remaining claims stay available. Saved
+Clinical/Market/Partnerships results get the same presentation when they meet
+these criteria; saved report data is not rewritten. Specific licensing, safety
+and pricing gaps remain visible.

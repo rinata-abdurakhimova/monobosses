@@ -39,3 +39,24 @@ test("does not treat ordinary structured analysis or null data as recovery", () 
     /Evidence gaps/,
   );
 });
+
+test("saved market analysis with evidence-backed claims shows preliminary conclusions", () => {
+  const result = analysisStatus({
+    role_id: "market",
+    position: "insufficient_data",
+    claims: [{ support_status: "supported", evidence_ids: ["ev-1"] }],
+  });
+  assert.match(result.label, /Preliminary conclusions/);
+  assert.match(
+    analysisStatus({ position: "partial_assessment" }).label,
+    /Preliminary conclusions/,
+  );
+  assert.match(
+    analysisStatus({
+      role_id: "market",
+      position: "insufficient_data",
+      claims: [{ support_status: "unknown", evidence_ids: [] }],
+    }).label,
+    /Evidence gaps/,
+  );
+});

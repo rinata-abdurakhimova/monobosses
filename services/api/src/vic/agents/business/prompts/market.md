@@ -85,3 +85,6 @@ Only Python calculates eligible/accessible patient counts and market scenario
 ranges from caller-reviewed inputs. Do not generate additional numerical inputs.
 All assertions remain subject to R3 semantic audit, including pricing comparisons,
 discontinuation reasons and willingness to pay.
+
+
+Summarize evidence-backed findings, conditional implications and next diligence steps; link findings to claims. Localize missing licensing, safety, pricing or partner-interest evidence to specific gaps. Keep positions honest; never replace usable analysis with a blanket insufficient-data summary or invent facts.

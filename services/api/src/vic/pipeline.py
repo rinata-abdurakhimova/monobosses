@@ -387,6 +387,27 @@ class Pipeline:
                     'rejected_claim_ids': incompatible}})
                 for key in ([k for k, owner in SECTION_OWNERS.items() if owner == role] or ['critical_unknowns'])])
 
+    def _partial_assessment(self, result: RoleResult) -> RoleResult:
+        if (result.role_id not in {RoleId.CLINICAL, RoleId.MARKET, RoleId.PARTNERSHIPS}
+                or result.position != 'insufficient_data'):
+            return result
+        if any((section.structured_data or {}).get('node_recovery')
+                for section in result.section_content):
+            return result
+        findings = [c for c in result.claims if c.evidence_ids
+            and c.support_status in {SupportStatus.SUPPORTED, SupportStatus.MIXED,
+                SupportStatus.CONTRADICTED}]
+        if not findings:
+            return result
+        # Partial is a description of usable output, not a positive feasibility/fit verdict.
+        return result.model_copy(update={'position': 'partial_assessment',
+            'section_content': [section.model_copy(update={'structured_data': {
+                **(section.structured_data or {}), 'assessment_coverage': {
+                    'status': 'partial_assessment', 'original_position': result.position,
+                    'finding_claim_ids': [c.id for c in findings],
+                    'limitation': 'Findings support a preliminary analysis; missing evidence still limits definitive conclusions.'}}})
+                for section in result.section_content]})
+
     async def _agent(self, role: RoleId, factory) -> RoleResult:
         async def invoke():
             previous_feedback = self.ctx.feedback.get(role.value)
@@ -454,7 +475,7 @@ class Pipeline:
                 raise RunFailure(f"The {role.value} analysis returned an invalid result", code="agent_error")
             if result.role_id != role:
                 raise ValidationFailed(f"The {role.value} analysis returned role_id '{result.role_id.value}'")
-            return self._scope_safe_result(role, result)
+            return self._partial_assessment(self._scope_safe_result(role, result))
         return await self._track(role, invoke)
 
     async def _save_node(self, role, status, *, result=None, error=None):
