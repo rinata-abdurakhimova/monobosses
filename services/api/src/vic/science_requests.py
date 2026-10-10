@@ -85,6 +85,32 @@ async def generate_science(adapter, payload, schema, ctx):
              "evidence_reviews": notes, "reviewed_characters": offset}
     size = measure(adapter, final, schema, ctx)
     ctx.trace.log(RunStage.ANALYZE, f"science reviewed all {offset} characters in {len(notes)} segments; synthesis_bytes={size}")
+    # Review every source first, then merge adjacent reviews in bounded calls.
+    # Preserve coverage intervals; never drop an input review to make synthesis fit.
+    merge_system = (REVIEW + " Merge ALL supplied AI reviews. Preserve source IDs, decisive supporting/opposing "
+                    "findings and uncertainty. Do not treat these reviews as verbatim sources. "
+                    "Keep observations under 600 characters and uncertainties under 400 characters.")
+    round_number = 0
+    while size > adapter._s.science_request_target_bytes - 512 and len(notes) > 1:
+        round_number += 1
+        merged = []
+        for start in range(0, len(notes), 2):
+            group = notes[start:start + 2]
+            if len(group) == 1:
+                merged.extend(group)
+                continue
+            request = {**base, "review_merge": group}
+            if measure(adapter, request, EvidenceReview, ctx, merge_system) > target - 512:
+                raise RunFailure("Science review merge exceeds the target; inspect size diagnostics.",
+                                 code="science_merge_size")
+            review = await adapter._generate_direct("science", request, EvidenceReview, ctx,
+                                                    system_override=merge_system, compact=True)
+            merged.append({"start": group[0]["start"], "end": group[-1]["end"], **review.model_dump()})
+        notes = merged
+        final["evidence_reviews"] = notes
+        size = measure(adapter, final, schema, ctx)
+        ctx.trace.log(RunStage.ANALYZE, f"science review merge round={round_number}; "
+                      f"reviews={len(notes)}; covered_characters={offset}; synthesis_bytes={size}")
     if size > adapter._s.science_request_target_bytes - 512:
         raise RunFailure("Science reviewed all evidence but synthesis exceeds the target; inspect size diagnostics.",
                          code="science_synthesis_size")
