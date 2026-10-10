@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Literal, get_args
 
 from pydantic import BaseModel, ConfigDict, Field, create_model, model_validator
+
 from vic.contracts import (
     CaseInput,
     Claim,
@@ -15,7 +16,7 @@ from vic.contracts import (
 )
 
 PROMPT_ID = "clinical"
-PROMPT_VERSION = "1.2.0"
+PROMPT_VERSION = "1.3.0"
 
 ClinicalClaimKey = Literal[
     "clinical.target_population",
@@ -217,6 +218,10 @@ async def _split_analysis(payload: dict, ctx: RunContext) -> ClinicalPlanAnalysi
         if any(claim.key not in keys for claim in part.claims):
             raise ValueError(f"{prompt_id}: claim outside assigned clinical task")
         parts.append(part.model_dump())
+    return ClinicalPlanAnalysis.model_validate(_merge_parts(parts))
+
+
+def _merge_parts(parts: list[dict]) -> dict:
     merged = {key: value for part in parts for key, value in part.items()
               if key not in _COMMON_FIELDS}
     for key in _COMMON_FIELDS:
@@ -238,7 +243,7 @@ async def _split_analysis(payload: dict, ctx: RunContext) -> ClinicalPlanAnalysi
                         continue
                 if item not in merged[key]:
                     merged[key].append(item)
-    return ClinicalPlanAnalysis.model_validate(merged)
+    return merged
 
 
 def _format_evidence(pack: EvidencePack) -> str:
@@ -452,22 +457,12 @@ async def analyze_clinical(
     translation_result: RoleResult,
     ctx: RunContext,
 ) -> RoleResult:
-    payload = _build_payload(case, pack, scientific_result, translation_result)
-    split = False
-    measure = getattr(ctx.model, "structured_request_size", None)
-    if callable(measure):
-        sizes = measure(PROMPT_ID, payload, ClinicalPlanAnalysis, ctx)
-        if isinstance(sizes, dict):
-            ctx.trace.log(RunStage.ANALYZE, f"clinical request sizes {sizes}")
-            split = sizes["request_bytes"] > CLINICAL_REQUEST_SPLIT_BYTES
-    if split:
-        raw_analysis = await _split_analysis(payload, ctx)
+    subtask_generator = getattr(ctx.model, "generate_clinical_subtasks", None)
+    if callable(subtask_generator):
+        raw_analysis = await subtask_generator(case, pack, scientific_result, translation_result, ctx)
     else:
-        raw_analysis = await ctx.model.generate_structured(
-            PROMPT_ID, payload, ClinicalPlanAnalysis, ctx
-        )
+        raw_analysis = await _legacy_analysis(case, pack, scientific_result, translation_result, ctx)
     analysis = _validate_analysis(raw_analysis)
-
     claims = _to_claims(analysis, pack)
     risks = _to_risks(analysis)
     trial_size_data, trial_size_notes = _normalise_trial_size(analysis.trial_size, pack)
@@ -524,3 +519,22 @@ async def analyze_clinical(
         change_conditions=analysis.change_conditions,
         section_content=[section],
     )
+
+
+async def _legacy_analysis(case, pack, scientific_result, translation_result, ctx):
+    """Compatibility for custom adapters; production uses measured subtasks."""
+    payload = _build_payload(case, pack, scientific_result, translation_result)
+    split = False
+    measure = getattr(ctx.model, "structured_request_size", None)
+    if callable(measure):
+        sizes = measure(PROMPT_ID, payload, ClinicalPlanAnalysis, ctx)
+        if isinstance(sizes, dict):
+            ctx.trace.log(RunStage.ANALYZE, f"clinical request sizes {sizes}")
+            split = sizes["request_bytes"] > CLINICAL_REQUEST_SPLIT_BYTES
+    if split:
+        raw_analysis = await _split_analysis(payload, ctx)
+    else:
+        raw_analysis = await ctx.model.generate_structured(
+            PROMPT_ID, payload, ClinicalPlanAnalysis, ctx
+        )
+    return raw_analysis
