@@ -529,7 +529,7 @@ async def brief_context(adapter, payload, ctx, target_bytes=6000):
         if len(dumps(briefing_payload(source, target)).encode()) > 10500:
             return False
         measure = getattr(adapter, "structured_request_size", None)
-        if callable(measure):
+        if callable(measure) and getattr(adapter._s, "enforce_node_request_budget", True):
             _, schema, request = review_spec(source, target)
             cap = min(adapter._s.node_initial_request_bytes, adapter._s.node_request_max_bytes - 512)
             return measure("context_brief", request, schema, ctx)["request_bytes"] <= cap
@@ -1047,6 +1047,8 @@ async def fit_wire_context(adapter, prompt_id, payload, response_model, ctx, sys
     from vic.llm import request_sizes, structured_request
 
     result = copy.deepcopy(payload)
+    if not getattr(adapter._s, "enforce_node_request_budget", True):
+        return result
     def size():
         _, rendered, messages = structured_request(prompt_id, result, response_model, ctx,
                                                     system_override=system, compact=True)

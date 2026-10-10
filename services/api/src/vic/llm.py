@@ -330,8 +330,8 @@ class StructuredLlm:
             sizes = request_sizes(system, messages, model=self._s.llm_model,
                                   max_tokens=self._s.llm_max_output_tokens,
                                   reasoning_effort=self._reasoning_effort(prompt_id))
-            ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} request sizes {sizes}; budget_bytes={self._s.node_request_max_bytes}")
-            if sizes["request_bytes"] > self._s.node_request_max_bytes:
+            ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} request sizes {sizes}; budget_bytes={self._s.node_request_max_bytes}; enforced={self._s.enforce_node_request_budget}")
+            if self._s.enforce_node_request_budget and sizes["request_bytes"] > self._s.node_request_max_bytes:
                 raise RunFailure("Node request exceeds the configured byte budget", code="node_request_budget")
         if prompt_id in MARKET_PROMPTS:
             sizes = request_sizes(system, messages, model=self._s.llm_model,

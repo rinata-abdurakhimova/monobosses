@@ -12,6 +12,7 @@ from vic.failures import (
     MalformedModelOutput,
     ProviderAuthError,
     ProviderTimeout,
+    RunFailure,
     RunTimeout,
 )
 from vic.llm import ProviderResponse, StructuredLlm
@@ -50,6 +51,27 @@ def _fake_prompt(monkeypatch):
 
 def _settings(**kw):
     return Settings(_env_file=None, llm_max_retries=2, llm_max_repairs=1, **kw)
+
+
+@pytest.mark.asyncio
+async def test_oversized_science_request_reaches_provider_when_local_guard_is_disabled():
+    provider = FakeProvider(['{"answer":"accepted"}'])
+    adapter = StructuredLlm(provider, _settings())
+    ctx = _ctx()
+    text = "Preserve this input. " * 1000
+    result = await adapter.generate_structured("science", {"evidence_text": text}, Out, ctx)
+    assert result.answer == "accepted" and len(provider.calls) == 1
+    assert text in provider.calls[0][0]["content"]
+    assert any("enforced=False" in event["message"] for event in ctx.trace.events)
+
+
+@pytest.mark.asyncio
+async def test_local_science_byte_guard_can_be_reenabled():
+    provider = FakeProvider(['{"answer":"must not be called"}'])
+    adapter = StructuredLlm(provider, _settings(enforce_node_request_budget=True))
+    with pytest.raises(RunFailure, match="configured byte budget"):
+        await adapter._generate_direct("science", {"evidence_text": "x" * 17000}, Out, _ctx())
+    assert provider.calls == []
 
 
 def _ctx(**budget):

@@ -54,6 +54,7 @@ Backend environment variables:
 | `MAX_CONCURRENT_RUNS` | `2` unless R2 documents another positive limit |
 | `MAX_UPLOAD_BYTES` | `10485760` (10 MiB) |
 | `MAX_RUN_SECONDS` | `600` unless R2 documents a different budget |
+| `ENFORCE_NODE_REQUEST_BUDGET` | `false` by default for the gateway test: Science/general-node requests are measured but not rejected by the local byte cap. Set `true` to enforce `NODE_REQUEST_MAX_BYTES` and hard-budget context fitting again. |
 | `MAX_RUN_COST_USD` | Verified model-call spending budget; not a placeholder zero |
 | `CORS_ORIGINS` | Public website origin if required by the backend; browsers use the website proxy |
 

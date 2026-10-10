@@ -214,7 +214,7 @@ async def test_summary_segments_fit_real_envelope_and_preserve_coverage_in_final
                                     for name in request["groups"]}), None, None)
 
     ctx = RunContext("case", "run", "snapshot", None, "evidence_only")
-    adapter = StructuredLlm(Provider(), Settings(_env_file=None, llm_model="test"))
+    adapter = StructuredLlm(Provider(), Settings(_env_file=None, llm_model="test", enforce_node_request_budget=True))
     notes, numeric = await brief_context(adapter, payload, ctx, target_bytes=4500)
     received.sort(key=lambda record: record["data"]["source_start"])
     assert "".join(record["data"]["summary"] for record in received) == text
