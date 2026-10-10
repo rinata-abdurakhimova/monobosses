@@ -54,7 +54,7 @@ def _run(handler, ctx=None, **kw):
 def test_live_pack_combines_literature_and_registry():
     pack = _run(_router())
     assert {s.type for s in pack.sources} == {"peer_reviewed", "registry"}
-    assert len(pack.sources) == 2 and pack.synthetic is False
+    assert len(pack.sources) == 4 and pack.synthetic is False
     assert all(not s.synthetic for s in pack.sources)
     assert all(e.source_id in {s.id for s in pack.sources} for e in pack.evidence)
     assert not any("ambiguous" in w for w in pack.retrieval_warnings)
@@ -116,50 +116,26 @@ def test_user_document_is_merged_and_deduplicated_with_external():
     assert sorted({s.type for s in pack.sources}) == ["peer_reviewed", "registry", "user_upload"]
     assert sum(s.type == "user_upload" for s in pack.sources) == 1
 
-def test_external_input_limits_preserve_literal_utf8_excerpts_and_user_documents():
-    from vic.config import Settings
-    from vic.evidence.retrieval import _bounded_external
-    literature = [parse_text(f'Paper {i}', 'Український текст про безпеку. ' * 90) for i in range(3)]
-    registry = [parse_text(f'Trial {i}', 'Trial terminated for toxicity. ' * 90) for i in range(3)]
-    settings = Settings(_env_file=None, retrieval_max_external_documents=2, retrieval_excerpt_max_bytes=150)
-    selected = _bounded_external([literature, registry], settings)
-    assert [doc.title for doc in selected] == ['Paper 0', 'Trial 0']
-    for doc in selected:
-        assert len(doc.annotations) == 1
-        annotation = doc.annotations[0]
-        assert 0 < len(annotation.excerpt.encode('utf-8')) <= 150
-        assert annotation.excerpt in doc.unit_by_locator(annotation.locator).text
-        assert 'omitted text' in annotation.limitations[-1]
-        assert len(doc.text.encode('utf-8')) > 150
-    extra = parse_text('User submission', 'User data ' * 200)
-    pack = _run(_router(), extra_documents=[extra], settings=settings)
-    assert len(pack.sources) == 3
-    assert any('partial sample' in warning for warning in pack.retrieval_warnings)
-    assert any(e.source_id == extra.source_id and len(e.excerpt.encode()) > 150 for e in pack.evidence)
-
-
-def test_small_retrieval_defaults_are_sent_to_connectors():
+def test_pre_cap_connector_defaults_are_restored_even_with_retired_variables(monkeypatch):
+    monkeypatch.setenv('RETRIEVAL_PUBMED_RETMAX', '1')
+    monkeypatch.setenv('RETRIEVAL_TRIALS_PAGE_SIZE', '1')
     seen = []
     _run(_router(seen))
     pubmed = [r for r in seen if r.url.path.endswith('esearch.fcgi')]
     trials = [r for r in seen if r.url.host == CT]
-    assert pubmed and all(r.url.params['retmax'] == '1' for r in pubmed)
-    assert trials and all(r.url.params['pageSize'] == '1' for r in trials)
+    assert pubmed and all(r.url.params['retmax'] == '3' for r in pubmed)
+    assert trials and all(r.url.params['pageSize'] == '4' for r in trials)
 
 
-def test_default_limited_external_pack_fits_translation_request_budget():
-    from vic.agents.science.translation import TranslationAnalysis, _build_payload
-    from vic.config import Settings
-    from vic.evidence.importer import build_pack
-    from vic.evidence.retrieval import _bounded_external
-    from vic.llm import request_sizes, structured_request
-    docs = [parse_text(f'External paper {i}', f'Paper {i}. ' + 'Reported animal findings and safety uncertainty. ' * 1000)
-            for i in range(12)]
-    selected = _bounded_external([docs[:6], docs[6:]], Settings(_env_file=None))
-    imported = build_pack(selected)
-    pack = imported.pack
-    assert len(pack.sources) == len(pack.evidence) == 2
-    assert sum(len(e.excerpt.encode()) for e in pack.evidence) <= 1000
-    assert verify_pack(imported) == []
-    _, system, messages = structured_request('translation', _build_payload(CASE, pack), TranslationAnalysis, _ctx())
-    assert request_sizes(system, messages)['request_bytes'] <= 15500
+def test_full_external_records_and_excerpts_survive_pack_assembly():
+    from vic.evidence.retrieval import _finish
+    docs = [parse_text(f'Paper {i}', f'Paper {i}: ' + 'Untrimmed safety evidence. ' * 1000) for i in range(12)]
+    from vic.evidence.importer import Annotation
+    for doc in docs:
+        doc.annotations = [Annotation(u.text, u.locator, Scope.APPROACH, []) for u in doc.units]
+    pack = _finish(docs, [], _ctx())
+    assert len(pack.sources) == 12
+    expected = {doc.source_id: [u.text for u in doc.units] for doc in docs}
+    for evidence in pack.evidence:
+        assert evidence.excerpt in expected[evidence.source_id]
+    assert sum(len(e.excerpt.encode('utf-8')) for e in pack.evidence) > 1000

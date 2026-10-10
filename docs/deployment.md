@@ -146,17 +146,14 @@ Screenshot saved locally at `apps/web/artifacts/railway-check/deployed-revision.
 
 Platform references: [Railway monorepos](https://docs.railway.com/guides/deploying-a-monorepo), [Dockerfiles](https://docs.railway.com/builds/dockerfiles), [private networking](https://docs.railway.com/networking/private-networking), [health checks](https://docs.railway.com/deployments/healthchecks), [volumes](https://docs.railway.com/volumes), [trial](https://docs.railway.com/pricing/free-trial).
 
-External retrieval now defaults to a small partial sample for constrained gateways:
-`RETRIEVAL_PUBMED_RETMAX=1`, `RETRIEVAL_TRIALS_PAGE_SIZE=1`,
-`RETRIEVAL_MAX_EXTERNAL_DOCUMENTS=2`, `RETRIEVAL_EXCERPT_MAX_BYTES=500`.
-Documents are selected by alternating connector results; each contributes one literal,
-UTF-8-bounded excerpt. Full source text, identifiers and locators remain available for
-provenance. Warnings explicitly mark omitted material, including possible safety and
-contradictory findings. This sample cannot support claims of exhaustive coverage or
-absence. User-supplied documents and evidence-only mode are unchanged.
-Restart the API and start a new live assessment to apply these defaults; existing
-snapshots and failed runs are unchanged. Smaller retrieval reduces request size but
-cannot guarantee acceptance of arbitrary prompts, uploads or upstream outputs.
+External retrieval retains every returned document and its original annotations,
+without a post-retrieval document-count or excerpt-byte cap. PubMed and trial
+queries use the earlier RETRIEVAL_PUBMED_PER_QUERY=3 and
+RETRIEVAL_TRIALS_PER_QUERY=4 defaults. These query counts do not guarantee an
+exhaustive search. The retired RETRIEVAL_PUBMED_RETMAX,
+RETRIEVAL_TRIALS_PAGE_SIZE, RETRIEVAL_MAX_EXTERNAL_DOCUMENTS and
+RETRIEVAL_EXCERPT_MAX_BYTES variables are ignored. Restart and start a new
+assessment to retrieve new evidence; Retry deliberately reuses the old snapshot.
 
 ## Provider input-limit diagnostics
 
