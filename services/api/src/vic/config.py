@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     # Diagnostic mode: let the gateway decide whether a node request fits.
     enforce_node_request_budget: bool = False
     node_initial_request_bytes: int = Field(default=13500, gt=0)
+    science_request_target_bytes: int = Field(default=10000, gt=1000)
     node_reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] | None = "low"
     # Provisional application cap, NOT a measured mentor gateway limit.
     market_request_max_bytes: int = Field(default=18000, gt=0)
@@ -101,6 +102,7 @@ class Settings(BaseSettings):
             "node_request_max_bytes": self.node_request_max_bytes,
             "enforce_node_request_budget": self.enforce_node_request_budget,
             "node_initial_request_bytes": self.node_initial_request_bytes,
+            "science_request_target_bytes": self.science_request_target_bytes,
             "node_reasoning_effort": self.node_reasoning_effort,
             "market_request_max_bytes": self.market_request_max_bytes,
             "llm_price_input_per_mtok": self.llm_price_input_per_mtok,

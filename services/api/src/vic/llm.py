@@ -268,6 +268,9 @@ class StructuredLlm:
 
     async def generate_structured(self, prompt_id: str, payload: dict[str, Any],
                                   response_model: type[T], ctx: RunContext) -> T:
+        if prompt_id == "science" and isinstance(payload.get("evidence_items"), str):
+            from vic.science_requests import generate_science
+            return await generate_science(self, payload, response_model, ctx)
         from vic.request_protocol import TASKS, generate_bounded
         if prompt_id in TASKS and self.structured_request_size(prompt_id, payload, response_model, ctx)["request_bytes"] > self._s.node_initial_request_bytes:
             return await generate_bounded(self, prompt_id, payload, response_model, ctx)
