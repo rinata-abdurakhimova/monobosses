@@ -9,7 +9,7 @@ from vic.failures import MalformedModelOutput
 
 class ShortConclusion(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    recommendation: Literal['Conditional', 'Do Not Invest']
+    recommendation: Literal['Invest', 'Conditional', 'Do Not Invest']
     rationale: str = Field(min_length=1, max_length=700)
     claim_ids: list[str] = Field(default_factory=list)
 
@@ -31,6 +31,13 @@ async def synthesize_short_committee(case, pack, results, ctx):
         output = ShortConclusion.model_validate(output.model_dump() if isinstance(output, BaseModel) else output)
     if not set(output.claim_ids) <= claims.keys():
         raise MalformedModelOutput('Short Chair referenced claims not supplied by the seven specialists')
+    unresolved = [c.id for c in claims.values() if c.importance.value == 'critical'
+        and c.support_status.value in {'unknown', 'unverified', 'contradicted'}]
+    unavailable = [r.role_id.value for r in results if r.position == 'analysis_unavailable']
+    if output.recommendation == 'Invest' and (unresolved or unavailable):
+        output = output.model_copy(update={'recommendation': 'Conditional',
+            'rationale': 'Proceed only after resolving critical evidence gaps or unavailable specialist analyses. '
+                'The seven specialist outputs do not yet support a positive investment decision.'})
     gaps = list(dict.fromkeys(gap for r in results for gap in r.unknowns))
     checks = (gaps + [
         'Confirm clinical efficacy and safety applicability.', 'Verify commercial and comparator assumptions.',

@@ -6,9 +6,31 @@ import pytest
 
 from tests.test_pipeline import CASE, Env
 from vic.config import Settings
-from vic.contracts import EvidencePack, RoleResult, RunContext, RunMode
+from vic.contracts import Claim, EvidencePack, RoleResult, RunContext, RunMode
 from vic.short_committee import synthesize_short_committee
 from vic.stubs import make_stub_modules
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('status,expected', [('supported', 'Invest'), ('unknown', 'Conditional'),
+    ('unverified', 'Conditional'), ('contradicted', 'Conditional')])
+async def test_positive_decision_depends_on_included_critical_evidence(status, expected):
+    claim = Claim(id='investment.funding', text='Funding covers the next milestone.',
+        provenance='source', support_status=status, evidence_ids=['funding-evidence'],
+        scope='program', importance='critical')
+    mock = AsyncMock(return_value={'recommendation': 'Invest',
+        'rationale': 'Invest. The supplied findings support the proposed investment.',
+        'claim_ids': [claim.id]})
+    ctx = RunContext('case', 'run', 'snap', None, RunMode.LIVE,
+        model=SimpleNamespace(generate_structured=mock))
+    inputs = [RoleResult(role_id='investment', position='positive', summary='Funding assessed.', claims=[claim]),
+        RoleResult(role_id='investment_threshold', position='analysis_unavailable', summary='Excluded failure.')]
+    pack = EvidencePack(snapshot_id='snap', sources=[], evidence=[], synthetic=False)
+    decision, chair = await synthesize_short_committee(CASE, pack, inputs, ctx)
+    assert decision.recommendation.value == expected
+    assert chair.position == expected
+    assert chair.section_content[0].claim_ids == [claim.id]
+    assert len(mock.call_args.args[1]['specialists']) == 1
 
 
 def test_short_pipeline_completes_without_disabled_modules_or_audit(tmp_path):

@@ -108,7 +108,10 @@ synthesizes a one- or two-sentence rationale. Investment Threshold, Failure Mine
 and Semantic Audit are not invoked or required, and do not enter Chair input.
 Their source files remain available. No audit call is made on Chair claims; the
 short Chair creates no new factual claims and can only reference existing IDs.
-Its recommendation is Conditional or Do Not Invest, explicitly preliminary.
+Its recommendation is Invest, Conditional or Do Not Invest, explicitly preliminary.
+The three excluded nodes do not block Invest. Unresolved critical claims or an
+unavailable specialist analysis in the seven included nodes require Conditional
+instead of Invest.
 The usual report schema, seven expert sections, evidence links and immutable
 versions remain. Five diligence questions are assembled from specialist gaps to
 retain report compatibility, separate from the short recommendation.
