@@ -137,6 +137,28 @@ class PartnershipsAnalysis(StrictOutput):
     change_conditions: list[Text]
     limitations: list[Text]
 
+    @model_validator(mode="after")
+    def validate_hypothesis_links(self):
+        statuses = {claim.id: claim.support_status.value for claim in self.claims}
+
+        def visit(value, path):
+            if isinstance(value, Finding) and value.basis == "hypothesis":
+                linked = {key: statuses.get(key, "missing") for key in value.claim_ids}
+                if not value.assumptions or not linked or any(
+                        status not in {"unknown", "unverified"} for status in linked.values()):
+                    raise ValueError(f"{path}: hypothesis requires nonempty assumptions and "
+                                     f"unknown/unverified claims; linked statuses={linked}. "
+                                     "Correct the finding using supplied claims; do not invent facts.")
+            if isinstance(value, BaseModel):
+                for key in type(value).model_fields:
+                    visit(getattr(value, key), f"{path}.{key}" if path else key)
+            elif isinstance(value, list):
+                for index, item in enumerate(value):
+                    visit(item, f"{path}[{index}]")
+
+        visit(self, "")
+        return self
+
 
 def _walk(value):
     if isinstance(value, BaseModel):

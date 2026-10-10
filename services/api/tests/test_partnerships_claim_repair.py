@@ -97,3 +97,46 @@ async def test_uncertain_claim_still_invalid_after_repair_is_controlled_failure(
     with pytest.raises(MalformedModelOutput):
         await analyze_partnerships(case, pack, ctx)
     assert provider.calls == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("defect", ["assumptions", "status"])
+async def test_hypothesis_finding_repairs_with_path_and_claim_statuses(defect):
+    import json
+
+    from vic.config import Settings
+    from vic.llm import ProviderResponse, StructuredLlm
+
+    invalid = output()
+    if defect == "assumptions":
+        invalid["candidates"][0]["fit"]["rationale"]["assumptions"] = []
+    else:
+        invalid["claims"].append({**invalid["claims"][0], "id": "partnerships.background",
+            "support_status": "supported", "evidence_ids": ["e1"]})
+        invalid["candidates"][0]["fit"]["rationale"]["claim_ids"] = ["partnerships.background"]
+    corrected = deepcopy(invalid)
+    corrected["candidates"][0]["fit"]["rationale"].update(
+        assumptions=["Category fit requires independent verification."], claim_ids=["partnerships.fit"])
+
+    class Provider:
+        name = "test"
+
+        def __init__(self):
+            self.calls = 0
+
+        async def complete(self, *, system, messages, model, max_tokens, timeout):
+            self.calls += 1
+            if self.calls == 1:
+                return ProviderResponse(json.dumps(invalid), 10, 10)
+            assert "candidates[0].fit.rationale" in messages[-1]["content"]
+            assert "linked statuses" in messages[-1]["content"]
+            assert all(m["role"] != "assistant" for m in messages)
+            return ProviderResponse(json.dumps(corrected), 10, 10)
+
+    case, pack, ctx = inputs()
+    provider = Provider()
+    ctx.model = StructuredLlm(provider, Settings(_env_file=None, provider_input_limit_test=True))
+    result = await analyze_partnerships(case, pack, ctx)
+    assert result.role_id == "partnerships"
+    assert provider.calls == 2
+    assert result.claims[0].support_status == "unverified"
