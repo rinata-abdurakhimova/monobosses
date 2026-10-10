@@ -3,13 +3,19 @@ from types import SimpleNamespace
 
 import pytest
 from pydantic import BaseModel, Field
+
 from vic.request_protocol import (
     BriefGroup,
     ContextBrief,
+    chair_audit_slice,
+    chair_audit_table,
     compact_references,
     compact_schema,
+    consolidate_note_table,
     context_records,
+    expand_disposition_groups,
     fit_wire_context,
+    grouped_chair_review_model,
     numeric_table,
     shared_text,
     translate,
@@ -54,7 +60,7 @@ def test_numeric_locators_and_values_are_lossless():
 
 
 def test_reference_ranges_cover_exact_aliases():
-    original = ["ref0", "ref1", "ref4", "ref7", "ref8"]
+    original = [f"ref{i}" for i in range(30)] + [f"ref{i}" for i in range(40, 50)]
     packed = compact_references(original, "refs")
     expanded = [f"ref{i}" for start, end in packed["alias_ranges"] for i in range(start, end + 1)]
     assert expanded == original
@@ -68,6 +74,28 @@ def test_shared_text_does_not_mutate_input_or_change_content():
     assert original == before
     assert packed["shared_texts"][packed["first"]["text_ref"]] == sentence
     assert packed["first"] == packed["second"]
+
+
+@pytest.mark.asyncio
+async def test_context_fit_refuses_request_without_room_for_compact_repair():
+    from vic.contracts import RunContext
+    from vic.failures import RunFailure
+    from vic.llm import request_sizes, structured_request
+
+    class Output(BaseModel):
+        summary: str
+
+    payload = {"exact_numeric_context": {"source_value": "preserve exact input"}}
+    ctx = RunContext("case", "run", "snapshot", None, "evidence_only")
+    _, system, messages = structured_request("investment", payload, Output, ctx,
+        system_override="Analyze supplied evidence only.", compact=True)
+    size = request_sizes(system, messages, model="test", max_tokens=4096)["request_bytes"]
+    adapter = SimpleNamespace(_s=SimpleNamespace(node_initial_request_bytes=size,
+        node_request_max_bytes=size + 100, llm_model="test", llm_max_output_tokens=4096),
+        _reasoning_effort=lambda _: None)
+    with pytest.raises(RunFailure, match="repair reserve"):
+        await fit_wire_context(adapter, "investment", payload, Output, ctx,
+                               "Analyze supplied evidence only.")
 
 
 def test_compact_schema_retains_required_properties_constraints_and_descriptions():
@@ -137,6 +165,167 @@ def test_business_components_cannot_confuse_evidence_and_claim_references(role):
         validate_component_references(role, payload, {"claims": [{"evidence_ids": [claim_id]}]}, inverse)
 
 
+@pytest.mark.parametrize("field,wrong", [
+    ("upstream_claim_ids", "investment.own_claim"),
+    ("upstream_claim_ids", "partner_candidate"),
+    ("upstream_claim_ids", "ip_licensing.upstream_claim"),
+    ("record_ids", "partnerships.upstream_claim"),
+    ("record_ids", "license_record"),
+])
+@pytest.mark.parametrize("node", ["investment", "investment_threshold"])
+def test_investment_dependencies_keep_each_role_claim_and_record_namespace(node, field, wrong):
+    inverse = {"ref0": "partnerships.upstream_claim", "ref1": "partner_candidate"}
+    payload = {"context_dependency_ids": {"partnerships": {
+        "upstream_claim_ids": {"alias_ranges": [[0, 0]]}, "record_ids": ["ref1"]}}}
+    dependency = {"role_id": "partnerships", "upstream_claim_ids": [inverse["ref0"]],
+                  "record_ids": [inverse["ref1"]]}
+    validate_component_references(node, payload, dependency, inverse)
+    validate_component_references(node, payload, {**dependency, "record_ids": []}, inverse)
+    with pytest.raises(ValueError, match="context_dependency_ids"):
+        validate_component_references(node, payload, {**dependency, field: [wrong]}, inverse)
+
+
+def test_threshold_prospective_criterion_cannot_become_documented_from_an_unknown_claim():
+    payload = {"frozen_components": {"claims": {"rows": [["ref1", "human_gate", "unknown"]]}}}
+    inverse = {"ref1": "investment_threshold.human_gate"}
+    finding = {"value": "Human safety and exposure meet a prespecified target", "basis": "hypothesis",
+               "claim_ids": [inverse["ref1"]], "assumptions": ["Proposed target; no human results"],
+               "unknowns": ["Human exposure and safety remain unestablished"]}
+    validate_component_references("investment_threshold", payload, {"sufficient_result": finding}, inverse)
+    with pytest.raises(ValueError, match="supported"):
+        validate_component_references("investment_threshold", payload,
+            {"sufficient_result": {**finding, "basis": "documented"}}, inverse)
+
+
+def test_threshold_risk_cannot_reuse_a_claim_identity():
+    payload = {"frozen_components": {"claims": {"rows": [["ref1", "human_gate", "unknown"]]}}}
+    inverse = {"ref1": "investment_threshold.human_gate"}
+    risk = {"id": "investment_threshold.risk_human_gate", "claim_ids": [inverse["ref1"]]}
+    validate_component_references("investment_threshold", payload, {"risks": [risk]}, inverse)
+    with pytest.raises(ValueError, match="never frozen claim IDs"):
+        validate_component_references("investment_threshold", payload,
+            {"risks": [{**risk, "id": inverse["ref1"]}]}, inverse)
+
+
+def test_unknown_threshold_gate_cannot_have_a_hypothetical_achievement_assessment():
+    payload = {"gate_components": {"status": "unknown"}, "frozen_components": {
+        "claims": {"rows": [["ref1", "human_gate", "unknown"]]}}}
+    inverse = {"ref1": "investment_threshold.human_gate"}
+    assessment = {"basis": "unknown", "value": None, "claim_ids": [],
+                  "assumptions": [], "unknowns": ["Human safety result unavailable"]}
+    validate_component_references("investment_threshold", payload, {"assessment": assessment}, inverse)
+    with pytest.raises(ValueError, match="status=unknown"):
+        validate_component_references("investment_threshold", payload, {"assessment": {
+            **assessment, "basis": "hypothesis", "value": "Possibly sufficient", "claim_ids": [inverse["ref1"]]}}, inverse)
+
+
+def test_gate_rule_table_retains_exact_targets_claims_gap_scope_and_priority():
+    from vic.request_protocol import gate_rule_context
+    view = {"id": "next_stage", "horizon": "next_stage", "status": "unknown",
+        "criteria": [{"id": "human_safety", "sufficient_result": {
+            "value": "Prespecified human exposure and safety target, conditional on applicable evidence",
+            "basis": "hypothesis", "claim_ids": ["ref5"]}}],
+        "gaps": [{"id": "human_gap", "criterion_ids": ["human_safety"],
+            "missing_result_or_data": "Animal benefit does not establish human safety", "priority": "critical"}],
+        "existing_evidence": [{"criterion_id": "human_safety", "finding": {"basis": "unknown"}}]}
+    original = copy.deepcopy(view)
+    packed = gate_rule_context(view)
+    criteria = [dict(zip(packed["criteria"]["columns"], row, strict=True)) for row in packed["criteria"]["rows"]]
+    gaps = [dict(zip(packed["gaps"]["columns"], row, strict=True)) for row in packed["gaps"]["rows"]]
+    assert criteria == [{"id": "human_safety", **view["criteria"][0]["sufficient_result"]}]
+    assert gaps == view["gaps"]
+    assert packed["status"] == "unknown"
+    assert view == original
+
+
+@pytest.mark.parametrize("field,wrong", [
+    ("upstream_claim_ids", "clinical.risk_safety"),
+    ("upstream_risk_ids", "clinical.safety"),
+    ("record_ids", "absent_trial"),
+])
+def test_failure_origins_keep_claim_risk_record_namespaces(field, wrong):
+    inverse = {"ref1": "clinical.safety", "ref2": "clinical.risk_safety", "ref3": "trial_record"}
+    payload = {"origin_reference_ids": {"clinical": {
+        "upstream_claim_ids": ["ref1"], "upstream_risk_ids": {"alias_ranges": [[2, 2]]},
+        "record_ids": ["ref3"]}}}
+    origin = {"role_id": "clinical", "upstream_claim_ids": [inverse["ref1"]],
+              "upstream_risk_ids": [inverse["ref2"]], "record_ids": [inverse["ref3"]]}
+    validate_component_references("failure_miner", payload, {"origins": [origin]}, inverse)
+    with pytest.raises(ValueError, match="origin_reference_ids"):
+        validate_component_references("failure_miner", payload, {"origins": [{**origin, field: [wrong]}]}, inverse)
+
+
+def test_failure_unknown_findings_cannot_launder_claims_into_established_failures():
+    payload = {"frozen_components": {"claims": {"rows": [["ref1", "human", "unknown"]]}}}
+    inverse = {"ref1": "failure_miner.human"}
+    finding = {"basis": "unknown", "value": None, "claim_ids": [], "assumptions": [],
+               "unknowns": ["Human safety unavailable"]}
+    validate_component_references("failure_miner", payload, {"problem": finding}, inverse)
+    with pytest.raises(ValueError, match=r"claim_ids=\[\]"):
+        validate_component_references("failure_miner", payload,
+            {"problem": {**finding, "claim_ids": [inverse["ref1"]]}}, inverse)
+
+
+def test_failure_interactions_require_real_endpoints_instead_of_claim_keys():
+    inverse = {"ref1": "clinical_gap", "ref2": "translation_gap"}
+    payload = {"frozen_components": {"record_descriptors": [
+        {"id": alias, "component": "failure_modes"} for alias in inverse]}}
+    link = {"id": "linked_gap", "from_failure_id": "clinical_gap", "to_failure_id": "translation_gap",
+            "relationship": "shared_dependency"}
+    validate_component_references("failure_miner", payload, {"interaction_blueprint": [link]}, inverse)
+    with pytest.raises(ValueError, match="frozen collection"):
+        validate_component_references("failure_miner", payload, {"interaction_blueprint": [
+            {**link, "from_failure_id": "failure_miner.human"}]}, inverse)
+    with pytest.raises(ValueError, match="distinct endpoints"):
+        validate_component_references("failure_miner", payload, {"interaction_blueprint": [
+            {**link, "to_failure_id": "clinical_gap"}]}, inverse)
+
+
+def test_failure_review_cannot_defer_a_risk_already_linked_by_its_frozen_origin():
+    inverse = {"ref1": "clinical.risk_safety", "ref2": "clinical_gap"}
+    payload = {"review_role": "clinical", "review_items": [{"id": "ref1"}],
+        "frozen_components": {"failure_modes": [{"id": "ref2", "domains": ["clinical"], "origins": [
+            {"role_id": "clinical", "upstream_risk_ids": ["ref1"]}]}]}}
+    disposition = {"upstream_risk_id": "clinical.risk_safety", "disposition": "included",
+                   "failure_ids": ["clinical_gap"]}
+    review = {"role_id": "clinical", "failure_ids": ["clinical_gap"], "risk_dispositions": [disposition]}
+    validate_component_references("failure_miner", payload, review, inverse)
+    with pytest.raises(ValueError, match="included with EVERY matching"):
+        validate_component_references("failure_miner", payload, {**review, "risk_dispositions": [
+            {**disposition, "disposition": "deferred", "failure_ids": []}]}, inverse)
+    with pytest.raises(ValueError, match="EVERY review_items"):
+        validate_component_references("failure_miner", payload, {**review, "risk_dispositions": []}, inverse)
+
+
+def test_failure_diligence_cannot_drop_a_chain_or_rank_major_before_critical():
+    inverse = {"ref1": "human_gap", "ref2": "budget_gap"}
+    payload = {"frozen_components": {"record_descriptors": [
+        {"id": alias, "component": "failure_modes"} for alias in inverse]}}
+    questions = [{"rank": 1, "priority": "critical", "failure_ids": ["human_gap"], "interaction_ids": []},
+                 {"rank": 2, "priority": "major", "failure_ids": ["budget_gap"], "interaction_ids": []}]
+    validate_component_references("failure_miner", payload, {"diligence_priorities": questions}, inverse)
+    with pytest.raises(ValueError, match="missing failure_ids"):
+        validate_component_references("failure_miner", payload, {"diligence_priorities": questions[:1]}, inverse)
+    with pytest.raises(ValueError, match="Critical diligence"):
+        validate_component_references("failure_miner", payload, {"diligence_priorities": [
+            {**questions[0], "priority": "major"}, {**questions[1], "priority": "critical"}]}, inverse)
+
+
+def test_failure_interaction_question_must_cover_both_endpoints():
+    inverse = {"ref1": "human_gap", "ref2": "budget_gap", "ref3": "shared_gap"}
+    payload = {"frozen_components": {
+        "record_descriptors": [{"id": alias, "component": "failure_modes"} for alias in ("ref1", "ref2")]
+            + [{"id": "ref3", "component": "interactions"}],
+        "interaction_links": [{"id": "ref3", "from_failure_id": "ref1", "to_failure_id": "ref2"}]}}
+    question = {"rank": 1, "priority": "critical", "failure_ids": ["human_gap", "budget_gap"],
+                "interaction_ids": ["shared_gap"]}
+    validate_component_references("failure_miner", payload, {"diligence_priorities": [question]}, inverse)
+    with pytest.raises(ValueError, match="BOTH endpoint"):
+        validate_component_references("failure_miner", payload, {"diligence_priorities": [
+            {**question, "failure_ids": ["human_gap"]},
+            {"rank": 2, "priority": "major", "failure_ids": ["budget_gap"], "interaction_ids": []}]}, inverse)
+
+
 def test_partnership_hypothesis_cannot_omit_its_claim_or_become_documented():
     payload = {"evidence": [], "frozen_components": {"claims": {
         "rows": [["ref1", "fit", "unverified"]]}, "record_descriptors": []}}
@@ -147,6 +336,23 @@ def test_partnership_hypothesis_cannot_omit_its_claim_or_become_documented():
     for bad in ({**finding, "claim_ids": []}, {**finding, "basis": "documented"}):
         with pytest.raises(ValueError):
             validate_component_references("partnerships", payload, {"finding": bad}, inverse)
+
+
+@pytest.mark.parametrize("field", ["capital", "time"])
+def test_investment_without_calculated_scenarios_rejects_placeholder_scenario_ids(field):
+    payload = {"calculated_financials": {"scenarios": []}}
+    validate_component_references("investment", payload, {field: {"scenario_ids": []}}, {})
+    with pytest.raises(ValueError, match="not scenario IDs"):
+        validate_component_references("investment", payload,
+            {field: {"scenario_ids": ["delay", "human_development_decision"]}}, {})
+
+
+def test_commercial_constraints_reject_non_market_dependencies_before_final_assembly():
+    validate_component_references("investment", {},
+        {"commercial_constraints": [{"role_id": "market"}]}, {})
+    with pytest.raises(ValueError, match="EVERY"):
+        validate_component_references("investment", {},
+            {"commercial_constraints": [{"role_id": "market"}, {"role_id": "partnerships"}]}, {})
 
 
 @pytest.mark.asyncio
@@ -179,3 +385,159 @@ async def test_context_byte_fit_keeps_every_reference_and_metadata_row(initial_b
     _, system, messages = structured_request("partnerships", fitted, Output, ctx,
         system_override="Analyze supplied evidence only.", compact=True)
     assert request_sizes(system, messages, model="test")["request_bytes"] <= 8000
+
+
+def test_sparse_references_keep_shorter_exact_list():
+    original = ["ref0", "ref4", "ref7"]
+    assert compact_references(original, "refs") == original
+
+
+def test_chair_audit_table_retains_verdicts_evidence_blockers_and_warnings():
+    audit = {"findings": [
+        {"claim_id": "science.a", "verdict": "supported", "evidence_ids": ["ev1"], "blocking": False, "reason": "Confirmed"},
+        {"claim_id": "market.b", "verdict": "unverified", "evidence_ids": ["ev1"], "blocking": True, "reason": "Absent clinical premise"},
+        {"claim_id": "clinical.c", "verdict": "unknown", "evidence_ids": [], "blocking": False, "reason": "Gap"}],
+        "warnings": ["synthetic evidence"], "unresolved_critical_claim_ids": ["market.b"]}
+    before = copy.deepcopy(audit)
+    wire = chair_audit_table(audit)
+    decoded = [{"claim_id": cid, "verdict": wire["legends"]["verdict"][verdict],
+                "evidence_ids": wire["legends"]["evidence_ids"][evidence], "blocking": blocking}
+               for verdict, evidence, blocking, refs in wire["findings"] for cid in refs]
+    assert decoded == [{k: f[k] for k in ("claim_id", "verdict", "evidence_ids", "blocking")} for f in audit["findings"]]
+    assert wire["blocking_reasons"] == {"market.b": "Absent clinical premise"}
+    assert wire["warnings"] == audit["warnings"]
+    assert wire["unresolved_critical_claim_ids"] == audit["unresolved_critical_claim_ids"]
+    assert audit == before
+
+
+def test_note_consolidation_never_mixes_status_or_loses_references():
+    table = {"columns": ["kind", "scope", "status", "priority", "refs", "summary"],
+             "legends": {}, "roles": {"science": [
+                 [1, 1, 2, 1, ["ref1"], "Mouse only"],
+                 [1, 1, 2, 1, ["ref2"], "No humans"],
+                 [1, 1, 3, 1, ["ref3"], "Conflicting signal"]], "clinical": None}}
+    before = copy.deepcopy(table)
+    result = consolidate_note_table(table)
+    assert result["roles"]["science"] == [
+        [1, 1, 2, 1, ["ref1", "ref2"], "Mouse only; No humans"],
+        [1, 1, 3, 1, ["ref3"], "Conflicting signal"]]
+    assert result["roles"]["clinical"] is None
+    assert table == before
+
+
+def test_chair_wire_claim_alias_decodes_exactly():
+    audit = {"findings": [{"claim_id": "ref123", "verdict": "unverified", "evidence_ids": [],
+                          "blocking": True, "reason": "Human safety unknown"}],
+             "warnings": [], "unresolved_critical_claim_ids": ["ref123"]}
+    wire = chair_audit_table(audit)
+    assert wire["findings"] == [[0, 0, True, ["ref123"]]]
+    assert wire["blocking_reasons"] == {"ref123": "Human safety unknown"}
+
+
+def test_chair_question_cannot_change_frozen_links_or_rank():
+    plan = {"id": "planned", "rank": 1, "role_ids": ["market"], "risk_ids": ["ref1"]}
+    payload = {"requested_question_plan": plan}
+    good = {**plan, "risk_ids": ["chair_risk"], "question": "Verify commercial premise?"}
+    validate_component_references("chair", payload, good, {"ref1": "chair_risk"})
+    for change in ({"rank": 2}, {"risk_ids": []}, {"role_ids": ["clinical"]}, {"id": "invented"}):
+        with pytest.raises(ValueError, match="frozen question"):
+            validate_component_references("chair", payload, {**good, **change}, {"ref1": "chair_risk"})
+
+
+def test_chair_documented_reason_rejects_unknown_own_and_audit_downgraded_claims():
+    payload = {"frozen_components": {"claims": {"rows": [["ref1", "", "unknown"], ["ref2", "", "supported"]]}},
+               "audit": {"unresolved_critical_claim_ids": ["ref2"]}}
+    reason = {"basis": "documented", "claim_ids": ["chair.gap"], "unknowns": [], "assumptions": []}
+    inverse = {"ref1": "chair.gap", "ref2": "market.blocked"}
+    for cid in ("chair.gap", "market.blocked"):
+        with pytest.raises(ValueError, match="supported unblocked"):
+            validate_component_references("chair", payload, {"rationale": {**reason, "claim_ids": [cid]}}, inverse)
+    validate_component_references("chair", payload,
+        {"rationale": {"basis": "unknown", "claim_ids": [], "unknowns": ["Human safety absent"]}}, inverse)
+
+
+def test_chair_unknown_claim_requires_gap_assumptions_before_acceptance():
+    with pytest.raises(ValueError, match="assumptions"):
+        validate_component_references("chair", {},
+            {"claims": [{"support_status": "unknown", "assumptions": []}]}, {})
+
+
+def test_chair_audit_reasons_follow_claim_and_risk_inventory_with_exact_aliases():
+    raw = {"claims": [{"id": "market.a"}, {"id": "market.b"}],
+           "risks": [{"claim_ids": ["market.b"]}]}
+    audit = {"findings": [
+        {"claim_id": "market.a", "verdict": "supported", "reason": "Animal report", "evidence_ids": ["ev1"], "blocking": False},
+        {"claim_id": "market.b", "verdict": "unverified", "reason": "Human benefit absent", "evidence_ids": ["ev1"], "blocking": True}], "warnings": ["synthetic"]}
+    mapping = {"market.a": "ref1", "market.b": "ref2", "ev1": "ref3"}
+    first = chair_audit_slice(audit, raw, [{"id": "market/claims/0"}], mapping)
+    risk = chair_audit_slice(audit, raw, [{"id": "market/risks/0"}], mapping)
+    assert first["findings"] == [["ref1", "supported", "Animal report", ["ref3"], False]]
+    assert risk["findings"] == [["ref2", "unverified", "Human benefit absent", ["ref3"], True]]
+    assert first["warnings"] == risk["warnings"] == ["synthetic"]
+    assert chair_audit_slice(audit, raw, [{"id": "market/unknowns/0"}], mapping)["findings"] == []
+
+
+def test_chair_domain_review_requires_exact_coverage_and_valid_decision_links():
+    payload = {"review_role": "market", "review_items": [{"id": "ref1"}],
+               "frozen_components": {"arguments": [{"id": "ref2"}], "questions": [], "conditions": []}}
+    inverse = {"ref1": "market/unknowns/0", "ref2": "market_gate"}
+    disposition = {"item_id": "market/unknowns/0", "disposition": "considered", "rationale": "Blocks diligence",
+                   "argument_ids": ["market_gate"], "question_ids": [], "condition_ids": []}
+    data = {"role_id": "market", "assessment": {"basis": "unknown", "claim_ids": [], "unknowns": ["Missing inputs"]},
+            "dispositions": [disposition]}
+    validate_component_references("chair", payload, data, inverse)
+    for invalid in ({"dispositions": []}, {"role_id": "clinical"},
+                    {"dispositions": [disposition, disposition]},
+                    {"dispositions": [{**disposition, "argument_ids": ["invented"]}]},
+                    {"dispositions": [{**disposition, "disposition": "deferred"}]}):
+        with pytest.raises(ValueError):
+            validate_component_references("chair", payload, {**data, **invalid}, inverse)
+
+
+def test_grouped_chair_dispositions_expand_without_changing_rationale_or_links():
+    from vic.agents.business.chair import DomainReview
+    grouped = grouped_chair_review_model(DomainReview)
+    raw = {"role_id": "market", "assessment": {"text": "Inputs missing", "basis": "unknown", "claim_ids": [],
+            "assumptions": [], "unknowns": ["Pricing absent"], "evidence_weight": "No market evidence"},
+           "dispositions": [{"item_ids": ["market/unknowns/0", "market/unknowns/1"], "disposition": "deferred",
+             "rationale": "Missing underlying inputs", "argument_ids": [], "question_ids": [], "condition_ids": []}]}
+    wire = grouped.model_validate(raw).model_dump(mode="json")
+    canonical = DomainReview.model_validate({**wire, "dispositions": expand_disposition_groups(wire["dispositions"])})
+    assert [d.item_id for d in canonical.dispositions] == ["market/unknowns/0", "market/unknowns/1"]
+    assert all(d.rationale == "Missing underlying inputs" and not d.argument_ids for d in canonical.dispositions)
+    payload = {"grouped_dispositions": True, "review_role": "market", "review_items": [{"id": d.item_id} for d in canonical.dispositions],
+               "frozen_components": {"arguments": [], "questions": [], "conditions": []}}
+    validate_component_references("chair", payload, wire, {})
+    broken = copy.deepcopy(wire); broken["dispositions"][0]["item_ids"] *= 2
+    with pytest.raises(ValueError, match="exactly once"):
+        validate_component_references("chair", payload, broken, {})
+
+
+def test_chair_conflict_requires_claims_from_every_named_role():
+    view = {"legends": {"kind": ["claim"], "status": ["supported"]},
+            "roles": {"science": [[0, 0, 0, 0, ["ref1"], "signal"]],
+                      "market": [[0, 0, 0, 0, ["ref2"], "readiness"]]}}
+    payload = {"upstream_context": view}
+    good = {"role_ids": ["science", "market"], "upstream_claim_ids": ["science.signal", "market.ready"]}
+    inverse = {"ref1": "science.signal", "ref2": "market.ready"}
+    validate_component_references("chair", payload, {"conflicts": [good]}, inverse)
+    with pytest.raises(ValueError, match="each listed role"):
+        validate_component_references("chair", payload, {"conflicts": [{**good, "role_ids": ["science", "investment"]}]}, inverse)
+    with pytest.raises(ValueError, match="listed roles"):
+        validate_component_references("chair", payload, {"conflicts": [{**good, "upstream_claim_ids": [*good["upstream_claim_ids"], "clinical.other"]}]}, inverse)
+
+
+def test_chair_change_trigger_must_change_frozen_recommendation():
+    payload = {"frozen_components": {"recommendation": "Conditional"}}
+    with pytest.raises(ValueError, match="different"):
+        validate_component_references("chair", payload, {"change_triggers": [{"resulting_recommendation": "Conditional"}]}, {})
+    validate_component_references("chair", payload, {"change_triggers": [{"resulting_recommendation": "Invest"}]}, {})
+    # Missing fields are handled by schema validation rather than KeyError.
+    validate_component_references("chair", payload, {"change_triggers": [{}]}, {})
+
+
+def test_ip_missing_identifier_is_a_gap_before_accepting_component():
+    with pytest.raises(ValueError, match="documented publication_number"):
+        validate_component_references("ip_licensing", {}, {"patents": [{"publication_number": {"basis": "unknown"}}]}, {})
+    with pytest.raises(ValueError, match="documented rights_granted"):
+        validate_component_references("ip_licensing", {}, {"rights_and_licenses": [{"rights_granted": {"basis": "hypothesis"}}]}, {})

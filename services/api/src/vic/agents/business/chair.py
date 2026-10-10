@@ -3,6 +3,7 @@ from datetime import date
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
 from vic.contracts import (
     AuditResult,
     CaseInput,
@@ -194,8 +195,14 @@ def _inventory(role, raw):
         for i, value in enumerate(raw[field]):
             items.append({"id": f"{role}/{field}/{i}", "kind": field, "value": value})
     # Include identified records, nested gaps, and candidate questions without truncation.
-    sections = [{**section, "structured_data": {key: value for key, value in (section.get("structured_data") or {}).items()
-                 if key not in {"upstream_context", "sources", "evidence", "claim_evidence_links", "evidence_source_links"}}}
+    def own_records(value):
+        if isinstance(value, dict):
+            return {key: own_records(child) for key, child in value.items() if key not in {
+                "upstream_context", "sources", "evidence", "claim_evidence_links", "evidence_source_links"}}
+        if isinstance(value, list):
+            return [own_records(child) for child in value]
+        return value
+    sections = [{**section, "structured_data": own_records(section.get("structured_data") or {})}
                 for section in raw["section_content"]]
     for path, block in _walk(sections, "/section_content"):
         if "id" in block or "question" in block:

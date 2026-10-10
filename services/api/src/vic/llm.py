@@ -196,12 +196,15 @@ def structured_request(prompt_id, payload, response_model, ctx, *, system_overri
                             ensure_ascii=False, separators=(",", ":"))
     system = (f"{system_override or prompt.text}\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
               f"that validates against this JSON Schema:\n{schema}")
-    messages = [{"role": "user", "content": json.dumps(payload, ensure_ascii=False,
+    wire_payload = {key: value for key, value in payload.items() if key != "_market_audit_feedback"}
+    messages = [{"role": "user", "content": json.dumps(wire_payload, ensure_ascii=False,
                                   default=str, separators=(",", ":"))}]
     owner = "investment" if prompt_id == "investment_plan" else (
         "market" if prompt_id in MARKET_PROMPTS else
         "clinical" if prompt_id in {"clinical_design", "clinical_development"} else prompt_id)
     feedback = ctx.feedback.get(owner)
+    if owner == "market" and "_market_audit_feedback" in payload:
+        feedback = payload["_market_audit_feedback"]
     if feedback:
         messages.append({"role": "user", "content": "Correct the audit/completeness findings: "
             + json.dumps([item.model_dump(mode="json") if isinstance(item, BaseModel) else item
@@ -290,14 +293,31 @@ class StructuredLlm:
                     locations = [{"type": error["type"], "loc": error["loc"]}
                                  for error in exc.errors(include_input=False, include_context=False)]
                     ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} schema errors {locations}")
+                else:
+                    ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} reference/domain error: {str(exc)[:350]}")
                 if repairs >= self._s.llm_max_repairs:
                     raise MalformedModelOutput(
                         f"The model output for '{prompt_id}' did not match the required schema "
                         f"after {repairs} repair attempt(s)") from None
                 repairs += 1
-                if compact or prompt_id == "context_brief":
+                if compact or prompt_id in {"context_brief", "science", "translation"}:
+                    if hasattr(exc, "errors"):
+                        # Collapse repeated array failures and exclude invalid values.
+                        defects = list(dict.fromkeys(
+                            ".".join("*" if isinstance(part, int) else str(part)
+                                     for part in error["loc"]) + ":" + error["type"]
+                            + (":" + error["msg"] if error["type"] == "value_error" else "")
+                            for error in exc.errors(include_input=False, include_context=False)))
+                        feedback = json.dumps(defects, ensure_ascii=True)[:350]
+                        if any("record_ids" in error["loc"] for error in exc.errors()):
+                            feedback = ("record_ids: supplied record IDs only, never claims; [] if absent. "
+                                        "Put upstream claims in upstream_claim_ids. " + feedback)
+                    else:
+                        feedback = str(exc).encode("ascii", "backslashreplace").decode()[:350]
+                    while len(json.dumps(feedback).encode("utf-8")) > 400:
+                        feedback = feedback[:-1]
                     messages = original_messages + [{"role": "user", "content":
-                        "Correct the schema error and return only valid JSON: " + str(exc)[:1000]}]
+                        "Correct these errors; return only valid JSON: " + feedback}]
                     continue
                 messages = messages + [
                     {"role": "assistant", "content": response.text},

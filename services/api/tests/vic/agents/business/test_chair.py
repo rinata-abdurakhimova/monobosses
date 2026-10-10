@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock
 import pytest
 from pydantic import ValidationError
 from test_failure_miner import inputs, upstream
+
 from vic.agents.business.chair import (
     ROLES,
     ChairAnalysis,
@@ -14,7 +15,7 @@ from vic.agents.business.chair import (
     prepare_chair_inputs,
     validate_chair_result,
 )
-from vic.contracts import AuditResult, Importance, RoleId, RoleResult, SectionContent, SupportStatus
+from vic.contracts import AuditResult, Importance, RoleId, SectionContent, SupportStatus
 
 
 @pytest.fixture(autouse=True)
@@ -62,7 +63,7 @@ def prepared(contexts=None, audit=None):
 
 
 def validate(raw, contexts=None, audit=None):
-    case, pack, ctx, payload = prepared(contexts, audit)
+    case, pack, _ctx, payload = prepared(contexts, audit)
     analysis = ChairAnalysis.model_validate(raw)
     validate_chair_result(analysis, case, pack, payload)
     return analysis
@@ -179,7 +180,7 @@ def test_reject_invalid_outputs(defect):
 
 @pytest.mark.parametrize("defect", ["role", "snapshot", "nested_snapshot", "date", "evidence", "risk_ref", "section_ref", "audit_claim", "audit_evidence", "ctx_snapshot", "ctx_date"])
 def test_input_guards(defect):
-    raw, contexts = complete()
+    _raw, contexts = complete()
     case, pack, ctx = inputs(); audit = None
     result = contexts["science"]
     if defect == "role": result.role_id = RoleId.MARKET
@@ -273,6 +274,7 @@ def test_discovery_unchanged_and_prompt_schema():
 @pytest.mark.asyncio
 async def test_real_gateway_adapter_feedback_trace_and_all_contexts():
     import httpx
+
     from vic.config import Settings
     from vic.llm import OpenAICompatibleProvider, StructuredLlm
     from vic.prompts import load_prompt
@@ -355,6 +357,7 @@ def test_existing_upstream_examples(filename, role):
 async def test_real_failure_and_threshold_outputs_reach_chair_without_loss():
     from test_failure_miner import output as failure_output
     from test_investment_threshold import output as threshold_output
+
     from vic.agents.business.failure_miner import analyze_failure_miner
     from vic.agents.business.investment_threshold import analyze_investment_threshold
     case, pack, ctx = inputs()
@@ -391,7 +394,7 @@ def test_invest_cannot_bypass_evidence_checks(defect):
 
 
 def test_upstream_json_inputs_and_immutable_payload():
-    raw, contexts = complete()
+    _raw, contexts = complete()
     before = {r: v.model_dump(mode="json") for r, v in contexts.items()}
     payload = prepared(before)[3]
     assert payload["upstream_context"] == before
@@ -503,12 +506,15 @@ async def _run_chair_revision_pair(update):
         class ScriptedProvider:
             name = "offline-chair-revision"
 
+            def __init__(self, response):
+                self.response = response
+
             async def complete(self, **request):
                 payload = json.loads(request["messages"][0]["content"])
                 calls.append(payload)
-                return ProviderResponse(json.dumps(raw), 100, 50)
+                return ProviderResponse(json.dumps(self.response), 100, 50)
 
-        ctx.model = StructuredLlm(ScriptedProvider(), Settings(
+        ctx.model = StructuredLlm(ScriptedProvider(raw), Settings(
             _env_file=None, llm_max_retries=0, llm_max_repairs=0))
         result = await analyze_chair(case, pack, ctx, **contexts, audit=audit)
         assert calls[-1]["snapshot_id"] == pack.snapshot_id
@@ -594,3 +600,17 @@ async def test_irrelevant_evidence_preserves_chair_decision_and_report_recommend
     assert child.decision_conditions == parent.decision_conditions
     assert child.diligence_questions == parent.diligence_questions
     assert child.roles[-1].section_content[0].structured_data["chair"] == after_data
+
+
+def test_inventory_does_not_recount_nested_upstream_copies():
+    from vic.agents.business.chair import _inventory
+    role = upstream("investment").model_dump(mode="json")
+    own = {"id": "local_path", "unknowns": ["Own funding gap"],
+           "upstream_context": {"market": {"id": "copied_market", "unknowns": ["Copied gap"]}}}
+    role["section_content"][0]["structured_data"] = {"investment": own}
+    before = deepcopy(role)
+    items = _inventory("investment", role)
+    assert any(item["id"].endswith("/investment/unknowns/0") for item in items)
+    assert any(item["id"].endswith("/investment") for item in items)
+    assert not any("upstream_context" in item["id"] for item in items)
+    assert role == before

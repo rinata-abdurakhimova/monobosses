@@ -5,12 +5,11 @@ import time
 from contextvars import ContextVar
 from pathlib import Path
 
+from tests.conftest import new_client
 from vic.config import Settings
 from vic.contracts import Report
 from vic.llm import ProviderResponse, StructuredLlm, _compact_schema
 from vic.storage import get_repository
-
-from tests.conftest import new_client
 
 BUSINESS = Path(__file__).parent / "vic" / "agents" / "business"
 sys.path.insert(0, str(BUSINESS))
@@ -113,6 +112,39 @@ class Provider:
             key = "item_id" if prompt_id == "chair" else "upstream_risk_id"
             wanted = {item["id"] for item in decoded["review_items"]}
             output[field] = [item for item in output[field] if item[key] in wanted]
+            if wire.get("grouped_dispositions"):
+                output[field] = [{**{name: value for name, value in item.items() if name != "item_id"},
+                                  "item_ids": [item["item_id"]]} for item in output[field]]
+        elif wire.get("requested_components") == ["interaction_blueprint"]:
+            output = {"interaction_blueprint": [{key: item[key] for key in (
+                "id", "from_failure_id", "to_failure_id", "relationship")} for item in output["interactions"]]}
+        elif wire.get("requested_components") == ["question_plan"]:
+            output = {"questions": [{key: value for key, value in item.items() if key in {
+                "id", "rank", "role_ids", "argument_ids", "risk_ids", "unknown_ids", "condition_ids", "conflict_ids"}}
+                for item in output["questions"]]}
+        elif "requested_question_id" in wire:
+            output = next(item for item in output["questions"] if item["id"] == wire["requested_question_id"])
+            if "frozen_question_plan" in wire:
+                output = {key: value for key, value in output.items() if key not in {
+                    "id", "rank", "role_ids", "argument_ids", "risk_ids", "unknown_ids", "condition_ids", "conflict_ids"}}
+        elif "requested_interaction_id" in wire:
+            output = next(item for item in output["interactions"] if item["id"] == wire["requested_interaction_id"])
+        elif "requested_failure_role" in wire:
+            output = {"failure_modes": [item for item in output["failure_modes"]
+                                         if item["domains"][0] == wire["requested_failure_role"]]}
+        elif prompt_id == "investment_threshold" and "requested_horizon" in wire:
+            gate = next(item for item in output["gates"] if item["horizon"] == wire["requested_horizon"])
+            part = wire["requested_gate_part"]
+            if part == "dependency":
+                output = next(item for item in gate["dependencies"]
+                              if item["role_id"] == wire["requested_dependency_role"])
+            elif part in {"gaps", "existing_evidence"}:
+                criterion = wire["requested_criterion_id"]
+                output = {part: [item for item in gate[part]
+                    if criterion in item["criterion_ids"]] if part == "gaps" else
+                    [item for item in gate[part] if item["criterion_id"] == criterion]}
+            else:
+                output = {key: gate[key] for key in part.split("-")}
         elif "requested_path" in wire:
             output = next(item for item in output["financial_paths"] if item["path"] == wire["requested_path"])
         elif "requested_components" in wire:

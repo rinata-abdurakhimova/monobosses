@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
 from vic.contracts import (
     CaseInput,
     Claim,
@@ -295,7 +296,28 @@ def prepare_pass_inputs(payload, clinical, task, evidence):
                          "partial_batch": True, "total_evidence_count": len(payload["evidence"])}}
 
 
-def plan_market_batches(payload, clinical, task, ctx):
+def plan_market_batches(payload, clinical, task, ctx, *, audit_batch_id=None):
+    feedback = [item.model_dump(mode="json") if isinstance(item, BaseModel) else item
+                for item in ctx.feedback.get("market", [])]
+    if len(json.dumps(feedback, ensure_ascii=False).encode()) > 2500:
+        groups, current = [], []
+        for finding in feedback:
+            if current and len(json.dumps([*current, finding], ensure_ascii=False).encode()) > 2500:
+                groups.append(current)
+                current = []
+            current.append(finding)
+        if current:
+            groups.append(current)
+        if len(groups) < 2:
+            raise RunFailure("One exact Market audit finding exceeds the feedback budget", code="market_request_budget")
+        batches = []
+        for group in groups:
+            child = replace(ctx, feedback={**ctx.feedback, "market": group})
+            identity = hashlib.sha256(json.dumps(group, sort_keys=True).encode()).hexdigest()[:12]
+            for batch in plan_market_batches(payload, clinical, task, child, audit_batch_id=identity):
+                batch["_market_audit_feedback"] = group
+                batches.append(batch)
+        return batches
     model = PASS_MODELS[task]
     cap = getattr(ctx.model, "market_request_budget", DEFAULT_REQUEST_MAX_BYTES)
     initial_cap = int(cap * INITIAL_BUDGET_FRACTION)
@@ -303,6 +325,8 @@ def plan_market_batches(payload, clinical, task, ctx):
     def make(records, context=full_context, context_ids=None):
         data = prepare_pass_inputs(payload, clinical, task, records)
         data["clinical_input"] = context
+        if audit_batch_id:
+            data["coverage"]["audit_feedback_batch_id"] = audit_batch_id
         if context_ids is not None:
             data["coverage"].update(partial_clinical_context=True,
                                     clinical_context_ids=context_ids)
@@ -532,6 +556,9 @@ async def run_market_pass(task, batches, ctx):
     results = []
     for batch in batches:
         call_ctx = ctx
+        if "_market_audit_feedback" in batch:
+            call_ctx = replace(ctx, feedback={**ctx.feedback, "market": batch["_market_audit_feedback"]})
+            batch = {key: value for key, value in batch.items() if key != "_market_audit_feedback"}
         for attempt in range(2):
             raw = await ctx.model.generate_structured(task, batch, PASS_MODELS[task], call_ctx)
             result = raw if isinstance(raw, PASS_MODELS[task]) else PASS_MODELS[task].model_validate(raw)
@@ -539,6 +566,9 @@ async def run_market_pass(task, batches, ctx):
             try:
                 if any(not set(c.evidence_ids) <= visible_ids for c in result.claims):
                     raise ValueError("Market pass cited evidence outside its batch")
+                if any(c.support_status in {"supported", "contradicted", "mixed"} and not c.evidence_ids
+                       for c in result.claims):
+                    raise ValueError("Supported/contradicted/mixed Market claims require supplied evidence IDs; context-only gaps must remain unknown/unverified")
                 if isinstance(result, CompetitiveAnalysis):
                     if set(result.competitive_coverage) != set(Category.__args__):
                         raise ValueError("Market pass must cover all six competitor categories")
@@ -546,13 +576,16 @@ async def run_market_pass(task, batches, ctx):
                     if any(d.comparator not in names for d in result.differentiation):
                         raise ValueError("Differentiation must reference a listed comparator; "
                                          "use an empty differentiation list when no comparator is known")
-                normalized = namespace_pass(result, task, batch["coverage"].get("clinical_context_ids"), visible_ids)
+                context_ids = batch["coverage"].get("clinical_context_ids")
+                if batch["coverage"].get("audit_feedback_batch_id"):
+                    context_ids = [*(context_ids or []), "audit:" + batch["coverage"]["audit_feedback_batch_id"]]
+                normalized = namespace_pass(result, task, context_ids, visible_ids)
             except ValueError as exc:
                 if attempt:
                     raise
                 # Fresh corrective request avoids replaying a large invalid output.
                 # All original evidence/context and existing audit feedback survive.
-                feedback = {**ctx.feedback, "market": [*ctx.feedback.get("market", []), str(exc)]}
+                feedback = {**call_ctx.feedback, "market": [*call_ctx.feedback.get("market", []), str(exc)]}
                 call_ctx = replace(ctx, feedback=feedback)
                 ctx.trace.log(RunStage.ANALYZE, f"{task} bounded reference repair")
             else:

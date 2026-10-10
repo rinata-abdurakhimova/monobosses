@@ -79,6 +79,15 @@ def _analysis(**overrides):
     return TranslationAnalysis(**values)
 
 
+def test_risk_cannot_reference_absent_optional_translation_claim():
+    risk = _RiskOutput(id="risk.exposure", description="Tissue exposure is unknown.",
+        priority="critical", related_claim_keys=["translation.tissue_penetration"],
+        impact="Safe exposure cannot be assessed.", next_check="Obtain exposure evidence.")
+    with pytest.raises(ValidationError, match="absent optional claim"):
+        _analysis(risks=[risk])
+    _analysis(risks=[risk], additional_claims=[_additional_claim(key="translation.tissue_penetration")])
+
+
 def _additional_claim(**overrides):
     values = {
         "key": "translation.safe_exposure",
@@ -402,8 +411,8 @@ async def test_affirmed_human_evidence_is_not_downgraded_alongside_animal_data()
     ("excerpt", "expected"),
     [
         (
-            "No patients were enrolled and no clinical trial has been conducted; "
-            "treatment improved disease scores in mice.",
+            ("No patients were enrolled and no clinical trial has been conducted; "
+             "treatment improved disease scores in mice."),
             True,
         ),
         ("Efficacy was observed in mice; there is a lack of clinical data in patients.", True),

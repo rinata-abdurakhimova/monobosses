@@ -3,6 +3,7 @@ import copy
 import json
 
 import pytest
+
 from tests.vic.agents.business.test_market import fixture, run_context, split_output
 from vic.agents.business.market import (
     PASS_MODELS,
@@ -143,3 +144,46 @@ async def test_invalid_reference_repair_is_bounded():
     with pytest.raises(ValueError, match="Differentiation must reference"):
         await run_market_pass("market_competitive", batches, ctx)
     assert count == 2
+
+
+@pytest.mark.asyncio
+async def test_context_only_supported_claim_gets_one_fresh_bounded_correction():
+    case, pack, output = fixture()
+    contexts = []
+
+    class Adapter:
+        async def generate_structured(self, task, payload, model, ctx):
+            contexts.append(ctx)
+            raw = copy.deepcopy(split_output(output, task))
+            if len(contexts) == 1:
+                raw["claims"][0].update(support_status="supported", evidence_ids=[])
+            return raw
+
+    ctx = run_context(Adapter())
+    ctx.feedback["market"] = ["Preserve the safety gap"]
+    batches = plan_market_batches(prepare_market_inputs(case, pack), None, "market_competitive", ctx)
+    result = await run_market_pass("market_competitive", batches, ctx)
+    assert result and len(contexts) == 2
+    assert contexts[1].feedback["market"][0] == "Preserve the safety gap"
+    assert "require supplied evidence IDs" in contexts[1].feedback["market"][-1]
+
+
+def test_large_market_audit_feedback_is_partitioned_losslessly_with_measured_requests():
+    case, pack, _ = fixture()
+    adapter = StructuredLlm(type('Provider', (), {'name': 'fake'})(), Settings(_env_file=None))
+    ctx = run_context(adapter)
+    findings = [AuditFinding(claim_id=f'market.claim_{i}', verdict='unverified',
+                reason=f'Finding {i}: ' + 'Missing safety information. ' * 18,
+                evidence_ids=['e1'], blocking=True) for i in range(12)]
+    ctx.feedback['market'] = findings
+    batches = plan_market_batches(prepare_market_inputs(case, pack), None, 'market_competitive', ctx)
+    groups = {batch['coverage']['audit_feedback_batch_id']: batch['_market_audit_feedback'] for batch in batches}
+    assert len(groups) > 1
+    assert sorted(item['claim_id'] for group in groups.values() for item in group) == sorted(f.claim_id for f in findings)
+    assert all(item['blocking'] for group in groups.values() for item in group)
+    for batch in batches:
+        _, system, messages = structured_request('market_competitive', batch, PASS_MODELS['market_competitive'], ctx)
+        assert request_sizes(system, messages)['request_bytes'] <= 13500
+        assert '_market_audit_feedback' not in messages[0]['content']
+        assert all(item['reason'] in json.loads(messages[1]['content'].split(': ', 1)[1])[i]['reason']
+                   for i, item in enumerate(batch['_market_audit_feedback']))

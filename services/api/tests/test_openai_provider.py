@@ -4,6 +4,7 @@ import json
 import httpx
 import pytest
 from pydantic import BaseModel, ValidationError
+
 from vic.config import Settings
 from vic.contracts import RunBudget, RunContext, RunMode
 from vic.failures import ProviderAuthError, ProviderError, ProviderTimeout
@@ -155,7 +156,8 @@ def test_shared_adapter_retries_repairs_and_records_usage(monkeypatch):
                             settings(), sleep=no_sleep)
     result = asyncio.run(adapter.generate_structured("science", {}, Out, ctx))
     assert result.answer == "repaired" and len(requests) == 3
-    assert requests[2]["messages"][-2] == {"role": "assistant", "content": "bad JSON"}
+    assert all(message["role"] != "assistant" for message in requests[2]["messages"])
+    assert "Correct these errors" in requests[2]["messages"][-1]["content"]
     assert [item["outcome"] for item in ctx.trace.usage] == ["provider_error", "ok", "ok"]
     assert ctx.trace.usage[-1]["model"] == "gpt-6-luna"
     assert KEY not in json.dumps(ctx.trace.usage)
