@@ -730,6 +730,7 @@ class Pipeline:
             ctx.warnings.append("Chair claims set to 'unverified' after the audit: " + ", ".join(sorted(blocked)))
         unavailable = [r.value for r, result in results.items() if any(
             (section.structured_data or {}).get('node_recovery', {}).get('status') == 'analysis_unavailable'
+            or (section.structured_data or {}).get('investment', {}).get('explanation_recovery', {}).get('status') == 'analysis_unavailable'
             for section in result.section_content)]
         if unavailable:
             decision = decision.model_copy(update={'conditions': [*decision.conditions,

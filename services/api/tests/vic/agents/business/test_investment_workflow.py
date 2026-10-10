@@ -286,3 +286,42 @@ def test_incomplete_plan_finding_becomes_unknown_without_inventing_claims():
     assert fixed.claims == plan.claims
     assert any(b.basis == 'unknown' and b.value is None and b.unknowns for b in _walk(fixed) if isinstance(b, Finding))
     assert qualify_incomplete_plan_findings(fixed) == fixed
+
+
+@pytest.mark.asyncio
+async def test_explanation_domain_repair_keeps_validated_plan_and_calculations():
+    from vic.config import Settings
+    case, pack, ctx = inputs()
+    bad = explanation_output(True)
+    bad['summary'] = 'Budget increases by 20%.'
+    good = explanation_output(True)
+    ctx.model = SimpleNamespace(_s=Settings(_env_file=None, continue_on_node_validation_error=True),
+        generate_structured=AsyncMock(side_effect=[plan_output(True), bad, good]))
+    result = await analyze_investment(case, pack, ctx)
+    calls = ctx.model.generate_structured.call_args_list
+    assert [c.args[0] for c in calls] == ['investment_plan', 'investment', 'investment']
+    assert calls[1].args[1]['fixed_plan_hash'] == calls[2].args[1]['fixed_plan_hash']
+    assert calls[1].args[1]['calculated_financials'] == calls[2].args[1]['calculated_financials']
+    assert 'Numeric literals are forbidden' in calls[2].args[3].feedback['investment'][-1]
+    assert not ctx.feedback
+    assert result.claims
+    assert result.summary == good['summary']
+
+
+@pytest.mark.asyncio
+async def test_failed_explanation_retains_real_plan_claims_and_python_numbers():
+    from vic.config import Settings
+    case, pack, ctx = inputs()
+    bad = explanation_output(True)
+    bad['summary'] = 'Invented capital is USD 999999999.'
+    ctx.model = SimpleNamespace(_s=Settings(_env_file=None, continue_on_node_validation_error=True),
+        generate_structured=AsyncMock(side_effect=[plan_output(True), bad, bad]))
+    result = await analyze_investment(case, pack, ctx)
+    assert result.position == 'partial_assessment'
+    assert result.claims and result.summary.startswith('Preliminary investment plan:')
+    data = result.section_content[0].structured_data['investment']
+    assert data['calculated_financials']['scenarios'][0]['capital_to_milestone'] == {
+        'minimum': '400000', 'maximum': '700000'}
+    assert data['explanation_recovery']['status'] == 'analysis_unavailable'
+    assert '999999999' not in result.model_dump_json()
+    assert len(ctx.model.generate_structured.call_args_list) == 3

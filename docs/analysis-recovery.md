@@ -63,3 +63,22 @@ input/context omitted and configured secrets scrubbed. A displayed : value_error
 alone does not prove which rule failed in a historical run. This duplicate-claim
 failure has been reproduced with a test provider; confirmation for a production
 run requires its original traceback/trace or a new run with the improved diagnostics.
+
+
+## Investment stage validation and retained plans
+
+Investment performs one targeted domain repair of its planning stage or financial
+explanation when using the shared adapter with repairs enabled. Explanation repair
+reuses the same fixed_plan hash and Python calculated_financials; it does not
+regenerate a validated plan. Input binding, arithmetic, reference and qualitative
+narrative checks remain enforced. At most one additional generation per stage is
+performed; shared schema repair and existing pipeline recovery limits still apply.
+
+With continue_on_node_validation_error enabled, an explanation that remains
+invalid yields a partial_assessment containing the validated planning claims,
+risks, work packages, fixed plan and Python calculations. Rejected explanation
+claims, financial-path conclusions and narrative numbers are omitted. The exact
+sanitized reason is retained under investment.explanation_recovery, and the
+committee cannot issue unconditional Invest based on this incomplete specialist.
+A plan that fails its own validation is not retained as if it were valid.
+Provider authentication/transport failures still propagate normally.

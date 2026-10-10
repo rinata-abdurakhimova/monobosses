@@ -223,3 +223,28 @@ def test_root_validation_error_retains_clinical_rule_and_duplicate_key(tmp_path)
     assert '<root>: value_error:' in reason
     assert 'clinical claim keys must be unique' in reason
     assert 'repeated keys:' in reason
+
+
+def test_retained_investment_plan_blocks_unconditional_committee_recommendation(tmp_path):
+    from vic.contracts import Recommendation
+    base = make_stub_modules()
+
+    async def partial(*args, **kwargs):
+        result = await base.analyze_investment(*args, **kwargs)
+        sections = [s.model_copy(update={'structured_data': {'investment': {
+            'explanation_recovery': {'status': 'analysis_unavailable'}}}}) for s in result.section_content]
+        return result.model_copy(update={'position': 'partial_assessment', 'section_content': sections})
+
+    async def optimistic(results, audit, ctx):
+        decision = await base.synthesize_committee(results, audit, ctx)
+        return decision.model_copy(update={'recommendation': Recommendation.INVEST})
+
+    env = Env(tmp_path, dataclasses.replace(base, analyze_investment=partial,
+        synthesize_committee=optimistic), continue_on_node_validation_error=True)
+    run = env.run()
+    assert run.status.value == 'completed', run.error
+    report = env.repo.get_report(env.case_id, 1)
+    assert report.recommendation == Recommendation.CONDITIONAL
+    investment = next(r for r in report.roles if r.role_id.value == 'investment')
+    assert investment.claims
+    assert investment.position == 'partial_assessment'

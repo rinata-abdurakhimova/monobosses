@@ -2,24 +2,40 @@
 
 No retrieval, upstream node calls, outreach, final recommendation or deal valuation.
 """
-from copy import deepcopy
-from hashlib import sha256
 import json
 import re
+from copy import deepcopy
+from dataclasses import replace
+from hashlib import sha256
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from vic.contracts import CaseInput, Claim, EvidencePack, Risk, RoleResult, RunContext, SectionContent
+from vic.contracts import (
+    CaseInput,
+    Claim,
+    EvidencePack,
+    Risk,
+    RoleResult,
+    RunContext,
+    RunStage,
+    SectionContent,
+)
+from vic.failures import MalformedModelOutput
 from vic.integrity import assert_pack
+from vic.tracing import scrub
 
 from .investment_calculations import (
-    InvestmentScenario, StressScenario, calculate_investment_scenarios,
+    InvestmentScenario,
+    StressScenario,
+    calculate_investment_scenarios,
 )
-
 from .investment_preparation import (
-    NumericBinding, ScenarioBlueprint, StressBlueprint, resolve_numeric_inputs,
+    NumericBinding,
+    ScenarioBlueprint,
+    StressBlueprint,
+    resolve_numeric_inputs,
 )
 
 PLAN_PROMPT_ID = "investment_plan"
@@ -324,10 +340,9 @@ def prepare_investment_inputs(case: CaseInput, pack: EvidencePack, ctx: RunConte
             if hasattr(block, "evidence_ids"):
                 if not set(block.evidence_ids) <= evidence.keys():
                     raise ValueError("Numeric input references unknown evidence")
-                if case.scope == "program" and block.minimum is not None and not any(
-                        evidence[e].scope == "program" for e in block.evidence_ids):
-                    if not block.assumptions:
-                        raise ValueError("Approach analogues for a program require explicit adaptation assumptions")
+                if (case.scope == "program" and block.minimum is not None and not any(
+                        evidence[e].scope == "program" for e in block.evidence_ids) and not block.assumptions):
+                    raise ValueError("Approach analogues for a program require explicit adaptation assumptions")
         if isinstance(record, InvestmentScenario) and as_of and record.as_of_date != as_of:
             raise ValueError("Numeric scenario date differs from effective as-of date")
     calculations = calculate_investment_scenarios(scenarios, stresses) if calculate else {
@@ -446,7 +461,7 @@ def validate_investment_result(analysis: InvestmentAnalysis, case: CaseInput,
         raise ValueError("Incomplete capital requires missing inputs")
     if any(r["time_to_milestone_days"] is None for r in rows if r["id"] in next_scenarios) and not analysis.time.missing_inputs:
         raise ValueError("Incomplete time requires missing inputs")
-    if set(p.path for p in analysis.financial_paths) != {"own_development", "licensing", "acquisition"}:
+    if {p.path for p in analysis.financial_paths} != {"own_development", "licensing", "acquisition"}:
         raise ValueError("Assess each financial path exactly once")
     for path in analysis.financial_paths:
         if not {"partnerships", "ip_licensing"} <= {d.role_id for d in path.financing_dependencies}:
@@ -691,6 +706,37 @@ def qualify_incomplete_plan_findings(plan: PreparedInvestmentPlan) -> PreparedIn
     return PreparedInvestmentPlan.model_validate(data)
 
 
+def _stage_validation_reason(exc, settings):
+    if isinstance(exc, ValidationError):
+        detail = '; '.join(('.'.join(map(str, e['loc'])) or '<root>') + ': ' + e['msg']
+            for e in exc.errors(include_input=False, include_context=False))
+    else:
+        detail = str(exc)
+    return scrub(detail, secrets=[settings.llm_api_key, settings.api_shared_secret])[:1000]
+
+
+async def _generate_validated_stage(prompt_id, payload, response_model, ctx, validate):
+    """Repair the stage that failed domain checks, retaining the validated prior plan."""
+    settings = getattr(ctx.model, '_s', None)
+    repairs = min(1, settings.llm_max_repairs) if settings is not None else 0
+    call_ctx = ctx
+    for attempt in range(repairs + 1):
+        raw = await ctx.model.generate_structured(prompt_id, deepcopy(payload), response_model, call_ctx)
+        try:
+            value = response_model.model_validate(raw.model_dump(mode='json') if isinstance(raw, BaseModel) else raw)
+            return validate(value)
+        except ValueError as exc:
+            if attempt == repairs:
+                raise
+            detail = _stage_validation_reason(exc, settings)
+            ctx.trace.log(RunStage.ANALYZE, f'{prompt_id} domain repair: {detail}')
+            feedback = [*ctx.feedback.get('investment', []),
+                'Correct this domain validation error: ' + detail
+                + '. Keep the supplied fixed_plan, its claims, identifiers and calculated_financials unchanged. '
+                'Use exact supplied references; do not invent missing inputs or financial numbers.']
+            call_ctx = replace(ctx, feedback={**ctx.feedback, 'investment': feedback})
+
+
 async def analyze_investment(case: CaseInput, pack: EvidencePack, ctx: RunContext, *,
         clinical: RoleResult | dict | None = None, market: RoleResult | dict | None = None,
         partnerships: RoleResult | dict | None = None, ip_licensing: RoleResult | dict | None = None,
@@ -703,30 +749,56 @@ async def analyze_investment(case: CaseInput, pack: EvidencePack, ctx: RunContex
         raise RuntimeError("R2 model adapter with generate_structured is required")
     # Adapters receive detached payloads so accidental mutation cannot rewrite canonical records.
     payload["prompt_version"] = PLAN_PROMPT_VERSION
-    raw_plan = await ctx.model.generate_structured(PLAN_PROMPT_ID, deepcopy(payload), PreparedInvestmentPlan, ctx)
-    plan = PreparedInvestmentPlan.model_validate(
-        raw_plan.model_dump(mode="json") if isinstance(raw_plan, BaseModel) else raw_plan)
-    plan = qualify_incomplete_plan_findings(plan)
-    generated, generated_stresses, bindings = resolve_numeric_inputs(
-        plan.scenario_blueprints, plan.stress_blueprints, plan.numeric_bindings, pack)
-    caller = payload["caller_numeric_inputs"]
-    prepared_scenarios = [*[InvestmentScenario.model_validate(s) for s in caller["scenarios"]], *generated]
-    prepared_stresses = [*[StressScenario.model_validate(s) for s in caller["stresses"]], *generated_stresses]
-    validate_prepared_plan(plan, case, pack, payload, prepared_scenarios, prepared_stresses)
-    calculations = calculate_investment_scenarios(prepared_scenarios, prepared_stresses)
+    def validate_plan(candidate):
+        candidate = qualify_incomplete_plan_findings(candidate)
+        generated, generated_stresses, bindings = resolve_numeric_inputs(
+            candidate.scenario_blueprints, candidate.stress_blueprints, candidate.numeric_bindings, pack)
+        caller = payload["caller_numeric_inputs"]
+        scenarios_for_plan = [*[InvestmentScenario.model_validate(s) for s in caller["scenarios"]], *generated]
+        stresses_for_plan = [*[StressScenario.model_validate(s) for s in caller["stresses"]], *generated_stresses]
+        validate_prepared_plan(candidate, case, pack, payload, scenarios_for_plan, stresses_for_plan)
+        return candidate, bindings, calculate_investment_scenarios(scenarios_for_plan, stresses_for_plan)
+
+    plan, bindings, calculations = await _generate_validated_stage(
+        PLAN_PROMPT_ID, payload, PreparedInvestmentPlan, ctx, validate_plan)
     fixed_plan = plan.model_dump(mode="json", exclude={"scenario_blueprints", "stress_blueprints", "numeric_bindings"})
     plan_hash = sha256(json.dumps(fixed_plan, sort_keys=True).encode()).hexdigest()
     explanation_payload = {k: v for k, v in payload.items() if k not in (
         "caller_numeric_inputs", "calculated_financials", "prompt_version")}
     explanation_payload.update(prompt_version=PROMPT_VERSION, fixed_plan=fixed_plan,
         fixed_plan_hash=plan_hash, calculated_financials=calculations, numeric_provenance=bindings)
-    raw_explanation = await ctx.model.generate_structured(
-        PROMPT_ID, deepcopy(explanation_payload), InvestmentExplanation, ctx)
-    explanation = InvestmentExplanation.model_validate(
-        raw_explanation.model_dump(mode="json") if isinstance(raw_explanation, BaseModel) else raw_explanation)
-    analysis = assemble_investment_analysis(plan, explanation)
-    explanation_payload["calculated_financials"] = calculations
-    validate_investment_result(analysis, case, pack, explanation_payload)
+    def validate_explanation(candidate):
+        analysis = assemble_investment_analysis(plan, candidate)
+        validate_investment_result(analysis, case, pack, explanation_payload)
+        return analysis
+
+    try:
+        analysis = await _generate_validated_stage(
+            PROMPT_ID, explanation_payload, InvestmentExplanation, ctx, validate_explanation)
+    except (ValueError, MalformedModelOutput) as exc:
+        settings = getattr(ctx.model, '_s', None)
+        if settings is None or not settings.continue_on_node_validation_error:
+            raise
+        reason = _stage_validation_reason(exc, settings)
+        gap = 'Financial interpretation unavailable after validation; the validated plan and Python calculations are retained.'
+        milestone = plan.next_milestone.required_result.value
+        work_items = [w.work.value for w in plan.work_packages if w.work.value]
+        summary = ('Preliminary investment plan: ' + (milestone or 'next-milestone requirements remain unknown')
+            + ('. Proposed work: ' + '; '.join(work_items[:3]) if work_items else '')
+            + '. Financial path feasibility and financing implications require a corrected interpretation.')
+        ctx.trace.log(RunStage.ANALYZE, 'investment partial plan retained: ' + reason)
+        return RoleResult(role_id='investment', position='partial_assessment', summary=summary,
+            claims=[Claim.model_validate(c.model_dump()) for c in plan.claims], risks=plan.risks,
+            unknowns=list(dict.fromkeys([*plan.unknowns, gap, 'Validation reason: ' + reason])),
+            change_conditions=['Validate financing-path and stress interpretations against the saved plan and calculations.'],
+            section_content=[SectionContent(key='capital_to_milestone', summary=summary,
+                claim_ids=[c.id for c in plan.claims], limitations=[*plan.limitations, gap,
+                    'A retained plan is not a validated financial interpretation or an investment recommendation.'],
+                structured_data={'investment': {'prepared_plan': fixed_plan, 'fixed_plan_hash': plan_hash,
+                    'calculated_financials': calculations, 'numeric_provenance': bindings,
+                    'snapshot_id': pack.snapshot_id, 'as_of_date': payload['as_of_date'],
+                    'numeric_review_status': 'semantic_review_pending',
+                    'explanation_recovery': {'status': 'analysis_unavailable', 'validation_reason': reason}}})])
     gaps = identify_investment_gaps(analysis, explanation_payload)
     gaps.extend(f"R3 semantic review pending: {b['record_id']}/{b['input_path']}: {b['applicability']}"
                 for b in bindings)
