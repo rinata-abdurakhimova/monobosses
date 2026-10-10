@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal, get_args
 
-from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, create_model, model_validator
 
 from vic.contracts import (
     CaseInput,
@@ -189,24 +189,10 @@ _DESIGN_CLAIMS = {"clinical.target_population", "clinical.primary_endpoint",
                   "clinical.standard_of_care", "clinical.unmet_need"}
 
 
-def _unique_task_claims(claims):
-    seen = set()
-    duplicates = set()
-    for claim in claims:
-        if claim.key in seen:
-            duplicates.add(claim.key)
-        seen.add(claim.key)
-    if duplicates:
-        raise ValueError("Duplicate clinical claim keys: " + ", ".join(sorted(duplicates))
-                         + "; return one claim per assigned key, preserving conflicting evidence and uncertainty")
-    return claims
-
-
 def _pass_model(name: str, fields: set[str], keys: set[str]) -> type[BaseModel]:
     claim_model = create_model(name + "Claim", __base__=_ClaimOutput,
                                key=(Literal[tuple(sorted(keys))], ...))
-    return create_model(name, __config__=ConfigDict(extra="forbid", strict=True),
-        __validators__={"unique_task_claims": field_validator("claims")(_unique_task_claims)}, **{
+    return create_model(name, __config__=ConfigDict(extra="forbid", strict=True), **{
         key: (list[claim_model] if key == "claims" else field.annotation, field)
         for key, field in ClinicalPlanAnalysis.model_fields.items()
         if key in fields | _COMMON_FIELDS

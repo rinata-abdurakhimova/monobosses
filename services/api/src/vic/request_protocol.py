@@ -1006,7 +1006,7 @@ def validate_component_references(prompt_id, payload, data, inverse):
                     reverse = {original: alias for alias, original in inverse.items()}
                     allowed_hypotheses = [reverse.get(item, item) for item, status in statuses.items()
                                           if status in {"unknown", "unverified"}]
-                    raise ValueError(f"{path}: hypothesis linked statuses={linked}; claim_ids may ONLY contain " + dumps(allowed_hypotheses) +
+                    raise ValueError("Hypothesis claim_ids may ONLY contain " + dumps(allowed_hypotheses) +
                                      "; supported claims are forbidden here, even as background. Keep assumptions nonempty.")
             for key, child in value.items():
                 references = (set(child) if isinstance(child, list) else {child} if isinstance(child, str) else set()) if key in allowed else set()
