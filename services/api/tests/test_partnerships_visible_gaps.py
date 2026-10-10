@@ -47,6 +47,7 @@ def test_saved_partnerships_result_allows_investment_and_chair_to_run(tmp_path):
     case, pack, ctx = inputs()
     raw = output()
     raw['claims'][0]['assumptions'] = []
+    raw['candidates'][0]['fit']['rationale']['assumptions'] = []
     ctx.model = type('Adapter', (), {'generate_structured': AsyncMock(return_value=raw)})()
     result = asyncio.run(analyze_partnerships(case, pack, ctx))
     async def partnerships(*args, **kwargs):
@@ -59,3 +60,22 @@ def test_saved_partnerships_result_allows_investment_and_chair_to_run(tmp_path):
         assert nodes[role].status == 'completed'
         assert nodes[role].result is not None
     assert 'Partial Partnerships' in nodes['partnerships'].result.summary
+
+
+def test_hypothesis_linked_to_supported_fact_becomes_unknown_without_downgrading_fact():
+    from vic.agents.business.partnerships import qualify_inconsistent_hypotheses
+    case, pack, _ = inputs()
+    raw = output()
+    raw['claims'][0]['support_status'] = 'supported'
+    raw['claims'][0]['evidence_ids'] = ['e1']
+    original = deepcopy(raw)
+    fixed = qualify_inconsistent_hypotheses(PartnershipsAnalysis.model_validate(raw))
+    validate_partnerships_result(fixed, case, pack)
+    assert fixed.claims[0].support_status.value == 'supported'
+    assert fixed.claims[0].evidence_ids == ['e1']
+    assert fixed.candidates == []  # Its identity was also an inconsistent hypothesis.
+    assert fixed.position == 'insufficient_data'
+    assert fixed.candidate_search_unknowns
+    assert any('Unresolved hypothesis' in gap for gap in fixed.unknowns)
+    assert raw == original
+    assert qualify_inconsistent_hypotheses(fixed) == fixed
