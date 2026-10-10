@@ -354,3 +354,39 @@ async def test_malformed_planning_risk_does_not_discard_other_valid_plan_finding
         assert any(original['description'] in gap and original['next_check'] in gap
             for gap in result.unknowns)
     assert p['risks'] == [original]  # caller/model response was not mutated
+
+
+@pytest.mark.parametrize('status', ['unknown', 'unverified'])
+@pytest.mark.parametrize('assumptions', [[], ['   ']])
+def test_uncertain_claim_without_rationale_becomes_explicit_gap(status, assumptions):
+    from vic.agents.business.investment import qualify_missing_claim_gaps
+    data = plan_output(True)
+    data['claims'][0].update(support_status=status, assumptions=assumptions)
+    original = PreparedInvestmentPlan.model_validate(data)
+    result = qualify_missing_claim_gaps(original)
+    assert result.claims[0].support_status == status
+    assert result.claims[0].evidence_ids == original.claims[0].evidence_ids
+    assert result.claims[0].text == original.claims[0].text
+    assert result.claims[0].assumptions
+    assert any(result.claims[0].id in gap for gap in result.unknowns)
+    assert original.claims[0].assumptions == assumptions
+    assert qualify_missing_claim_gaps(result) == result
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('stage', ['plan', 'explanation'])
+async def test_missing_uncertain_claim_rationale_does_not_reject_investment(stage):
+    case, pack, ctx = inputs()
+    plan, explanation = plan_output(True), explanation_output(True)
+    claim = deepcopy(plan['claims'][0])
+    claim.update(id='investment.unresolved_basis', support_status='unverified',
+        evidence_ids=[], assumptions=[], text='Funding applicability requires verification')
+    (plan if stage == 'plan' else explanation)['claims'].append(claim)
+    ctx.model = SimpleNamespace(generate_structured=AsyncMock(side_effect=[plan, explanation]))
+    result = await analyze_investment(case, pack, ctx)
+    retained = next(c for c in result.claims if c.id == claim['id'])
+    assert retained.support_status == 'unverified'
+    assert retained.evidence_ids == []
+    assert retained.assumptions
+    assert any(claim['id'] in gap for gap in result.unknowns)
+    assert ctx.model.generate_structured.await_count == 2

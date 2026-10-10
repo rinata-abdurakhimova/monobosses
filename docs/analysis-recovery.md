@@ -90,3 +90,11 @@ distinct; duplicate input IDs remain invalid. A risk without claim references is
 retained verbatim as an unvalidated proposal in unknowns, including impact and
 next check, rather than assigned fabricated support or allowed to invalidate all
 other findings. Unknown nonempty claim references still require correction.
+
+
+Uncertain Investment claims without assumptions are retained with an explicit
+model-omitted-rationale verification gap before plan and explanation validation.
+Existing text, evidence references and support status remain unchanged. No source
+support or domain assumption is invented. Empty/whitespace-only rationale is
+handled; repeated qualification is idempotent. This prevents a missing explanatory
+field from discarding an otherwise valid assessment while exposing its limitation.

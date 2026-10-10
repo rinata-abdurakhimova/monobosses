@@ -274,8 +274,8 @@ def _validate_claims(claims, case, pack, *, require_assumptions=True):
                 raise ValueError("Factual claim requires evidence")
             if c.scope == "program" and not any(evidence[e].scope == "program" for e in c.evidence_ids):
                 raise ValueError("Program fact requires program evidence")
-        elif require_assumptions and not c.assumptions:
-            raise ValueError("Unknown/unverified claim requires assumptions or gaps")
+        elif require_assumptions and not any(note.strip() for note in c.assumptions):
+            raise ValueError("Unknown/unverified claim requires assumptions or gaps: " + c.id)
 
 
 def _record_ids(result):
@@ -684,7 +684,26 @@ def assemble_investment_analysis(plan: PreparedInvestmentPlan,
     return InvestmentAnalysis.model_validate(data)
 
 
+def qualify_missing_claim_gaps(output):
+    """Preserve uncertain claims and disclose omitted rationale without inventing support."""
+    data = output.model_dump(mode='python')
+    gaps = []
+    for claim in data['claims']:
+        if claim['support_status'] in ('unknown', 'unverified') and not any(
+                note.strip() for note in claim['assumptions']):
+            gap = (f"{claim['id']}: the model marked this statement {claim['support_status']} "
+                "but supplied no assumptions or gap explanation. Its basis remains unresolved; "
+                "verify the relevant source and applicability before relying on this statement.")
+            claim['assumptions'] = [gap]
+            gaps.append(gap)
+    if gaps:
+        data['unknowns'] = list(dict.fromkeys([*data['unknowns'], *gaps]))
+        data['limitations'].append('Uncertain claims with omitted rationale were explicitly marked as verification gaps; support statuses and evidence references were not upgraded.')
+    return type(output).model_validate(data)
+
+
 def qualify_incomplete_plan_findings(plan: PreparedInvestmentPlan) -> PreparedInvestmentPlan:
+    plan = qualify_missing_claim_gaps(plan)
     data = plan.model_dump(mode='python')
     gaps = []
     def walk(value, path='investment_plan'):
@@ -791,6 +810,7 @@ async def analyze_investment(case: CaseInput, pack: EvidencePack, ctx: RunContex
     explanation_payload.update(prompt_version=PROMPT_VERSION, fixed_plan=fixed_plan,
         fixed_plan_hash=plan_hash, calculated_financials=calculations, numeric_provenance=bindings)
     def validate_explanation(candidate):
+        candidate = qualify_missing_claim_gaps(candidate)
         analysis = assemble_investment_analysis(plan, candidate)
         validate_investment_result(analysis, case, pack, explanation_payload)
         return analysis

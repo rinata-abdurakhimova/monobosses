@@ -65,3 +65,6 @@ Planning risk IDs must start with investment. Each risk must reference at least 
 existing investment claim ID from this plan. Do not reference upstream claim IDs
 as planning risk support or invent a claim to satisfy this rule. Put unsupported
 risk proposals in unknowns with their impact and next check until claim support exists.
+
+Every unknown or unverified claim must include a specific assumption or evidence gap
+in assumptions. Explain what remains unverified; evidence IDs alone are not a rationale.
