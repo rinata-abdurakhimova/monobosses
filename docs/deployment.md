@@ -203,3 +203,13 @@ evidence is excluded from this snapshot; use a new assessment to include it.
 Only failed pipeline runs with a saved snapshot can resume. Active runs, runs
 with saved reports or a newer report, and duplicate requests are rejected.
 Deploy both API and website, then open the existing failed assessment and retry.
+
+## Partnerships missing uncertainty basis
+
+An unknown/unverified claim without assumptions receives an explicit qualification
+that its supporting basis was not provided and requires verification. Its ID,
+text, evidence references and support status stay unchanged. This qualification
+is also exposed in unknowns, and the result is marked insufficient_data with a
+partial-result limitation. No substantive assumption, partner interest or verified
+fit is invented. Other evidence, reference and domain validation remains active.
+After deployment, retry the failed node to reuse the saved upstream results.

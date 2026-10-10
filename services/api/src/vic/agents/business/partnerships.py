@@ -283,6 +283,29 @@ def identify_partnerships_gaps(analysis: PartnershipsAnalysis) -> list[str]:
     return list(dict.fromkeys(gaps))
 
 
+def qualify_missing_claim_basis(analysis: PartnershipsAnalysis) -> PartnershipsAnalysis:
+    """Expose missing model qualifications without inventing a factual assumption."""
+    claims, gaps = [], []
+    for claim in analysis.claims:
+        if claim.support_status in ('unknown', 'unverified') and not any(
+                assumption.strip() for assumption in claim.assumptions):
+            gap = (f"Unverified basis for {claim.id}: the model supplied no assumptions or supporting "
+                "rationale. Treat this claim as unresolved; obtain evidence before relying on it.")
+            claims.append(claim.model_copy(update={'assumptions': [gap]}))
+            gaps.append(gap)
+        else:
+            claims.append(claim)
+    if not gaps:
+        return analysis
+    warning = ('Partial Partnerships result: some unverified claims lacked a stated basis; '
+        'explicit verification gaps were added. Partner fit, interest and deal readiness are not confirmed.')
+    return analysis.model_copy(update={'claims': claims,
+        'unknowns': [*analysis.unknowns, *gaps],
+        'limitations': [*analysis.limitations, warning],
+        'summary': warning + ' ' + analysis.summary,
+        'position': 'insufficient_data'})
+
+
 async def analyze_partnerships(case: CaseInput, pack: EvidencePack, ctx: RunContext,
                                *, market: RoleResult | None = None,
                                ip_licensing: RoleResult | dict | None = None,
@@ -294,6 +317,7 @@ async def analyze_partnerships(case: CaseInput, pack: EvidencePack, ctx: RunCont
         raise RuntimeError("R2 model adapter with generate_structured is required")
     raw = await ctx.model.generate_structured(PROMPT_ID, payload, PartnershipsAnalysis, ctx)
     analysis = PartnershipsAnalysis.model_validate(raw)
+    analysis = qualify_missing_claim_basis(analysis)
     validate_partnerships_result(analysis, case, pack)
     gaps = identify_partnerships_gaps(analysis)
     for name, available in payload["context_availability"].items():
