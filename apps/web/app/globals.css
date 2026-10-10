@@ -2528,3 +2528,57 @@ summary::-webkit-details-marker {
     padding: 18px;
   }
 }
+/* Model operations dashboard */
+.usage-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.usage-metrics .panel,
+.usage-trace,
+.usage-table-wrap.panel {
+  padding: 24px;
+}
+.usage-metrics h2 {
+  overflow-wrap: anywhere;
+}
+.usage-table-wrap {
+  overflow-x: auto;
+}
+.usage-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.usage-table caption {
+  text-align: left;
+  padding: 12px 0;
+}
+.usage-table th,
+.usage-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  vertical-align: top;
+}
+.usage-table th {
+  white-space: nowrap;
+}
+.usage-trace {
+  margin-top: 24px;
+  overflow-wrap: anywhere;
+}
+.usage-trace li {
+  margin-bottom: 8px;
+}
+.usage-trace pre {
+  overflow: auto;
+  max-height: 420px;
+  font-size: 12px;
+}
+@media (max-width: 800px) {
+  .usage-metrics {
+    grid-template-columns: 1fr;
+  }
+}

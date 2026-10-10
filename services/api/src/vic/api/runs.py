@@ -6,8 +6,38 @@ from vic.api.deps import errors, get_repo
 from vic.contracts import Run, RunOutputs
 from vic.errors import ApiError
 from vic.storage import Repository
+from vic.config import get_settings
+from vic.tracing import scrub
 
 router = APIRouter(tags=["runs"])
+
+
+@router.get("/runs", response_model=list[Run], responses=errors(401))
+async def list_runs(repo: Repository = Depends(get_repo)) -> list[Run]:
+    """Latest 200 runs, including unknown costs and synthetic runs."""
+    return await asyncio.to_thread(repo.list_runs, 200)
+
+
+@router.get("/runs/{run_id}/trace", responses=errors(401, 404))
+async def get_run_trace(run_id: str, repo: Repository = Depends(get_repo)) -> dict:
+    run = await asyncio.to_thread(repo.get_run, run_id)
+    if run is None:
+        raise ApiError(404, "not_found", f"Run '{run_id}' not found")
+    trace = await asyncio.to_thread(repo.get_trace, run_id)
+    if trace is None:
+        return {"run_id": run_id, "trace_id": run.trace_id, "available": False,
+                "usage": [], "events": [], "pricing": {}}
+    # Only expose operational trace fields; never return the full stored config.
+    keys = {"run_id", "trace_id", "status", "mode", "model", "prompt_versions",
+            "config_version", "stage_durations_ms", "usage", "events", "warnings",
+            "error", "cost_usd", "cost_note"}
+    result = {key: value for key, value in trace.items() if key in keys}
+    config = trace.get("config") or {}
+    result["pricing"] = {key: config.get(key) for key in (
+        "llm_price_input_per_mtok", "llm_price_output_per_mtok", "llm_price_date")}
+    result["available"] = True
+    settings = get_settings()
+    return scrub(result, secrets=[settings.llm_api_key, settings.api_shared_secret])
 
 
 def _node_analysis(value):

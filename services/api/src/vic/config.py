@@ -50,8 +50,8 @@ class Settings(BaseSettings):
     node_reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] | None = "low"
     # Provisional application cap, NOT a measured mentor gateway limit.
     market_request_max_bytes: int = Field(default=18000, gt=0)
-    llm_price_input_per_mtok: float | None = None    # USD per 1M input tokens
-    llm_price_output_per_mtok: float | None = None   # USD per 1M output tokens
+    llm_price_input_per_mtok: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    llm_price_output_per_mtok: float | None = Field(default=None, ge=0, allow_inf_nan=False)
     llm_price_date: str | None = None                # date the prices were checked
 
     @field_validator("llm_base_url")
@@ -74,6 +74,15 @@ class Settings(BaseSettings):
     @classmethod
     def _empty_to_none(cls, value):
         return None if isinstance(value, str) and not value.strip() else value
+
+    @field_validator("llm_price_date")
+    @classmethod
+    def _validate_price_date(cls, value):
+        if value is not None:
+            from datetime import date
+            if date.fromisoformat(value).isoformat() != value:
+                raise ValueError("LLM_PRICE_DATE must use YYYY-MM-DD")
+        return value
 
     @property
     def cors_list(self) -> list[str]:
