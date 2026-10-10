@@ -329,8 +329,26 @@ class Pipeline:
                                     f"before {case.as_of_date.isoformat()}")
             new_src = [x for x in new_src if x.id not in bad]
             new_ev = [x for x in new_ev if x.source_id not in bad]
-        sources = _merge([*parent_src, *new_src], "Source")
-        evidence = _merge([*parent_ev, *new_ev], "Evidence")
+        # Retrieved content IDs are stable, but timestamps and annotations are not.
+        # Keep previously cited records frozen; rerun all agents on those records
+        # plus newly imported/retrieved evidence. Do not mask actual ID collisions.
+        new_src = _merge(new_src, "Source")
+        old_sources = {source.id: source for source in parent_src}
+        for source in new_src:
+            old = old_sources.get(source.id)
+            if old is not None and (old.content_hash != source.content_hash
+                                    or old.synthetic != source.synthetic):
+                raise ValidationFailed(f"Source id '{source.id}' is used by two different contents",
+                                       code="id_conflict")
+        old_evidence = {item.id: item for item in parent_ev}
+        for item in new_ev:
+            old = old_evidence.get(item.id)
+            if old is not None and any(getattr(old, field) != getattr(item, field)
+                                       for field in ("source_id", "excerpt", "locator", "scope")):
+                raise ValidationFailed(f"Evidence id '{item.id}' is used by two different records",
+                                       code="id_conflict")
+        sources = _merge([*parent_src, *(s for s in new_src if s.id not in old_sources)], "Source")
+        evidence = _merge([*parent_ev, *(e for e in new_ev if e.id not in old_evidence)], "Evidence")
         if self._stubbed and any(not x.synthetic for x in sources):
             raise ValidationFailed("With stubbed modules only synthetic evidence is allowed",
                                    code="dev_stubs_requires_synthetic_evidence")

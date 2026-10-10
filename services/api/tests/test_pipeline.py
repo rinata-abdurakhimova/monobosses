@@ -342,3 +342,61 @@ def test_stub_chair_reuses_questions_and_filters_dangling_risk_claims():
 
 def test_empty_role_wave_is_valid_during_downstream_audit_repair():
     assert asyncio.run(Pipeline._gather(None, [])) == []
+
+
+def test_review_deduplicates_retrieval_metadata_and_reruns_nodes(tmp_path):
+    env = Env(tmp_path)
+    assert env.run().status == RunStatus.COMPLETED
+    v1 = env.repo.get_report(env.case_id, 1)
+    original = env.modules
+    seen = []
+
+    async def refreshed_pack(case, ctx):
+        pack = await original.build_evidence_pack(case, ctx)
+        return pack.model_copy(update={
+            "sources": [s.model_copy(update={"retrieved_at": s.retrieved_at.replace(year=2030)})
+                        for s in pack.sources],
+            "evidence": [e.model_copy(update={"limitations": ["Updated annotation"]})
+                         for e in pack.evidence]})
+
+    async def science(case, pack, ctx):
+        seen.append(pack)
+        return await original.analyze_science(case, pack, ctx)
+
+    env.modules = dataclasses.replace(original, build_evidence_pack=refreshed_pack,
+                                      analyze_science=science)
+    added = env.repo.add_evidence(env.case_id, EvidenceCreate(
+        title="Safety update", text="New synthetic safety evidence.", synthetic=True))
+    run = env.run(parent_report_id=v1.id)
+    assert run.status == RunStatus.COMPLETED, run.error
+    v2 = env.repo.get_report(env.case_id, 2)
+    assert len(seen) == 1
+    assert set(added.evidence_ids) <= {e.id for e in seen[0].evidence}
+    assert all(source in v2.sources for source in v1.sources)
+    assert all(item in v2.evidence for item in v1.evidence)
+    assert all(n.status == "completed" for n in env.repo.get_nodes(run.id))
+    assert v2.run_id != v1.run_id and v2.snapshot_id != v1.snapshot_id
+    assert env.repo.get_report(env.case_id, 1) == v1
+
+
+@pytest.mark.parametrize("collision", ["source", "evidence"])
+def test_review_rejects_actual_content_collisions(tmp_path, collision):
+    env = Env(tmp_path)
+    env.run()
+    v1 = env.repo.get_report(env.case_id, 1)
+    original = env.modules
+
+    async def conflicting_pack(case, ctx):
+        pack = await original.build_evidence_pack(case, ctx)
+        if collision == "source":
+            return pack.model_copy(update={"sources": [
+                pack.sources[0].model_copy(update={"content_hash": "sha256:" + "f" * 64}),
+                *pack.sources[1:]]})
+        return pack.model_copy(update={"evidence": [
+            pack.evidence[0].model_copy(update={"excerpt": "Different content under the same ID"}),
+            *pack.evidence[1:]]})
+
+    env.modules = dataclasses.replace(original, build_evidence_pack=conflicting_pack)
+    run = env.run(parent_report_id=v1.id)
+    assert run.status == RunStatus.FAILED and run.error.code == "id_conflict"
+    assert env.repo.get_report(env.case_id, 1) == v1
