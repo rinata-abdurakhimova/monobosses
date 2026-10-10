@@ -243,3 +243,12 @@ the former ten-minute polling pause is removed. This does not impose a provider
 timeout or guarantee that a provider request will finish. Existing processes use
 the code they started with; deploy and retry an interrupted/failed run to apply
 the new orchestration behavior.
+
+## Scope-safe Chair inputs
+
+In approach-level assessments, an upstream role containing program-scoped claims
+is now exposed as analysis_unavailable / scope_mismatch before downstream nodes
+consume it. No claim is relabeled to pretend its scope is broader. Compatible
+roles remain intact, and Chair receives explicit missing-analysis limitations.
+Retry applies the same check to saved outputs and reruns cached dependents of
+any replaced role. Program-level assessments continue to accept program claims.

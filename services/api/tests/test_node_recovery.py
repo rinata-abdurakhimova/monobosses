@@ -90,3 +90,28 @@ def test_audit_blockers_go_to_chair_without_rerunning_specialists(tmp_path, audi
     nodes = env.repo.get_nodes(run.id)
     assert all(n.status != 'stale' for n in nodes)
     assert next(n for n in nodes if n.role_id.value == 'chair').status == 'completed'
+
+
+def test_program_claim_in_approach_assessment_does_not_block_chair(tmp_path):
+    from tests.test_pipeline import CASE
+    from vic.contracts import Scope
+    base = make_stub_modules()
+    seen = []
+    async def wrong_scope(case, pack, ctx):
+        result = await base.analyze_science(case, pack, ctx)
+        claims = [c.model_copy(update={'scope': 'program'}) for c in result.claims]
+        assert claims
+        return result.model_copy(update={'claims': claims})
+    async def chair(results, audit, ctx):
+        seen.extend(results)
+        assert all(c.scope.value == 'approach' for r in results for c in r.claims)
+        return await base.synthesize_committee(results, audit, ctx)
+    env = Env(tmp_path, dataclasses.replace(base, analyze_science=wrong_scope,
+        synthesize_committee=chair), continue_on_node_validation_error=True)
+    case_id = env.repo.create_case(CASE.model_copy(update={'scope': Scope.APPROACH}))
+    run = env.run(case_id=case_id)
+    assert run.status.value == 'completed', run.error
+    science = next(r for r in seen if r.role_id.value == 'science')
+    assert science.claims == []
+    assert science.section_content[0].structured_data['node_recovery']['error_code'] == 'scope_mismatch'
+    assert next(n for n in env.repo.get_nodes(run.id) if n.role_id.value == 'chair').status == 'completed'
