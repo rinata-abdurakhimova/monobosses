@@ -1,3 +1,4 @@
+from dataclasses import replace
 """Evidence-weighted committee synthesis. Pipeline wiring belongs to R2."""
 from datetime import date
 from typing import Annotated, Literal
@@ -424,7 +425,13 @@ async def analyze_chair(case: CaseInput, pack: EvidencePack, ctx: RunContext, *,
     if ctx.model is None or not callable(getattr(ctx.model, "generate_structured", None)):
         raise RuntimeError("R2 generate_structured adapter required")
     analysis = ChairAnalysis.model_validate(await ctx.model.generate_structured(PROMPT_ID, payload, ChairAnalysis, ctx))
-    validate_chair_result(analysis, case, pack, payload)
+    try:
+        validate_chair_result(analysis, case, pack, payload)
+    except ValueError as exc:
+        child = replace(ctx, feedback={**ctx.feedback, 'chair': [*ctx.feedback.get('chair', []),
+            'Correct this Chair validation error without inventing evidence: ' + str(exc)]})
+        analysis = ChairAnalysis.model_validate(await ctx.model.generate_structured(PROMPT_ID, payload, ChairAnalysis, child))
+        validate_chair_result(analysis, case, pack, payload)
     questions = [DiligenceQuestion(question=q.question, why_it_matters=q.why_it_matters.text,
         evidence_needed=q.evidence_needed, decision_if_positive=q.decision_if_positive,
         decision_if_negative=q.decision_if_negative) for q in sorted(analysis.questions, key=lambda q: q.rank)]

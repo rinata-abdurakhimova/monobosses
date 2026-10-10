@@ -271,3 +271,18 @@ def test_explanation_reference_ids_and_reviewer_names_are_allowed():
     data["capital"]["scenario_ids"] = ["scenario_2026"]
     data["stress_explanations"][0]["event_id"] = "delay_2"
     validate_explanation_numbers(InvestmentExplanation.model_validate(data))
+
+
+def test_incomplete_plan_finding_becomes_unknown_without_inventing_claims():
+    from vic.agents.business.investment import qualify_incomplete_plan_findings
+    raw = plan_output(True)
+    plan = PreparedInvestmentPlan.model_validate(raw)
+    from vic.agents.business.investment import _walk, Finding
+    target = next(b for b in _walk(plan) if isinstance(b, Finding) and b.basis != 'unknown')
+    original = target.value
+    target.claim_ids = []
+    fixed = qualify_incomplete_plan_findings(plan)
+    assert any(str(original) in gap and 'Incomplete finding' in gap for gap in fixed.unknowns)
+    assert fixed.claims == plan.claims
+    assert any(b.basis == 'unknown' and b.value is None and b.unknowns for b in _walk(fixed) if isinstance(b, Finding))
+    assert qualify_incomplete_plan_findings(fixed) == fixed

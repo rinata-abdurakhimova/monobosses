@@ -213,3 +213,19 @@ is also exposed in unknowns, and the result is marked insufficient_data with a
 partial-result limitation. No substantive assumption, partner interest or verified
 fit is invented. Other evidence, reference and domain validation remains active.
 After deployment, retry the failed node to reuse the saved upstream results.
+
+## Shared specialist validation recovery
+
+CONTINUE_ON_NODE_VALIDATION_ERROR defaults to true. If a specialist rejects its
+output with a validation error or exhausts schema correction, the pipeline saves
+an explicit analysis_unavailable / insufficient_data result with no rejected
+claims, numbers or risks. Required report sections display this limitation, and
+subsequent specialists and the real Chair still run. Missing specialist analyses
+are included in committee conditions and prevent an unconditional Invest result.
+Set false for strict stop-on-validation-error behavior. Authentication, transport,
+retrieval, cancellation, audit and report-integrity failures still surface.
+
+Investment also marks non-unknown plan findings with a missing value or empty
+claim references as unknown, preserving their original text in visible gaps. It
+does not fabricate financial inputs or supporting claims. Chair domain validation
+receives one corrective model request; an invalid Chair result is not fabricated.
