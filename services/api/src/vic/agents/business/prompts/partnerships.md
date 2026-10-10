@@ -1,4 +1,4 @@
-# partnerships — prompt 1.0.0
+# partnerships — prompt 1.0.1
 
 Return only PartnershipsAnalysis using the supplied response schema.
 Analyze supplied case, evidence excerpts and sources. No web retrieval, contacting
@@ -34,6 +34,11 @@ All substantive findings are documented, hypothesis or unknown:
 - documented: non-null value and supported local claims linked to pack evidence;
 - hypothesis: non-null value, assumptions and unverified/unknown local claims;
 - unknown: value=null and explicit unknowns.
+Every unknown or unverified claim MUST have at least one nonblank entry in its
+own assumptions array, stating an explicit assumption or the specific missing
+data needed to verify that claim. Global unknowns and finding-level gaps do not
+replace this claim-level requirement. Do not upgrade its status or invent facts
+to avoid the requirement.
 Every claim ID starts partnerships. and has a stable snake_case suffix. Risks
 also start partnerships. Each risk needs local claim references (an explicit
 unknown claim can support a missing-data risk). Reference only supplied evidence.
