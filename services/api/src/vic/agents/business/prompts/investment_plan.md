@@ -60,3 +60,8 @@ hypotheses need assumptions and unverified/unknown claims. Unknown Finding is nu
 Return explicit missing-input questions as unknowns, and planning risks/limitations.
 Exact token checks do not prove semantic applicability, completeness or factual accuracy;
 all new numerical extraction remains semantic_review_pending for R3/human audit.
+
+Planning risk IDs must start with investment. Each risk must reference at least one
+existing investment claim ID from this plan. Do not reference upstream claim IDs
+as planning risk support or invent a claim to satisfy this rule. Put unsupported
+risk proposals in unknowns with their impact and next check until claim support exists.

@@ -82,3 +82,11 @@ sanitized reason is retained under investment.explanation_recovery, and the
 committee cannot issue unconditional Invest based on this incomplete specialist.
 A plan that fails its own validation is not retained as if it were valid.
 Provider authentication/transport failures still propagate normally.
+
+
+Planning risk recovery normalizes foreign/missing Investment ID prefixes without
+changing the description or existing claim references. ID collisions remain
+distinct; duplicate input IDs remain invalid. A risk without claim references is
+retained verbatim as an unvalidated proposal in unknowns, including impact and
+next check, rather than assigned fabricated support or allowed to invalidate all
+other findings. Unknown nonempty claim references still require correction.

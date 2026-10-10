@@ -538,8 +538,10 @@ def validate_prepared_plan(plan: PreparedInvestmentPlan, case: CaseInput, pack: 
                 if block.basis == "hypothesis" and (not block.assumptions or any(
                         c.support_status not in ("unverified", "unknown") for c in linked)):
                     raise ValueError("Plan hypothesis requires assumptions and unverified claims")
-    if any(not r.id.startswith("investment.") or not r.claim_ids for r in plan.risks):
-        raise ValueError("Plan risks require investment namespace and claims")
+    invalid_risks = [r.id for r in plan.risks if not r.id.startswith("investment.") or not r.claim_ids]
+    if invalid_risks:
+        raise ValueError("Plan risks require investment namespace and claims; invalid risk IDs: "
+            + ", ".join(invalid_risks))
     if len({r.id for r in plan.risks}) != len(plan.risks):
         raise ValueError("Duplicate planning risk IDs")
     next_id = plan.next_milestone.id
@@ -700,9 +702,30 @@ def qualify_incomplete_plan_findings(plan: PreparedInvestmentPlan) -> PreparedIn
             for index, child in enumerate(value):
                 walk(child, f'{path}[{index}]')
     walk(data)
+    if len({risk['id'] for risk in data['risks']}) != len(data['risks']):
+        raise ValueError('Duplicate planning risk IDs')
+    kept_risks = []
+    used_ids = {risk['id'] for risk in data['risks'] if risk['id'].startswith('investment.')}
+    for risk in data['risks']:
+        if not risk['claim_ids']:
+            gaps.append('Unlinked planning risk proposal (not validated): '
+                + json.dumps(risk, ensure_ascii=False, default=str)
+                + '; supply existing investment claim references before treating this as a substantiated risk.')
+            continue
+        if not risk['id'].startswith('investment.'):
+            original = risk['id']
+            suffix = re.sub(r'[^a-z0-9_]+', '_', original.lower()).strip('_') or 'risk'
+            canonical = 'investment.' + suffix[:80]
+            if canonical in used_ids:
+                canonical += '_' + sha256(original.encode()).hexdigest()[:12]
+            risk['id'] = canonical
+            used_ids.add(canonical)
+            data['limitations'].append(f'Planning risk identifier normalized: {original} -> {canonical}; content and claim references are unchanged.')
+        kept_risks.append(risk)
+    data['risks'] = kept_risks
     if gaps:
         data['unknowns'].extend(gaps)
-        data['limitations'].append('Partial Investment plan: incomplete findings were marked unknown; no missing values or supporting claims were invented.')
+        data['limitations'].append('Partial Investment plan: incomplete findings and unlinked risk proposals remain explicit gaps; no missing values or supporting claims were invented.')
     return PreparedInvestmentPlan.model_validate(data)
 
 

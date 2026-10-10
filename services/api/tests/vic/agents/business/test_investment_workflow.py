@@ -325,3 +325,32 @@ async def test_failed_explanation_retains_real_plan_claims_and_python_numbers():
     assert data['explanation_recovery']['status'] == 'analysis_unavailable'
     assert '999999999' not in result.model_dump_json()
     assert len(ctx.model.generate_structured.call_args_list) == 3
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('defect', ['namespace', 'missing_claims'])
+async def test_malformed_planning_risk_does_not_discard_other_valid_plan_findings(defect):
+    case, pack, ctx = inputs()
+    p = plan_output(True)
+    # Add the concrete risk shape that formerly killed validate_prepared_plan.
+    original = {'id': 'financing_gap', 'description': 'Funding may not cover the proposed work',
+        'priority': 'major', 'claim_ids': [p['claims'][0]['id']],
+        'impact': 'Next milestone may be delayed', 'next_check': 'Verify asset-allocated funding'}
+    if defect == 'missing_claims':
+        original.update(id='investment.financing_gap', claim_ids=[])
+    p['risks'] = [deepcopy(original)]
+    ctx.model = SimpleNamespace(generate_structured=AsyncMock(side_effect=[p, explanation_output(True)]))
+    result = await analyze_investment(case, pack, ctx)
+    assert result.claims
+    data = result.section_content[0].structured_data['investment']
+    assert data['calculated_financials']['scenarios'][0]['capital_to_milestone'] == {
+        'minimum': '400000', 'maximum': '700000'}
+    if defect == 'namespace':
+        risk = next(r for r in result.risks if r.id == 'investment.financing_gap')
+        assert risk.description == original['description']
+        assert risk.claim_ids == original['claim_ids']
+    else:
+        assert not any(r.id == original['id'] for r in result.risks)
+        assert any(original['description'] in gap and original['next_check'] in gap
+            for gap in result.unknowns)
+    assert p['risks'] == [original]  # caller/model response was not mutated
