@@ -297,6 +297,12 @@ def prepare_pass_inputs(payload, clinical, task, evidence):
 
 
 def plan_market_batches(payload, clinical, task, ctx, *, audit_batch_id=None):
+    if getattr(getattr(ctx.model, "_s", None), "provider_input_limit_test", False):
+        batch = prepare_pass_inputs(payload, clinical, task, payload["evidence"])
+        batch["coverage"]["partial_batch"] = False
+        if audit_batch_id:
+            batch["coverage"]["audit_feedback_batch_id"] = audit_batch_id
+        return [batch]
     feedback = [item.model_dump(mode="json") if isinstance(item, BaseModel) else item
                 for item in ctx.feedback.get("market", [])]
     if feedback and audit_batch_id is None:

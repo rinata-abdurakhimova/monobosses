@@ -26,6 +26,8 @@ USER_AGENT = "vic-evidence/0.1 (virtual investment committee hackathon)"
 
 def _bounded_external(groups: list[list[ParsedDocument]], settings: Settings) -> list[ParsedDocument]:
     """Keep a small, explicit sample and literal excerpts with original locators."""
+    if settings.provider_input_limit_test:
+        return list({doc.source_id: doc for group in groups for doc in group}.values())
     selected = []
     seen = set()
     for index in range(max((len(group) for group in groups), default=0)):
@@ -134,7 +136,7 @@ async def build_evidence_pack(
             "see the per-source warnings above."
         )
     bounded = _bounded_external(groups, settings)
-    if external:
+    if external and not settings.provider_input_limit_test:
         warnings.append(f"Limited external retrieval: {len(bounded)} of {len(external)} retrieved documents, "
                         f"one excerpt per document, at most {settings.retrieval_excerpt_max_bytes} UTF-8 bytes each. "
                         "This is a partial sample, not a systematic search or evidence of absence; "

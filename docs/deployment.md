@@ -157,3 +157,23 @@ absence. User-supplied documents and evidence-only mode are unchanged.
 Restart the API and start a new live assessment to apply these defaults; existing
 snapshots and failed runs are unchanged. Smaller retrieval reduces request size but
 cannot guarantee acceptance of arbitrary prompts, uploads or upstream outputs.
+
+## Provider input-limit diagnostics
+
+`PROVIDER_INPUT_LIMIT_TEST=true` is now the default. It sends complete scoped
+LLM inputs without Science reviews, general-node budgeting, Market byte/audit
+batching, or semantic-audit batching. Retrieved documents keep their full selected
+annotations rather than the local document/excerpt sample caps. Connector query
+page sizes still control search breadth, not acceptance of supplied input.
+
+Run cost ceilings, run deadlines (including the Science diagnostic deadline),
+and LLM request timeouts are bypassed. OpenAI-compatible requests omit the output
+token cap and let the gateway choose it. Anthropic still requires max_tokens.
+Existing limit variables cannot re-enable these checks while this mode is true.
+Set false to opt back into the older bounded behavior. Restart and use a new run.
+
+Schema/citation validation, authentication, concurrency, file-upload validation,
+connector timeouts, and finite error/repair retries remain. These protect data
+correctness and transport behavior; they are not LLM input-size budgets. Provider
+and hosting limits can still reject requests. No local run cost/time ceiling
+means runs can last longer and incur more provider charges.

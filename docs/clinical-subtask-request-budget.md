@@ -12,7 +12,10 @@ these four Clinical calls, including schema repairs. The gateway determines whet
 the request fits; provider context-limit failures propagate without summarization or
 smaller retries. Initial and actual request sizes remain recorded in the run trace.
 
-Existing output-token caps, request timeouts, retries, run cost/time settings, Market
-and Science budgets, and retrieval sampling settings are unchanged. These are
-separate from the Clinical budgets removed here. Restart the API and use a new run
-for a live provider input-limit test; existing saved traces remain unchanged.
+Provider-limit diagnostics are enabled by default with PROVIDER_INPUT_LIMIT_TEST=true.
+This also bypasses the older Science/Market/general-node input budgets, semantic
+audit batching, run cost/time ceilings and LLM request timeouts. OpenAI-compatible
+requests omit the completion cap. Set the flag false to use the older bounded
+behavior elsewhere in the workflow; Clinical remains free of local byte budgets.
+See deployment.md for transport and validation behavior that still applies.
+Restart the API and use a new run for a live provider input-limit test.

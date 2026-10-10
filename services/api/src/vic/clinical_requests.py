@@ -85,7 +85,7 @@ async def _generate_task(adapter, case, pack, science, translation, ctx, task, p
     _, rendered, messages = structured_request(task, payload, model, ctx,
         system_override=system, compact=True)
     sizes = request_sizes(rendered, messages, model=adapter._s.llm_model,
-        max_tokens=adapter._s.llm_max_output_tokens,
+        max_tokens=adapter._output_limit(),
         reasoning_effort=adapter._reasoning_effort(task))
     ctx.trace.log(RunStage.ANALYZE, f'{task} initial request sizes {sizes}; application_budget=disabled')
     result = await adapter._generate_direct(task, payload, model, ctx,

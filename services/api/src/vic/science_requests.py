@@ -33,6 +33,8 @@ def measure(adapter, payload, schema, ctx, system=None):
 
 
 async def generate_science(adapter, payload, schema, ctx):
+    if adapter._s.provider_input_limit_test:
+        return await adapter._generate_direct("science", payload, schema, ctx, compact=True)
     target = adapter._s.science_request_target_bytes
     evidence = payload["evidence_items"]
     base = {key: value for key, value in payload.items() if key != "evidence_items"}

@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./data/vic.sqlite3"
     cors_origins: str = "http://localhost:3000"
     max_upload_bytes: int = 10 * 1024 * 1024
+    # Provider input-limit diagnostics bypass local LLM size/cost/time ceilings.
+    provider_input_limit_test: bool = True
     max_run_cost_usd: float | None = Field(default=None, gt=0)
     max_run_seconds: int = Field(default=600, gt=0)
     retrieval_pubmed_retmax: int = Field(default=1, ge=1, le=100)
@@ -98,6 +100,7 @@ class Settings(BaseSettings):
     def public_config(self) -> dict:
         """Non-secret configuration that goes into the trace and the config version."""
         return {
+            "provider_input_limit_test": self.provider_input_limit_test,
             "llm_provider": self.llm_provider, "llm_model": self.llm_model,
             "llm_base_url": self.llm_base_url,
             "llm_max_retries": self.llm_max_retries, "llm_max_repairs": self.llm_max_repairs,
