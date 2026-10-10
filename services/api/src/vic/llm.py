@@ -196,7 +196,16 @@ def structured_request(prompt_id, payload, response_model, ctx, *, system_overri
     else:
         schema = json.dumps(_compact_schema(response_model.model_json_schema()),
                             ensure_ascii=False, separators=(",", ":"))
-    system = (f"{system_override or prompt.text}\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
+    case = payload.get("case")
+    case_scope = case.get("scope") if isinstance(case, dict) else payload.get("scope")
+    scope_instruction = ""
+    if case_scope == "approach":
+        scope_instruction = ("\nAssessment scope: approach. All output claims must remain at approach scope. "
+            "Use candidate studies as contextual examples with explicit applicability limitations. "
+            "Missing candidate identity, exposure, PK/PD or rights should produce diligence gaps, "
+            "not an invented program or loss of the available approach analysis. Do not merely "
+            "relabel program-specific facts as class-wide conclusions.")
+    system = (f"{system_override or prompt.text}{scope_instruction}\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
               f"that validates against this JSON Schema:\n{schema}")
     wire_payload = {key: value for key, value in payload.items() if key != "_market_audit_feedback"}
     messages = [{"role": "user", "content": json.dumps(wire_payload, ensure_ascii=False,

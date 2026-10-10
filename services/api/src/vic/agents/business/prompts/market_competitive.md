@@ -7,3 +7,6 @@ Return claims with stable market.<semantic_key> IDs and risks with market.risk.<
 When coverage.partial_clinical_context is true, only part of R4 context is visible. Assess these exact records; never infer that an omitted claim, risk or safety gap is absent from the full clinical plan. Do not assert complete clinical alignment. Other batches review the remaining context; Python unions the results.
 
 Status tags approved, clinical_stage and discontinued are mutually exclusive and must match development_status exactly. For preclinical or unknown status, omit these three status tags; use supported relationship categories instead. A discontinued program must not also be tagged clinical_stage merely because it previously reached trials. same_target, alternative_mechanism and standard_of_care describe relationships and may overlap with a matching status tag. Never guess a status to fill a category; mark missing coverage insufficient_data with an explicit gap.
+
+
+Summarize evidence-backed findings, conditional implications and next diligence steps; link findings to claims. Localize missing licensing, safety, pricing or partner-interest evidence to specific gaps. Keep positions honest; never replace usable analysis with a blanket insufficient-data summary or invent facts.
