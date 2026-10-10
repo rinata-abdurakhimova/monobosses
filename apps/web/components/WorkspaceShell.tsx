@@ -38,7 +38,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         >
           <Link
             href="/"
-            className={!report ? "active" : ""}
+            className={path === "/" ? "active" : ""}
           >
             <Icon name="plus" />
             New assessment
@@ -49,6 +49,13 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
           >
             <Icon name="book" />
             Example report<span className="nav-count">01</span>
+          </Link>
+          <Link
+            href="/usage"
+            className={path === "/usage" ? "active" : ""}
+          >
+            <Icon name="layers" />
+            Usage &amp; traces
           </Link>
         </nav>
         <div className="sidebar-note">
@@ -64,7 +71,13 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         <header className="topbar">
           <div className="breadcrumb">
             Workspace <span>/</span>{" "}
-            <strong>{report ? "Underwriting report" : "New assessment"}</strong>
+            <strong>
+              {path === "/usage"
+                ? "Usage & traces"
+                : report
+                  ? "Underwriting report"
+                  : "New assessment"}
+            </strong>
           </div>
           <span className="preview-pill">
             <span className="status-dot" />

@@ -175,3 +175,40 @@ R3/R4/R5 use `vic.contracts`, `vic.run_context.RunContext` and
 Current node wiring, PDF import, frontend output, evaluation runner and the
 observed live gateway limitation are documented in
 [R2 full workflow handoff](../../docs/r2-full-workflow-handoff.md).
+## Usage dashboard and pricing
+
+The web workspace links to `/usage`. It reads the latest 200 saved runs from
+`GET /runs`; `GET /runs/{run_id}/trace` exposes operational events, model call
+attempts, stage durations and the pricing recorded for that run. Both endpoints
+use the existing API authentication. Trace responses exclude the stored private
+configuration and scrub configured secrets. A run without a saved trace returns
+`available: false`; pipeline traces are persisted at finalization, not streamed.
+
+The cost sample includes completed live runs with model calls, excluding mock and
+stub models. Unknown prices remain unavailable and are excluded from the average;
+the dashboard shows the number of priced runs and the full sample size. The
+sample is limited to the latest 200 runs and may mix models, input sizes and
+development configurations. Verify complete, non-stub workflows before quoting
+an underwriting benchmark. Failed runs and retries remain visible in the table.
+
+Set these **backend** environment variables using your provider's published or
+contracted price for the exact model and service tier, in USD per million tokens:
+
+```dotenv
+LLM_PRICE_INPUT_PER_MTOK=2
+LLM_PRICE_OUTPUT_PER_MTOK=10
+LLM_PRICE_DATE=2026-10-10
+```
+
+These are the direct OpenAI Standard reference rates for `gpt-6.1-sol`, checked
+on 2026-10-10: https://developers.openai.com/api/docs/models/gpt-6.1-sol.
+For the mentor gateway, obtain its actual rates from the organizers; OpenAI's
+reference prices are not proof of gateway billing. `LLM_PRICE_DATE` is the date
+you verified the rates, not the run date. Leave rates empty until verified and
+restart the API after changing settings. Changing settings does not reprice old
+runs; their saved trace retains the original rates.
+
+The estimate is `(input_tokens * input_rate + output_tokens * output_rate) / 1e6`.
+It does not distinguish cache reads/writes or additional provider charges, and
+usage for timed-out requests may be unavailable. Reconcile against provider
+billing for actual spend. Infrastructure and retrieval costs are not included.
