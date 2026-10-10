@@ -1135,6 +1135,79 @@
         "title": "RunStatus",
         "type": "string"
       },
+      "ScienceTestResult": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorBody"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "events": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "evidence_excerpt": {
+            "title": "Evidence Excerpt",
+            "type": "string"
+          },
+          "external_retrieval": {
+            "default": false,
+            "title": "External Retrieval",
+            "type": "boolean"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoleResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "completed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "synthetic": {
+            "default": true,
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "test_id": {
+            "title": "Test Id",
+            "type": "string"
+          },
+          "usage": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Usage",
+            "type": "array"
+          }
+        },
+        "required": [
+          "test_id",
+          "status",
+          "evidence_excerpt"
+        ],
+        "title": "ScienceTestResult",
+        "type": "object"
+      },
       "Scope": {
         "enum": [
           "approach",
@@ -1733,6 +1806,35 @@
         "summary": "Create Run",
         "tags": [
           "cases"
+        ]
+      }
+    },
+    "/diagnostics/science": {
+      "post": {
+        "operationId": "science_test_diagnostics_science_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScienceTestResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "429": {
+            "description": "Test already running"
+          }
+        },
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "summary": "Science Test",
+        "tags": [
+          "diagnostics"
         ]
       }
     },
