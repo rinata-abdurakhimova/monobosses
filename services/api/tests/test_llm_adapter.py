@@ -7,8 +7,13 @@ from pydantic import BaseModel
 from vic import llm as llm_module
 from vic.config import Settings
 from vic.contracts import RunBudget, RunContext, RunMode
-from vic.failures import (BudgetExceeded, MalformedModelOutput, ProviderAuthError, ProviderTimeout,
-                          RunTimeout)
+from vic.failures import (
+    BudgetExceeded,
+    MalformedModelOutput,
+    ProviderAuthError,
+    ProviderTimeout,
+    RunTimeout,
+)
 from vic.llm import ProviderResponse, StructuredLlm
 from vic.prompts import LoadedPrompt
 from vic.tracing import scrub
@@ -84,6 +89,22 @@ def test_repairs_are_bounded():
     assert len(provider.calls) == 2
 
 
+def test_compact_repair_deduplicates_array_errors_without_replaying_answer():
+    class Rows(BaseModel):
+        record_ids: list[int]
+    invalid = '{"record_ids":' + str(["clinical.claim"] * 60).replace("'", '"') + '}'
+    provider = FakeProvider([invalid, '{"record_ids":[]}'])
+    adapter = StructuredLlm(provider, _settings(), sleep=_no_sleep)
+    result = asyncio.run(adapter._generate_direct("investment", {}, Rows, _ctx(), compact=True))
+    assert result.record_ids == []
+    feedback = provider.calls[1][-1]["content"]
+    assert "record_ids.*:int_parsing" in feedback
+    assert "clinical.claim" not in feedback
+    assert all(message["role"] != "assistant" for message in provider.calls[1])
+    import json
+    assert len(json.dumps(feedback).encode()) < 512
+
+
 def test_provider_errors_are_retried_then_succeed():
     provider = FakeProvider([ProviderTimeout("t"), '{"answer": "ok"}'])
     assert _run(provider, _settings(), _ctx()).answer == "ok"
@@ -150,3 +171,13 @@ def test_subject_repair_feedback_reaches_the_model():
     ctx.feedback["science"] = ["The cited evidence does not establish human efficacy"]
     assert _run(provider, _settings(), ctx).answer == "fixed"
     assert "human efficacy" in provider.calls[0][-1]["content"]
+
+
+@pytest.mark.parametrize("prompt_id", ["science", "translation"])
+def test_science_translation_repair_does_not_replay_large_invalid_answer(prompt_id):
+    provider = FakeProvider(['{"irrelevant":"' + 'x' * 18000 + '"}', '{"answer":"corrected"}'])
+    adapter = StructuredLlm(provider, _settings(), sleep=_no_sleep)
+    result = asyncio.run(adapter._generate_direct(prompt_id, {}, Out, _ctx()))
+    assert result.answer == "corrected"
+    assert all(message["role"] != "assistant" for message in provider.calls[1])
+    assert sum(len(message["content"].encode()) for message in provider.calls[1]) < 1000

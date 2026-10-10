@@ -3,8 +3,20 @@ from datetime import date
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-from vic.contracts import (AuditResult, CaseInput, Claim, CommitteeDecision, DiligenceQuestion,
-    Disagreement, EvidencePack, Risk, RoleResult, RunContext, SectionContent)
+
+from vic.contracts import (
+    AuditResult,
+    CaseInput,
+    Claim,
+    CommitteeDecision,
+    DiligenceQuestion,
+    Disagreement,
+    EvidencePack,
+    Risk,
+    RoleResult,
+    RunContext,
+    SectionContent,
+)
 from vic.integrity import assert_pack
 
 PROMPT_ID = "chair"
@@ -178,20 +190,29 @@ def _claims_valid(claims, case, pack):
 
 
 def _inventory(role, raw):
-    items = [dict(id=f"{role}/{field}", kind=field) for field in ("summary", "position")]
+    items = [{"id": f"{role}/{field}", "kind": field} for field in ("summary", "position")]
     for field in ("claims", "risks", "unknowns", "change_conditions", "section_content"):
         for i, value in enumerate(raw[field]):
-            items.append(dict(id=f"{role}/{field}/{i}", kind=field, value=value))
+            items.append({"id": f"{role}/{field}/{i}", "kind": field, "value": value})
     # Include identified records, nested gaps, and candidate questions without truncation.
-    for path, block in _walk(raw["section_content"], "/section_content"):
+    def own_records(value):
+        if isinstance(value, dict):
+            return {key: own_records(child) for key, child in value.items() if key not in {
+                "upstream_context", "sources", "evidence", "claim_evidence_links", "evidence_source_links"}}
+        if isinstance(value, list):
+            return [own_records(child) for child in value]
+        return value
+    sections = [{**section, "structured_data": own_records(section.get("structured_data") or {})}
+                for section in raw["section_content"]]
+    for path, block in _walk(sections, "/section_content"):
         if "id" in block or "question" in block:
-            items.append(dict(id=f"{role}{path}", kind="record", value=block))
+            items.append({"id": f"{role}{path}", "kind": "record", "value": block})
         for field in ("unknowns", "limitations", "source_requests"):
             if isinstance(block.get(field), list):
                 for i, value in enumerate(block[field]):
-                    items.append(dict(id=f"{role}{path}/{field}/{i}", kind=field, value=value))
+                    items.append({"id": f"{role}{path}/{field}/{i}", "kind": field, "value": value})
     # A section can itself be an identified record: deduplicate by stable input path.
-    return [dict(id=item["id"], kind=item["kind"]) for item in {item["id"]: item for item in items}.values()]
+    return [{"id": item["id"], "kind": item["kind"]} for item in {item["id"]: item for item in items}.values()]
 
 
 def prepare_chair_inputs(case: CaseInput, pack: EvidencePack, ctx: RunContext, *,
@@ -210,9 +231,9 @@ def prepare_chair_inputs(case: CaseInput, pack: EvidencePack, ctx: RunContext, *
     if as_of and case.as_of_date and as_of != case.as_of_date:
         raise ValueError("Case and context dates differ")
     as_of = as_of or case.as_of_date
-    supplied = dict(science=science, translation=translation, clinical=clinical, market=market,
-        investment=investment, partnerships=partnerships, ip_licensing=ip_licensing,
-        investment_threshold=investment_threshold, failure_miner=failure_miner)
+    supplied = {"science": science, "translation": translation, "clinical": clinical, "market": market,
+        "investment": investment, "partnerships": partnerships, "ip_licensing": ip_licensing,
+        "investment_threshold": investment_threshold, "failure_miner": failure_miner}
     context, inventory = {}, {}
     all_claims, all_risks = [], []
     for role, value in supplied.items():
@@ -251,15 +272,15 @@ def prepare_chair_inputs(case: CaseInput, pack: EvidencePack, ctx: RunContext, *
         for finding in audited.findings:
             if finding.claim_id not in known or not set(finding.evidence_ids) <= {e.id for e in pack.evidence}:
                 raise ValueError("Unknown audit reference")
-    return dict(prompt_version=PROMPT_VERSION, case=case.model_dump(mode="json"),
-        snapshot_id=pack.snapshot_id, as_of_date=as_of.isoformat() if as_of else None,
-        sources=[s.model_dump(mode="json") for s in pack.sources],
-        evidence=[e.model_dump(mode="json") for e in pack.evidence],
-        synthetic=pack.synthetic or any(s.synthetic for s in pack.sources) or any(
+    return {"prompt_version": PROMPT_VERSION, "case": case.model_dump(mode="json"),
+        "snapshot_id": pack.snapshot_id, "as_of_date": as_of.isoformat() if as_of else None,
+        "sources": [s.model_dump(mode="json") for s in pack.sources],
+        "evidence": [e.model_dump(mode="json") for e in pack.evidence],
+        "synthetic": pack.synthetic or any(s.synthetic for s in pack.sources) or any(
             block.get("synthetic") is True for _, block in _walk(context)),
-        retrieval_warnings=list(pack.retrieval_warnings), upstream_context=context,
-        context_availability={r: value is not None for r, value in context.items()},
-        input_inventory=inventory, audit=audited.model_dump(mode="json") if audited else None)
+        "retrieval_warnings": list(pack.retrieval_warnings), "upstream_context": context,
+        "context_availability": {r: value is not None for r, value in context.items()},
+        "input_inventory": inventory, "audit": audited.model_dump(mode="json") if audited else None}
 
 
 def validate_chair_result(analysis: ChairAnalysis, case: CaseInput, pack: EvidencePack, payload: dict):
@@ -296,9 +317,9 @@ def validate_chair_result(analysis: ChairAnalysis, case: CaseInput, pack: Eviden
                 raise ValueError("Documented reason requires supported, unblocked evidence")
         elif not reason.assumptions:
             raise ValueError("Hypothesis requires assumptions")
-    collections = dict(argument_ids=analysis.arguments, condition_ids=analysis.conditions,
-        conflict_ids=analysis.conflicts, risk_ids=analysis.key_risks,
-        unknown_ids=analysis.critical_unknowns, question_ids=analysis.questions)
+    collections = {"argument_ids": analysis.arguments, "condition_ids": analysis.conditions,
+        "conflict_ids": analysis.conflicts, "risk_ids": analysis.key_risks,
+        "unknown_ids": analysis.critical_unknowns, "question_ids": analysis.questions}
     ids = {}
     for name, rows in collections.items():
         _unique([row.id for row in rows], name)

@@ -184,6 +184,20 @@ def test_synthetic_ip_context_from_serialized_role_result():
     assert payload["evidence"][0]["excerpt"] == pack.evidence[0].excerpt
 
 
+def test_upstream_unknown_claim_preserved_without_partnership_output_assumptions():
+    case, pack, ctx = inputs()
+    clinical = RoleResult(role_id="clinical", summary="Endpoint unknown", position="insufficient_data",
+        claims=[dict(id="clinical.endpoint", text="Endpoint not established", provenance="ai",
+                     support_status="unknown", evidence_ids=[], assumptions=[], scope="approach",
+                     importance="major")], unknowns=["Endpoint evidence missing"])
+    payload = prepare_partnerships_inputs(case, pack, ctx, clinical=clinical)
+    assert payload["upstream_context"]["clinical"] == clinical.model_dump(mode="json")
+    own = output()
+    own["claims"][0]["assumptions"] = []
+    with pytest.raises(ValueError, match="assumptions"):
+        validate(own)
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("empty", [False, True])
 async def test_one_call_and_complete_result(empty):

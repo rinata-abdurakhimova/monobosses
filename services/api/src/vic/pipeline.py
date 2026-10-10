@@ -5,19 +5,37 @@ RunFailure and ends the run as `failed` with an explained error. A run is `compl
 when a Report passed validation and was saved.
 """
 import asyncio
-import logging
 import inspect
+import logging
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from pydantic import ValidationError
 
 from vic import integrity
 from vic.config import Settings
-from vic.contracts import (AuditResult, CaseInput, Claim, CommitteeDecision, EvidencePack,
-                           Importance, Recommendation, Report, RoleId, RoleResult, Run, RunBudget,
-                           RunContext, RunMode, RunStage, RunStatus, SupportStatus, Usage)
-from vic.contracts import SectionContent
+from vic.contracts import (
+    AuditResult,
+    CaseInput,
+    Claim,
+    CommitteeDecision,
+    EvidencePack,
+    Importance,
+    Recommendation,
+    Report,
+    RoleId,
+    RoleResult,
+    Run,
+    RunBudget,
+    RunContext,
+    RunMode,
+    RunStage,
+    RunStatus,
+    SectionContent,
+    SupportStatus,
+    Usage,
+)
 from vic.failures import ProviderAuthError, RunFailure, RunTimeout, SourceOutage, ValidationFailed
 from vic.modules import STUB_ORIGIN, Modules, call_audit, call_clinical, call_investment
 from vic.report_builder import build_report
@@ -95,7 +113,7 @@ class Pipeline:
         failure: RunFailure | None = None
         try:
             await asyncio.wait_for(self._body(), timeout=s.max_run_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             failure = RunTimeout(f"The run exceeded the time limit of {s.max_run_seconds} seconds")
         except RunFailure as exc:
             failure = exc
@@ -104,7 +122,7 @@ class Pipeline:
                                          "Start the run again.", code="run_interrupted",
                                          retryable=True), started)
             raise
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.exception("Unexpected error in run %s", run.id)
             failure = RunFailure(f"Unexpected error in stage '{self._stage.value if self._stage else 'start'}'"
                                  f" ({type(exc).__name__})", code="internal_error")
@@ -270,7 +288,7 @@ class Pipeline:
             return await fn(*args)
         except (RunFailure, asyncio.CancelledError):
             raise
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.exception("Module step '%s' failed", name)
             if cls is SourceOutage:
                 raise SourceOutage(f"Evidence retrieval failed ({type(exc).__name__}); this is NOT a "
@@ -286,9 +304,11 @@ class Pipeline:
         return result
 
     async def _gather(self, coros: list):
+        if not coros:
+            return []
         tasks = [asyncio.ensure_future(c) for c in coros]
         try:
-            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
+            _done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
             for t in pending:
                 t.cancel()
             if pending:

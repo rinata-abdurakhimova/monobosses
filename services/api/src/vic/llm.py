@@ -18,8 +18,8 @@ from vic.failures import (
     ModuleNotReady,
     ProviderAuthError,
     ProviderError,
-    RunFailure,
     ProviderTimeout,
+    RunFailure,
     RunTimeout,
 )
 from vic.prompts import load_prompt
@@ -94,7 +94,8 @@ class OpenAICompatibleProvider:
         self._base_url = settings.llm_base_url
         self._transport = transport
 
-    async def complete(self, *, system, messages, model, max_tokens, timeout) -> ProviderResponse:
+    async def complete(self, *, system, messages, model, max_tokens, timeout,
+                       reasoning_effort=None) -> ProviderResponse:
         if not self._api_key.strip():
             raise ProviderAuthError("LLM_API_KEY is empty")
         if not self._base_url:
@@ -104,6 +105,8 @@ class OpenAICompatibleProvider:
         headers = {"Authorization": f"Bearer {self._api_key}"}
         body = {"model": model, "messages": [{"role": "system", "content": system}, *messages],
                 "max_completion_tokens": max_tokens, "stream": False}
+        if reasoning_effort is not None:
+            body["reasoning_effort"] = reasoning_effort
         try:
             # HTTPX has no implicit retries; redirects must not forward credentials.
             async with httpx.AsyncClient(transport=self._transport, follow_redirects=False) as client:
@@ -182,18 +185,26 @@ def _compact_schema(value, *, mapping=False):
 MARKET_PROMPTS = ("market_competitive", "market_commercial")
 
 
-def structured_request(prompt_id, payload, response_model, ctx):
+def structured_request(prompt_id, payload, response_model, ctx, *, system_override=None, compact=False):
     """Single serializer used by the planner and runtime, including audit feedback."""
     prompt = load_prompt(prompt_id)
-    schema = json.dumps(_compact_schema(response_model.model_json_schema()),
-                        ensure_ascii=False, separators=(",", ":"))
-    system = (f"{prompt.text}\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
+    if compact:
+        from vic.request_protocol import compact_schema
+        schema = compact_schema(response_model.model_json_schema())
+    else:
+        schema = json.dumps(_compact_schema(response_model.model_json_schema()),
+                            ensure_ascii=False, separators=(",", ":"))
+    system = (f"{system_override or prompt.text}\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
               f"that validates against this JSON Schema:\n{schema}")
-    messages = [{"role": "user", "content": json.dumps(payload, ensure_ascii=False,
+    wire_payload = {key: value for key, value in payload.items() if key != "_market_audit_feedback"}
+    messages = [{"role": "user", "content": json.dumps(wire_payload, ensure_ascii=False,
                                   default=str, separators=(",", ":"))}]
     owner = "investment" if prompt_id == "investment_plan" else (
-        "market" if prompt_id in MARKET_PROMPTS else prompt_id)
+        "market" if prompt_id in MARKET_PROMPTS else
+        "clinical" if prompt_id in {"clinical_design", "clinical_development"} else prompt_id)
     feedback = ctx.feedback.get(owner)
+    if owner == "market" and "_market_audit_feedback" in payload:
+        feedback = payload["_market_audit_feedback"]
     if feedback:
         messages.append({"role": "user", "content": "Correct the audit/completeness findings: "
             + json.dumps([item.model_dump(mode="json") if isinstance(item, BaseModel) else item
@@ -201,10 +212,13 @@ def structured_request(prompt_id, payload, response_model, ctx):
     return prompt, system, messages
 
 
-def request_sizes(system, messages, *, model="placeholder-model", max_tokens=4096):
+def request_sizes(system, messages, *, model="placeholder-model", max_tokens=4096, reasoning_effort=None):
     """UTF-8 bytes/characters, not token estimates; includes message envelopes."""
-    wire = json.dumps({"model": model, "messages": [{"role": "system", "content": system}, *messages],
-                       "max_completion_tokens": max_tokens, "stream": False},
+    body = {"model": model, "messages": [{"role": "system", "content": system}, *messages],
+            "max_completion_tokens": max_tokens, "stream": False}
+    if reasoning_effort is not None:
+        body["reasoning_effort"] = reasoning_effort
+    wire = json.dumps(body,
                       ensure_ascii=False, separators=(",", ":"))
     prompt, _, schema = system.partition("\n\n---\nReturn ONLY one JSON object (no markdown, no commentary) "
                                         "that validates against this JSON Schema:\n")
@@ -233,7 +247,20 @@ class StructuredLlm:
     def structured_request_size(self, prompt_id, payload, response_model, ctx):
         _, system, messages = structured_request(prompt_id, payload, response_model, ctx)
         return request_sizes(system, messages, model=self._s.llm_model,
-                             max_tokens=self._s.llm_max_output_tokens)
+                             max_tokens=self._s.llm_max_output_tokens,
+                             reasoning_effort=self._reasoning_effort(prompt_id))
+
+    def _reasoning_effort(self, prompt_id):
+        if not isinstance(self._provider, OpenAICompatibleProvider):
+            return None
+        if prompt_id in {"clinical", "clinical_design", "clinical_development"}:
+            return self._s.clinical_reasoning_effort
+        if prompt_id in MARKET_PROMPTS:
+            return self._s.market_reasoning_effort
+        if prompt_id in {"ip_licensing", "partnerships", "investment_plan", "investment",
+                         "investment_threshold", "failure_miner", "chair", "audit", "context_brief"}:
+            return self._s.node_reasoning_effort
+        return None
 
     def cost_limit_enforceable(self) -> bool:
         return (self._s.llm_price_input_per_mtok is not None
@@ -241,18 +268,57 @@ class StructuredLlm:
 
     async def generate_structured(self, prompt_id: str, payload: dict[str, Any],
                                   response_model: type[T], ctx: RunContext) -> T:
-        prompt, system, messages = structured_request(prompt_id, payload, response_model, ctx)
+        from vic.request_protocol import TASKS, generate_bounded
+        if prompt_id in TASKS and self.structured_request_size(prompt_id, payload, response_model, ctx)["request_bytes"] > self._s.node_initial_request_bytes:
+            return await generate_bounded(self, prompt_id, payload, response_model, ctx)
+        return await self._generate_direct(prompt_id, payload, response_model, ctx)
+
+    async def _generate_direct(self, prompt_id, payload, response_model, ctx, *, system_override=None,
+                               compact=False, inverse=None):
+        prompt, system, messages = structured_request(prompt_id, payload, response_model, ctx,
+                                                       system_override=system_override, compact=compact)
+        original_messages = messages
         repairs = 0
         while True:
             response = await self._call(prompt.prompt_id, prompt.version, system, messages, ctx)
             try:
+                if inverse:
+                    from vic.request_protocol import translate, validate_component_references
+                    data = translate(json.loads(_extract_json(response.text)), inverse)
+                    validate_component_references(prompt_id, payload, data, inverse)
+                    return response_model.model_validate(data)
                 return response_model.model_validate_json(_extract_json(response.text))
             except ValueError as exc:  # pydantic.ValidationError is a ValueError
+                if hasattr(exc, "errors"):
+                    locations = [{"type": error["type"], "loc": error["loc"]}
+                                 for error in exc.errors(include_input=False, include_context=False)]
+                    ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} schema errors {locations}")
+                else:
+                    ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} reference/domain error: {str(exc)[:350]}")
                 if repairs >= self._s.llm_max_repairs:
                     raise MalformedModelOutput(
                         f"The model output for '{prompt_id}' did not match the required schema "
                         f"after {repairs} repair attempt(s)") from None
                 repairs += 1
+                if compact or prompt_id in {"context_brief", "science", "translation", *MARKET_PROMPTS}:
+                    if hasattr(exc, "errors"):
+                        # Collapse repeated array failures and exclude invalid values.
+                        defects = list(dict.fromkeys(
+                            ".".join("*" if isinstance(part, int) else str(part)
+                                     for part in error["loc"]) + ":" + error["type"]
+                            + (":" + error["msg"] if error["type"] == "value_error" else "")
+                            for error in exc.errors(include_input=False, include_context=False)))
+                        feedback = json.dumps(defects, ensure_ascii=True)[:350]
+                        if any("record_ids" in error["loc"] for error in exc.errors()):
+                            feedback = ("record_ids: supplied record IDs only, never claims; [] if absent. "
+                                        "Put upstream claims in upstream_claim_ids. " + feedback)
+                    else:
+                        feedback = str(exc).encode("ascii", "backslashreplace").decode()[:350]
+                    while len(json.dumps(feedback).encode("utf-8")) > 400:
+                        feedback = feedback[:-1]
+                    messages = original_messages + [{"role": "user", "content":
+                        "Correct these errors; return only valid JSON: " + feedback}]
+                    continue
                 messages = messages + [
                     {"role": "assistant", "content": response.text},
                     {"role": "user", "content": "Your previous answer was invalid: "
@@ -260,9 +326,17 @@ class StructuredLlm:
 
     async def _call(self, prompt_id: str, version: str, system: str,
                     messages: list[dict[str, str]], ctx: RunContext) -> ProviderResponse:
+        if prompt_id not in {*MARKET_PROMPTS, "clinical", "clinical_design", "clinical_development"}:
+            sizes = request_sizes(system, messages, model=self._s.llm_model,
+                                  max_tokens=self._s.llm_max_output_tokens,
+                                  reasoning_effort=self._reasoning_effort(prompt_id))
+            ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} request sizes {sizes}; budget_bytes={self._s.node_request_max_bytes}")
+            if sizes["request_bytes"] > self._s.node_request_max_bytes:
+                raise RunFailure("Node request exceeds the configured byte budget", code="node_request_budget")
         if prompt_id in MARKET_PROMPTS:
             sizes = request_sizes(system, messages, model=self._s.llm_model,
-                                  max_tokens=self._s.llm_max_output_tokens)
+                                  max_tokens=self._s.llm_max_output_tokens,
+                                  reasoning_effort=self._reasoning_effort(prompt_id))
             ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} request sizes {sizes}; "
                           f"budget_bytes={self.market_request_budget}")
             if sizes["request_bytes"] > self.market_request_budget:
@@ -275,9 +349,14 @@ class StructuredLlm:
             timeout = self._timeout(ctx)
             started = time.monotonic()
             try:
+                options = {}
+                effort = self._reasoning_effort(prompt_id)
+                if effort is not None:
+                    options["reasoning_effort"] = effort
                 response = await asyncio.wait_for(
                     self._provider.complete(system=system, messages=messages, model=self._s.llm_model,
-                                            max_tokens=self._s.llm_max_output_tokens, timeout=timeout),
+                                            max_tokens=self._s.llm_max_output_tokens, timeout=timeout,
+                                            **options),
                     timeout=timeout + 5)
             except TimeoutError:
                 error: ProviderError = ProviderTimeout("The model provider timed out")
@@ -327,8 +406,8 @@ class StructuredLlm:
 
 def build_llm(settings: Settings) -> StructuredLlm:
     return StructuredLlm(make_provider(settings), settings)
-PROMPT_IDS = ("science", "translation", "clinical", "market", "market_competitive", "market_commercial", "investment_plan", "investment",
-              "chair", "audit", "ip_licensing", "partnerships", "investment_threshold", "failure_miner")
+PROMPT_IDS = ("science", "translation", "clinical", "clinical_design", "clinical_development", "market", "market_competitive", "market_commercial", "investment_plan", "investment",
+              "chair", "audit", "ip_licensing", "partnerships", "investment_threshold", "failure_miner", "context_brief")
 
 
 async def generate_structured(prompt_id: str, payload: dict[str, Any], response_model: type[T],

@@ -131,6 +131,10 @@ class TranslationAnalysis(BaseModel):
         additional_keys = [claim.key for claim in self.additional_claims]
         if len(additional_keys) != len(set(additional_keys)):
             raise ValueError("additional translation claim keys must be unique")
+        available = set(keys) | set(additional_keys)
+        if any(not set(risk.related_claim_keys) <= available for risk in self.risks):
+            raise ValueError("Risk related_claim_keys must reference generated links or additional_claims, "
+                             "not absent optional claim keys")
         return self
 
 

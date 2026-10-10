@@ -1,77 +1,86 @@
 """Offline gate, provenance and data-flow regression tests."""
+import json
 from copy import deepcopy
 from datetime import date
-import json
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 from pydantic import ValidationError
-
 from vic.agents.business.investment_threshold import (
-    ROLES, ThresholdAnalysis, analyze_investment_threshold,
-    identify_threshold_gaps, prepare_threshold_inputs, validate_threshold_result,
+    ROLES,
+    ThresholdAnalysis,
+    analyze_investment_threshold,
+    identify_threshold_gaps,
+    prepare_threshold_inputs,
+    validate_threshold_result,
 )
 from vic.contracts import CaseInput, EvidencePack, RoleResult, RunContext
+
+
+@pytest.fixture(autouse=True)
+def _canonical_transport_contract(monkeypatch):
+    monkeypatch.setenv("NODE_INITIAL_REQUEST_BYTES", "10000000")
+    monkeypatch.setenv("NODE_REQUEST_MAX_BYTES", "10000000")
 
 
 def inputs(empty=False):
     case = CaseInput(indication="Synthetic disease", mechanism="Synthetic mechanism", scope="approach")
     pack = EvidencePack(snapshot_id="threshold-snapshot", synthetic=True,
-        sources=[] if empty else [dict(id="s1", title="Synthetic study", type="synthetic",
-            retrieved_at="2026-10-08T00:00:00Z", synthetic=True, content_hash="sha256:" + "a" * 64)],
-        evidence=[] if empty else [dict(id="e1", source_id="s1", scope="approach",
-            excerpt="Synthetic target engagement result", locator="study result")])
+        sources=[] if empty else [{"id": "s1", "title": "Synthetic study", "type": "synthetic",
+            "retrieved_at": "2026-10-08T00:00:00Z", "synthetic": True, "content_hash": "sha256:" + "a" * 64}],
+        evidence=[] if empty else [{"id": "e1", "source_id": "s1", "scope": "approach",
+            "excerpt": "Synthetic target engagement result", "locator": "study result"}])
     ctx = RunContext(case_id="case-threshold", run_id="run-threshold", mode="evidence_only",
                      snapshot_id=pack.snapshot_id, as_of_date=None)
     return case, pack, ctx
 
 
 def finding(basis="hypothesis"):
-    return dict(value=None if basis == "unknown" else "Proposed target engagement gate",
-        basis=basis, claim_ids=[] if basis == "unknown" else ["investment_threshold.result"],
-        assumptions=["Synthetic proposal requires expert review"] if basis == "hypothesis" else [],
-        unknowns=["Need applicable study"] if basis == "unknown" else [])
+    return {"value": None if basis == "unknown" else "Proposed target engagement gate",
+        "basis": basis, "claim_ids": [] if basis == "unknown" else ["investment_threshold.result"],
+        "assumptions": ["Synthetic proposal requires expert review"] if basis == "hypothesis" else [],
+        "unknowns": ["Need applicable study"] if basis == "unknown" else []}
 
 
 def rule(result):
-    return dict(result=result, rationale="Assess relevance to funding the next test",
-                claim_ids=["investment_threshold.result"])
+    return {"result": result, "rationale": "Assess relevance to funding the next test",
+                "claim_ids": ["investment_threshold.result"]}
 
 
 def output():
     gates = []
     for horizon in ("now", "next_stage"):
         cid = f"criterion_{horizon}"
-        gates.append(dict(id=f"gate_{horizon}", horizon=horizon,
-            required_result=finding(), obtainable_stage=finding(),
-            criteria=[dict(id=cid, sufficient_result=finding(), rationale=finding(),
-                           assessment_method="Reviewed target engagement assay")],
-            existing_evidence=[dict(criterion_id=cid, finding=finding("unknown"),
-                                    evidence_ids=[], limitations=["No applicable result supplied"])],
-            status="unknown", assessment=finding("unknown"),
-            gaps=[dict(id=f"gap_{horizon}", criterion_ids=[cid],
-                missing_result_or_data="Applicable target engagement result",
-                investment_impact=finding(), priority="critical",
-                check=dict(method="Run validated assay", evidence_needed="Assay result and controls",
-                    feasible_stage=finding(), continue_if=rule("Reproducible engagement supports test funding"),
-                    revise_if=rule("Mixed engagement requires revised experiment"),
-                    stop_if=rule("Confirmed absence of engagement undermines mechanism"),
-                    inconclusive_if="Invalid controls require repeating the assay"))],
-            dependencies=[dict(role_id=r, assessment=finding("unknown"),
-                upstream_claim_ids=[], record_ids=[], next_check=f"Obtain {r} review") for r in ROLES],
-            continue_if=rule("All critical criteria met supports continuation"),
-            revise_if=rule("Mixed decisive data requires review"),
-            stop_if=rule("Validated decisive failure supports stopping recommendation")))
-    return dict(summary="Synthetic threshold proposal; data insufficient", position="insufficient_data",
-        claims=[dict(id="investment_threshold.result", text="Engagement may justify a bounded test",
-            provenance="ai", support_status="unverified", evidence_ids=[],
-            assumptions=["Proposed requirement; expert review needed"], scope="approach", importance="critical")],
-        gates=gates, risks=[dict(id="investment_threshold.engagement", description="Engagement unknown",
-            priority="critical", claim_ids=["investment_threshold.result"], impact="Funding rationale unresolved",
-            next_check="Review assay")], unknowns=["Applicable result absent"],
-        change_conditions=["Reviewed decisive data changes readiness"], limitations=["Synthetic test"])
+        gates.append({"id": f"gate_{horizon}", "horizon": horizon,
+            "required_result": finding(), "obtainable_stage": finding(),
+            "criteria": [{"id": cid, "sufficient_result": finding(), "rationale": finding(),
+                           "assessment_method": "Reviewed target engagement assay"}],
+            "existing_evidence": [{"criterion_id": cid, "finding": finding("unknown"),
+                                    "evidence_ids": [], "limitations": ["No applicable result supplied"]}],
+            "status": "unknown", "assessment": finding("unknown"),
+            "gaps": [{"id": f"gap_{horizon}", "criterion_ids": [cid],
+                "missing_result_or_data": "Applicable target engagement result",
+                "investment_impact": finding(), "priority": "critical",
+                "check": {"method": "Run validated assay", "evidence_needed": "Assay result and controls",
+                    "feasible_stage": finding(), "continue_if": rule("Reproducible engagement supports test funding"),
+                    "revise_if": rule("Mixed engagement requires revised experiment"),
+                    "stop_if": rule("Confirmed absence of engagement undermines mechanism"),
+                    "inconclusive_if": "Invalid controls require repeating the assay"}}],
+            "dependencies": [{"role_id": r, "assessment": finding("unknown"),
+                "upstream_claim_ids": [], "record_ids": [], "next_check": f"Obtain {r} review"} for r in ROLES],
+            "continue_if": rule("All critical criteria met supports continuation"),
+            "revise_if": rule("Mixed decisive data requires review"),
+            "stop_if": rule("Validated decisive failure supports stopping recommendation")})
+    return {"summary": "Synthetic threshold proposal; data insufficient", "position": "insufficient_data",
+        "claims": [{"id": "investment_threshold.result", "text": "Engagement may justify a bounded test",
+            "provenance": "ai", "support_status": "unverified", "evidence_ids": [],
+            "assumptions": ["Proposed requirement; expert review needed"], "scope": "approach", "importance": "critical"}],
+        "gates": gates, "risks": [{"id": "investment_threshold.engagement", "description": "Engagement unknown",
+            "priority": "critical", "claim_ids": ["investment_threshold.result"], "impact": "Funding rationale unresolved",
+            "next_check": "Review assay"}], "unknowns": ["Applicable result absent"],
+        "change_conditions": ["Reviewed decisive data changes readiness"], "limitations": ["Synthetic test"]}
 
 
 def validate(data, empty=False, upstream=None):
@@ -84,11 +93,11 @@ def validate(data, empty=False, upstream=None):
 
 def upstream(role):
     return RoleResult(role_id=role, summary="Synthetic upstream", position="unknown",
-        claims=[dict(id=f"{role}.result", text="Synthetic result", provenance="source",
-            support_status="supported", evidence_ids=["e1"], scope="approach", importance="major")],
-        unknowns=["Applicability pending"], section_content=[dict(key="critical_unknowns", summary="Synthetic",
-            claim_ids=[f"{role}.result"], structured_data={role: dict(snapshot_id="threshold-snapshot",
-                records=[dict(id=f"record_{role}", value="Keep complete upstream data")])})])
+        claims=[{"id": f"{role}.result", "text": "Synthetic result", "provenance": "source",
+            "support_status": "supported", "evidence_ids": ["e1"], "scope": "approach", "importance": "major"}],
+        unknowns=["Applicability pending"], section_content=[{"key": "critical_unknowns", "summary": "Synthetic",
+            "claim_ids": [f"{role}.result"], "structured_data": {role: {"snapshot_id": "threshold-snapshot",
+                "records": [{"id": f"record_{role}", "value": "Keep complete upstream data"}]}}}])
 
 
 def documented(data):
@@ -177,8 +186,8 @@ def test_reject_invalid_outputs(defect):
     if defect == "gap_criterion": g["gaps"][0]["criterion_ids"] = ["criterion_next_stage"]
     if defect == "gap_missing": g["gaps"] = []
     if defect == "uncovered":
-        g["criteria"].append(dict(id="additional", sufficient_result=finding(), rationale=finding(), assessment_method="Review"))
-        g["existing_evidence"].append(dict(criterion_id="additional", finding=finding("unknown"), evidence_ids=[], limitations=[]))
+        g["criteria"].append({"id": "additional", "sufficient_result": finding(), "rationale": finding(), "assessment_method": "Review"})
+        g["existing_evidence"].append({"criterion_id": "additional", "finding": finding("unknown"), "evidence_ids": [], "limitations": []})
     if defect == "false_met": g["status"] = "met"
     if defect == "false_failure": g["status"] = "not_met"
     if defect == "false_partial": g["status"] = "partially_met"
@@ -237,7 +246,7 @@ def test_invalid_inputs_fail_before_model_call(defect):
     if defect == "duplicate_evidence": pack.evidence.append(pack.evidence[0])
     if defect == "claim_evidence": market["claims"][0]["evidence_ids"] = ["missing"]
     if defect == "claim_duplicate": market["claims"].append(deepcopy(market["claims"][0]))
-    if defect == "risk_claim": market["risks"] = [dict(id="market.risk", description="Risk", priority="major", claim_ids=["market.missing"], impact="Impact", next_check="Review")]
+    if defect == "risk_claim": market["risks"] = [{"id": "market.risk", "description": "Risk", "priority": "major", "claim_ids": ["market.missing"], "impact": "Impact", "next_check": "Review"}]
     if defect == "section_claim": market["section_content"][0]["claim_ids"] = ["market.missing"]
     if defect in ("nested_snapshot", "metadata_date", "nested_evidence"):
         record = market["section_content"][0]["structured_data"]["market"]["records"][0]
@@ -308,8 +317,8 @@ def test_real_upstream_serialization_examples(filename, role):
     for fixture in fixtures:
         case = CaseInput.model_validate(fixture["case"])
         pack = EvidencePack.model_validate(fixture["pack"])
-        context = dict(fixture.get("context", dict(case_id="case-test", run_id="run-test",
-            snapshot_id=pack.snapshot_id, as_of_date=case.as_of_date, mode="evidence_only")))
+        context = dict(fixture.get("context", {"case_id": "case-test", "run_id": "run-test",
+            "snapshot_id": pack.snapshot_id, "as_of_date": case.as_of_date, "mode": "evidence_only"}))
         if isinstance(context.get("as_of_date"), str):
             context["as_of_date"] = date.fromisoformat(context["as_of_date"])
         ctx = RunContext(**context)

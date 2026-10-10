@@ -8,8 +8,17 @@ import pytest
 
 from vic import synthetic
 from vic.config import Settings
-from vic.contracts import (AuditFinding, AuditResult, CaseInput, EvidenceCreate, EvidencePack,
-                           Recommendation, Run, RunMode, RunStatus)
+from vic.contracts import (
+    AuditFinding,
+    AuditResult,
+    CaseInput,
+    EvidenceCreate,
+    EvidencePack,
+    Recommendation,
+    Run,
+    RunMode,
+    RunStatus,
+)
 from vic.failures import MalformedModelOutput, ModuleNotReady, ProviderTimeout
 from vic.modules import call_clinical, get_modules
 from vic.pipeline import Pipeline
@@ -284,3 +293,7 @@ def test_stub_chair_reuses_questions_and_filters_dangling_risk_claims():
     decision = asyncio.run(synthesize_committee([role], AuditResult(), None))
     assert decision.questions[0].question == "Real question?" and 5 <= len(decision.questions) <= 10
     assert decision.risks[0].claim_ids == [] and decision.recommendation == Recommendation.CONDITIONAL
+
+
+def test_empty_role_wave_is_valid_during_downstream_audit_repair():
+    assert asyncio.run(Pipeline._gather(None, [])) == []

@@ -1,44 +1,60 @@
 """Offline coverage, decision guards and full upstream data preservation."""
+import json
 from copy import deepcopy
 from unittest.mock import AsyncMock
-import json
+
 import pytest
 from pydantic import ValidationError
-from vic.agents.business.chair import (ROLES, ChairAnalysis, ChairResult, analyze_chair,
-    prepare_chair_inputs, validate_chair_result)
-from vic.contracts import AuditResult, RoleResult, SupportStatus, RoleId, SectionContent, Importance
 from test_failure_miner import inputs, upstream
+
+from vic.agents.business.chair import (
+    ROLES,
+    ChairAnalysis,
+    ChairResult,
+    analyze_chair,
+    prepare_chair_inputs,
+    validate_chair_result,
+)
+from vic.contracts import AuditResult, Importance, RoleId, SectionContent, SupportStatus
+
+
+@pytest.fixture(autouse=True)
+def _canonical_transport_contract(monkeypatch):
+    # These fixtures exercise the uncompressed transport/validation contract.
+    # Default bounded execution is covered by test_full_workflow/test_request_protocol.
+    monkeypatch.setenv("NODE_INITIAL_REQUEST_BYTES", "10000000")
+    monkeypatch.setenv("NODE_REQUEST_MAX_BYTES", "10000000")
 
 
 def reason(basis="unknown", cid=None):
-    return dict(text="Evidence applicability requires review", basis=basis,
-        claim_ids=[cid] if cid else [], assumptions=["Prospective assumption"] if basis == "hypothesis" else [],
-        unknowns=["Result unavailable"] if basis == "unknown" else [],
-        evidence_weight="No independent applicable evidence establishes benefit")
+    return {"text": "Evidence applicability requires review", "basis": basis,
+        "claim_ids": [cid] if cid else [], "assumptions": ["Prospective assumption"] if basis == "hypothesis" else [],
+        "unknowns": ["Result unavailable"] if basis == "unknown" else [],
+        "evidence_weight": "No independent applicable evidence establishes benefit"}
 
 
 def output():
-    return dict(summary="Committee requires diligence before financing", recommendation="Conditional",
-        rationale=reason(), claims=[], arguments=[dict(id="potential", direction="for", reason=reason(),
-            decision_impact="Potential benefit requires demonstration", decisive=False),
-            dict(id="gap", direction="against", reason=reason(), decision_impact="Do not commit before evidence", decisive=True)],
-        conditions=[dict(id="verification", requirement="Obtain applicable evidence", rationale=reason(),
-            verification_method="Independent data review", evidence_needed="Validated applicable results",
-            pass_if="Validated results satisfy agreed criteria", fail_if="Validated adverse result",
-            inconclusive_if="Invalid controls", timing="before_investment", failure_action="Withhold funding")],
-        conflicts=[], conflict_limitations=["No supplied conclusions to compare"], key_risks=[],
-        critical_unknowns=[dict(id="benefit", description="Clinical benefit unknown", role_ids=["clinical"],
-            decision_impact="Funding benefit uncertain", blocks_invest=True)],
-        change_triggers=[dict(id="adverse", result_or_new_evidence="Validated unacceptable toxicity",
-            verification_method="Review controlled applicable study", rationale=reason(), resulting_recommendation="Do Not Invest")],
-        questions=[dict(id=f"check_{i}", rank=i, role_ids=[ROLES[i-1]], argument_ids=["gap"], risk_ids=[],
-            unknown_ids=["benefit"], condition_ids=["verification"], conflict_ids=[],
-            question=f"Verify applicable decision evidence in domain {ROLES[i-1]}?", why_it_matters=reason(),
-            evidence_needed="Validated domain results", method="Independent specialist review",
-            decision_if_positive="Consider release after other gates", decision_if_negative="Withhold capital",
-            inconclusive_if="Repeat with valid controls") for i in range(1, 6)],
-        domain_reviews=[dict(role_id=r, assessment=reason(), dispositions=[]) for r in ROLES],
-        unknowns=["Program applicability"], limitations=["Synthetic offline case"])
+    return {"summary": "Committee requires diligence before financing", "recommendation": "Conditional",
+        "rationale": reason(), "claims": [], "arguments": [{"id": "potential", "direction": "for", "reason": reason(),
+            "decision_impact": "Potential benefit requires demonstration", "decisive": False},
+            {"id": "gap", "direction": "against", "reason": reason(), "decision_impact": "Do not commit before evidence", "decisive": True}],
+        "conditions": [{"id": "verification", "requirement": "Obtain applicable evidence", "rationale": reason(),
+            "verification_method": "Independent data review", "evidence_needed": "Validated applicable results",
+            "pass_if": "Validated results satisfy agreed criteria", "fail_if": "Validated adverse result",
+            "inconclusive_if": "Invalid controls", "timing": "before_investment", "failure_action": "Withhold funding"}],
+        "conflicts": [], "conflict_limitations": ["No supplied conclusions to compare"], "key_risks": [],
+        "critical_unknowns": [{"id": "benefit", "description": "Clinical benefit unknown", "role_ids": ["clinical"],
+            "decision_impact": "Funding benefit uncertain", "blocks_invest": True}],
+        "change_triggers": [{"id": "adverse", "result_or_new_evidence": "Validated unacceptable toxicity",
+            "verification_method": "Review controlled applicable study", "rationale": reason(), "resulting_recommendation": "Do Not Invest"}],
+        "questions": [{"id": f"check_{i}", "rank": i, "role_ids": [ROLES[i-1]], "argument_ids": ["gap"], "risk_ids": [],
+            "unknown_ids": ["benefit"], "condition_ids": ["verification"], "conflict_ids": [],
+            "question": f"Verify applicable decision evidence in domain {ROLES[i-1]}?", "why_it_matters": reason(),
+            "evidence_needed": "Validated domain results", "method": "Independent specialist review",
+            "decision_if_positive": "Consider release after other gates", "decision_if_negative": "Withhold capital",
+            "inconclusive_if": "Repeat with valid controls"} for i in range(1, 6)],
+        "domain_reviews": [{"role_id": r, "assessment": reason(), "dispositions": []} for r in ROLES],
+        "unknowns": ["Program applicability"], "limitations": ["Synthetic offline case"]}
 
 
 def prepared(contexts=None, audit=None):
@@ -47,7 +63,7 @@ def prepared(contexts=None, audit=None):
 
 
 def validate(raw, contexts=None, audit=None):
-    case, pack, ctx, payload = prepared(contexts, audit)
+    case, pack, _ctx, payload = prepared(contexts, audit)
     analysis = ChairAnalysis.model_validate(raw)
     validate_chair_result(analysis, case, pack, payload)
     return analysis
@@ -63,8 +79,8 @@ def complete():
     raw = output()
     payload = prepared(contexts)[3]
     for review in raw["domain_reviews"]:
-        review["dispositions"] = [dict(item_id=i["id"], disposition="considered", rationale="Affects diligence decision",
-            argument_ids=["gap"], question_ids=[], condition_ids=[]) for i in payload["input_inventory"][review["role_id"]]]
+        review["dispositions"] = [{"item_id": i["id"], "disposition": "considered", "rationale": "Affects diligence decision",
+            "argument_ids": ["gap"], "question_ids": [], "condition_ids": []} for i in payload["input_inventory"][review["role_id"]]]
     return raw, contexts
 
 
@@ -143,10 +159,10 @@ def test_reject_invalid_outputs(defect):
     if defect == "conflicts_unexplained": raw["conflict_limitations"] = []
     if defect == "change_same": raw["change_triggers"][0]["resulting_recommendation"] = "Conditional"
     if defect == "duplicate_trigger": raw["change_triggers"] *= 2
-    if defect == "risk_uncovered": raw["key_risks"] = [dict(id="toxicity", description=reason(), priority="critical", impact="Safety blocker", next_check="Study")]
+    if defect == "risk_uncovered": raw["key_risks"] = [{"id": "toxicity", "description": reason(), "priority": "critical", "impact": "Safety blocker", "next_check": "Study"}]
     if defect.startswith("claim_") or defect == "unverified_assumptions":
-        raw["claims"] = [dict(id="chair.new", text="Hypothetical result", provenance="ai", support_status="unverified",
-            assumptions=["Assumption"], evidence_ids=[], scope="approach", importance="major")]
+        raw["claims"] = [{"id": "chair.new", "text": "Hypothetical result", "provenance": "ai", "support_status": "unverified",
+            "assumptions": ["Assumption"], "evidence_ids": [], "scope": "approach", "importance": "major"}]
         c = raw["claims"][0]
         if defect == "claim_namespace": c["id"] = "market.new"
         if defect == "claim_evidence": c["evidence_ids"] = ["missing"]
@@ -164,7 +180,7 @@ def test_reject_invalid_outputs(defect):
 
 @pytest.mark.parametrize("defect", ["role", "snapshot", "nested_snapshot", "date", "evidence", "risk_ref", "section_ref", "audit_claim", "audit_evidence", "ctx_snapshot", "ctx_date"])
 def test_input_guards(defect):
-    raw, contexts = complete()
+    _raw, contexts = complete()
     case, pack, ctx = inputs(); audit = None
     result = contexts["science"]
     if defect == "role": result.role_id = RoleId.MARKET
@@ -175,8 +191,8 @@ def test_input_guards(defect):
     if defect == "evidence": result.section_content[0].structured_data["science"]["plan"]["evidence_ids"] = ["missing"]
     if defect == "risk_ref": result.risks[0].claim_ids = ["science.missing"]
     if defect == "section_ref": result.section_content[0].claim_ids = ["science.missing"]
-    if defect == "audit_claim": audit = dict(unresolved_critical_claim_ids=["science.missing"])
-    if defect == "audit_evidence": audit = dict(findings=[dict(claim_id="science.result", verdict="supported", reason="Review", evidence_ids=["missing"], blocking=False)])
+    if defect == "audit_claim": audit = {"unresolved_critical_claim_ids": ["science.missing"]}
+    if defect == "audit_evidence": audit = {"findings": [{"claim_id": "science.result", "verdict": "supported", "reason": "Review", "evidence_ids": ["missing"], "blocking": False}]}
     if defect == "ctx_snapshot": ctx.snapshot_id = "other"
     if defect == "ctx_date": ctx.as_of_date = "invalid"
     with pytest.raises(ValueError): prepare_chair_inputs(case, pack, ctx, **contexts, audit=audit)
@@ -185,7 +201,7 @@ def test_input_guards(defect):
 def test_invest_guards_and_adverse_decision():
     raw, contexts = invest()
     case, pack, ctx = inputs(); ctx.as_of_date = "2026-10-09"
-    payload = prepare_chair_inputs(case, pack, ctx, **contexts, audit=dict(findings=[dict(claim_id="science.result", verdict="supported", reason="Reviewed", evidence_ids=["e1"], blocking=False)]))
+    payload = prepare_chair_inputs(case, pack, ctx, **contexts, audit={"findings": [{"claim_id": "science.result", "verdict": "supported", "reason": "Reviewed", "evidence_ids": ["e1"], "blocking": False}]})
     validate_chair_result(ChairAnalysis.model_validate(raw), case, pack, payload)
     for change in ("audit", "date", "missing", "blocked", "reason"):
         p, a = deepcopy(payload), deepcopy(raw)
@@ -201,16 +217,16 @@ def test_invest_guards_and_adverse_decision():
     with pytest.raises(ValueError): validate(a)
     a["rationale"] = reason("documented", "chair.adverse")
     a["arguments"][1]["reason"] = reason("documented", "chair.adverse")
-    a["claims"] = [dict(id="chair.adverse", text="Observed adverse result", provenance="source", support_status="supported",
-        evidence_ids=["e1"], scope="approach", importance="critical")]
+    a["claims"] = [{"id": "chair.adverse", "text": "Observed adverse result", "provenance": "source", "support_status": "supported",
+        "evidence_ids": ["e1"], "scope": "approach", "importance": "critical"}]
     validate(a)
 
 
 def test_audit_blocks_evidence_laundering():
     raw, contexts = complete(); raw["rationale"] = reason("documented", "science.result")
     for verdict, blocking in (("mixed", False), ("unverified", False), ("supported", True)):
-        with pytest.raises(ValueError): validate(raw, contexts, dict(findings=[dict(claim_id="science.result",
-            verdict=verdict, reason="Audit issue", evidence_ids=["e1"], blocking=blocking)]))
+        with pytest.raises(ValueError): validate(raw, contexts, {"findings": [{"claim_id": "science.result",
+            "verdict": verdict, "reason": "Audit issue", "evidence_ids": ["e1"], "blocking": blocking}]})
 
 
 @pytest.mark.asyncio
@@ -246,8 +262,8 @@ async def test_missing_adapter_and_sparse_context():
 
 
 def test_discovery_unchanged_and_prompt_schema():
-    from vic.prompts import load_prompt
     from vic.modules import discover
+    from vic.prompts import load_prompt
     prompt = load_prompt("chair")
     assert "not the number" in prompt.text
     assert prompt.path.name == "chair.md"
@@ -258,6 +274,7 @@ def test_discovery_unchanged_and_prompt_schema():
 @pytest.mark.asyncio
 async def test_real_gateway_adapter_feedback_trace_and_all_contexts():
     import httpx
+
     from vic.config import Settings
     from vic.llm import OpenAICompatibleProvider, StructuredLlm
     from vic.prompts import load_prompt
@@ -288,13 +305,13 @@ async def test_r3_audit_and_report_preserve_full_chair_and_canonical_risks():
     from vic.integrity import assert_report
     from vic.report_builder import SECTION_OWNERS, build_report
     raw, contexts = complete()
-    raw["claims"] = [dict(id="chair.caution", text="Possible limitation needs review", provenance="ai",
-        support_status="unverified", assumptions=["Applicable results absent"], evidence_ids=[], scope="approach", importance="major")]
-    raw["key_risks"] = [dict(id="execution", description=reason("documented", "investment.result"),
-        priority="major", impact="Execution risk", next_check="Review implementation")]
-    raw["conflicts"] = [dict(id="tradeoff", topic="Applicability", role_ids=["science", "investment"],
-        upstream_claim_ids=["science.result", "investment.result"], competing_conclusions="Different implications",
-        resolution=reason(), decision_impact="Withhold pending review", status="unresolved")]
+    raw["claims"] = [{"id": "chair.caution", "text": "Possible limitation needs review", "provenance": "ai",
+        "support_status": "unverified", "assumptions": ["Applicable results absent"], "evidence_ids": [], "scope": "approach", "importance": "major"}]
+    raw["key_risks"] = [{"id": "execution", "description": reason("documented", "investment.result"),
+        "priority": "major", "impact": "Execution risk", "next_check": "Review implementation"}]
+    raw["conflicts"] = [{"id": "tradeoff", "topic": "Applicability", "role_ids": ["science", "investment"],
+        "upstream_claim_ids": ["science.result", "investment.result"], "competing_conclusions": "Different implications",
+        "resolution": reason(), "decision_impact": "Withhold pending review", "status": "unresolved"}]
     raw["questions"][0]["conflict_ids"] = ["tradeoff"]
     case, pack, ctx = inputs(); ctx.model = type("Model", (), {"generate_structured": AsyncMock(return_value=raw)})()
     result = await analyze_chair(case, pack, ctx, **contexts)
@@ -303,7 +320,7 @@ async def test_r3_audit_and_report_preserve_full_chair_and_canonical_risks():
     original_investment = contexts["investment"].model_dump(mode="json")
     roles = list(contexts.values())
     for role in roles:
-        role.section_content.extend([dict(key=k, summary="Synthetic section") for k, owner in SECTION_OWNERS.items()
+        role.section_content.extend([{"key": k, "summary": "Synthetic section"} for k, owner in SECTION_OWNERS.items()
             if owner == role.role_id])
         role.section_content = [SectionContent.model_validate(s) for s in role.section_content]
     roles.append(result.role_result)
@@ -324,35 +341,37 @@ async def test_r3_audit_and_report_preserve_full_chair_and_canonical_risks():
     ("partnerships-synthetic.json", "partnerships"), ("ip-licensing-synthetic.json", "ip_licensing")])
 def test_existing_upstream_examples(filename, role):
     from pathlib import Path
+
     from vic.contracts import CaseInput, EvidencePack, RunContext
     root = Path(__file__).resolve().parents[6]
     fixtures = json.loads((root / "docs" / "examples" / filename).read_text())
     for fixture in fixtures.values() if isinstance(fixtures, dict) else fixtures:
         case = CaseInput.model_validate(fixture["case"]); pack = EvidencePack.model_validate(fixture["pack"])
-        context = fixture.get("context", dict(case_id="case", run_id="run", snapshot_id=pack.snapshot_id,
-            as_of_date=case.as_of_date, mode="evidence_only"))
+        context = fixture.get("context", {"case_id": "case", "run_id": "run", "snapshot_id": pack.snapshot_id,
+            "as_of_date": case.as_of_date, "mode": "evidence_only"})
         payload = prepare_chair_inputs(case, pack, RunContext(**context), **{role: fixture["result"]})
         assert payload["upstream_context"][role] == fixture["result"]
 
 
 @pytest.mark.asyncio
 async def test_real_failure_and_threshold_outputs_reach_chair_without_loss():
-    from vic.agents.business.failure_miner import analyze_failure_miner
-    from vic.agents.business.investment_threshold import analyze_investment_threshold
     from test_failure_miner import output as failure_output
     from test_investment_threshold import output as threshold_output
+
+    from vic.agents.business.failure_miner import analyze_failure_miner
+    from vic.agents.business.investment_threshold import analyze_investment_threshold
     case, pack, ctx = inputs()
     ctx.model = type("Model", (), {"generate_structured": AsyncMock(return_value=failure_output())})()
     failure = await analyze_failure_miner(case, pack, ctx)
     # Threshold fixture uses different snapshot; its output is validated against the same pack here.
     ctx.model.generate_structured.return_value = threshold_output()
     threshold = await analyze_investment_threshold(case, pack, ctx)
-    contexts = dict(failure_miner=failure, investment_threshold=threshold)
+    contexts = {"failure_miner": failure, "investment_threshold": threshold}
     payload = prepare_chair_inputs(case, pack, ctx, **contexts)
     raw = output()
     for review in raw["domain_reviews"]:
-        review["dispositions"] = [dict(item_id=i["id"], disposition="considered", rationale="Decision evidence",
-            argument_ids=["gap"], question_ids=[], condition_ids=[]) for i in payload["input_inventory"][review["role_id"]]]
+        review["dispositions"] = [{"item_id": i["id"], "disposition": "considered", "rationale": "Decision evidence",
+            "argument_ids": ["gap"], "question_ids": [], "condition_ids": []} for i in payload["input_inventory"][review["role_id"]]]
     ctx.model.generate_structured.return_value = raw
     result = await analyze_chair(case, pack, ctx, **contexts)
     data = result.role_result.section_content[0].structured_data["chair"]
@@ -363,7 +382,7 @@ async def test_real_failure_and_threshold_outputs_reach_chair_without_loss():
 @pytest.mark.parametrize("defect", ["no_audit_coverage", "critical_unverified", "critical_unaudited", "unknown_domain", "audit_blocker"])
 def test_invest_cannot_bypass_evidence_checks(defect):
     raw, contexts = invest(); case, pack, ctx = inputs(); ctx.as_of_date = "2026-10-09"
-    audit = dict(findings=[dict(claim_id="science.result", verdict="supported", reason="Checked", evidence_ids=["e1"], blocking=False)])
+    audit = {"findings": [{"claim_id": "science.result", "verdict": "supported", "reason": "Checked", "evidence_ids": ["e1"], "blocking": False}]}
     if defect == "no_audit_coverage": audit = {}
     if defect in ("critical_unverified", "critical_unaudited"):
         contexts["clinical"].claims[0].importance = Importance.CRITICAL
@@ -375,7 +394,7 @@ def test_invest_cannot_bypass_evidence_checks(defect):
 
 
 def test_upstream_json_inputs_and_immutable_payload():
-    raw, contexts = complete()
+    _raw, contexts = complete()
     before = {r: v.model_dump(mode="json") for r, v in contexts.items()}
     payload = prepared(before)[3]
     assert payload["upstream_context"] == before
@@ -386,10 +405,10 @@ def test_upstream_json_inputs_and_immutable_payload():
 
 def test_invest_rejects_new_unverified_critical_chair_claim():
     raw, contexts = invest(); case, pack, ctx = inputs(); ctx.as_of_date = "2026-10-09"
-    raw["claims"] = [dict(id="chair.critical", text="Critical unknown", provenance="ai", support_status="unknown",
-        assumptions=["Missing applicable result"], evidence_ids=[], scope="approach", importance="critical")]
-    payload = prepare_chair_inputs(case, pack, ctx, **contexts, audit=dict(findings=[dict(claim_id="science.result",
-        verdict="supported", reason="Checked", evidence_ids=["e1"], blocking=False)]))
+    raw["claims"] = [{"id": "chair.critical", "text": "Critical unknown", "provenance": "ai", "support_status": "unknown",
+        "assumptions": ["Missing applicable result"], "evidence_ids": [], "scope": "approach", "importance": "critical"}]
+    payload = prepare_chair_inputs(case, pack, ctx, **contexts, audit={"findings": [{"claim_id": "science.result",
+        "verdict": "supported", "reason": "Checked", "evidence_ids": ["e1"], "blocking": False}]})
     with pytest.raises(ValueError, match="including new chair"):
         validate_chair_result(ChairAnalysis.model_validate(raw), case, pack, payload)
 
@@ -398,6 +417,7 @@ def test_invest_rejects_new_unverified_critical_chair_claim():
 # Provider responses are scripted: they do not evaluate live LLM reasoning quality.
 def _chair_revision_inputs(update=None):
     from datetime import date
+
     from vic.contracts import Claim, Evidence, Risk, Source
     from vic.report_builder import SECTION_OWNERS
 
@@ -450,8 +470,8 @@ def _chair_revision_response(case, pack, ctx, contexts, audit, *, adverse=False)
             recommendation="Do Not Invest", rationale=safety, conditions=[])
         raw["arguments"][1].update(reason=deepcopy(safety),
             decision_impact="The newly documented safety barrier prevents funding")
-        raw["key_risks"] = [dict(id="toxicity", description=deepcopy(safety), priority="critical",
-            impact="Safety barrier prevents investment", next_check="Independently review the safety study")]
+        raw["key_risks"] = [{"id": "toxicity", "description": deepcopy(safety), "priority": "critical",
+            "impact": "Safety barrier prevents investment", "next_check": "Independently review the safety study"}]
         raw["change_triggers"][0].update(result_or_new_evidence="Validated evidence overturns the safety finding",
             resulting_recommendation="Conditional", rationale=reason("hypothesis"))
         for q in raw["questions"]:
@@ -462,9 +482,9 @@ def _chair_revision_response(case, pack, ctx, contexts, audit, *, adverse=False)
             decision_if_negative="Reconsider Conditional if the safety finding is overturned")
     payload = prepare_chair_inputs(case, pack, ctx, **contexts, audit=audit)
     for review in raw["domain_reviews"]:
-        review["dispositions"] = [dict(item_id=item["id"], disposition="considered",
-            rationale="Included in the decision and follow-up diligence", argument_ids=["gap"],
-            question_ids=[], condition_ids=[]) for item in payload["input_inventory"][review["role_id"]]]
+        review["dispositions"] = [{"item_id": item["id"], "disposition": "considered",
+            "rationale": "Included in the decision and follow-up diligence", "argument_ids": ["gap"],
+            "question_ids": [], "condition_ids": []} for item in payload["input_inventory"][review["role_id"]]]
         if adverse and review["role_id"] == "clinical":
             review["assessment"] = deepcopy(raw["rationale"])
     return raw
@@ -486,12 +506,15 @@ async def _run_chair_revision_pair(update):
         class ScriptedProvider:
             name = "offline-chair-revision"
 
+            def __init__(self, response):
+                self.response = response
+
             async def complete(self, **request):
                 payload = json.loads(request["messages"][0]["content"])
                 calls.append(payload)
-                return ProviderResponse(json.dumps(raw), 100, 50)
+                return ProviderResponse(json.dumps(self.response), 100, 50)
 
-        ctx.model = StructuredLlm(ScriptedProvider(), Settings(
+        ctx.model = StructuredLlm(ScriptedProvider(raw), Settings(
             _env_file=None, llm_max_retries=0, llm_max_repairs=0))
         result = await analyze_chair(case, pack, ctx, **contexts, audit=audit)
         assert calls[-1]["snapshot_id"] == pack.snapshot_id
@@ -577,3 +600,17 @@ async def test_irrelevant_evidence_preserves_chair_decision_and_report_recommend
     assert child.decision_conditions == parent.decision_conditions
     assert child.diligence_questions == parent.diligence_questions
     assert child.roles[-1].section_content[0].structured_data["chair"] == after_data
+
+
+def test_inventory_does_not_recount_nested_upstream_copies():
+    from vic.agents.business.chair import _inventory
+    role = upstream("investment").model_dump(mode="json")
+    own = {"id": "local_path", "unknowns": ["Own funding gap"],
+           "upstream_context": {"market": {"id": "copied_market", "unknowns": ["Copied gap"]}}}
+    role["section_content"][0]["structured_data"] = {"investment": own}
+    before = deepcopy(role)
+    items = _inventory("investment", role)
+    assert any(item["id"].endswith("/investment/unknowns/0") for item in items)
+    assert any(item["id"].endswith("/investment") for item in items)
+    assert not any("upstream_context" in item["id"] for item in items)
+    assert role == before

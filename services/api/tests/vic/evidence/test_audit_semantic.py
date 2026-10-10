@@ -51,6 +51,16 @@ def test_absence_of_data_cited_as_safety_is_caught_by_the_llm_step():
     assert model.calls[0][0] == "audit" and "unknown" in model.calls[0][1]["audit_items"]
 
 
+def test_semantic_audit_batches_by_bytes_before_claim_count_limit():
+    claims = [_claim(f"translation.safety_{i}", SAFE, [_ev(UNKNOWN_EV)]) for i in range(3)]
+    model = FakeModel([_v(c.id, "unverified") for c in claims])
+    model.structured_request_size = lambda pid, payload, schema, ctx: {
+        "request_bytes": 2500 + 5000 * payload["claim_count"]}
+    result = _run(claims, model)
+    assert [call[1]["claim_count"] for call in model.calls] == [2, 1]
+    assert set(result.unresolved_critical_claim_ids) == {c.id for c in claims}
+
+
 def test_llm_cannot_rescue_a_claim_that_already_failed():
     c = _claim("translation.human_efficacy", "X-001 lowers marker M in patients.", [_ev("mouse model, the SYN-1 inhibitor")])
     model = FakeModel([_v(c.id, "supported")])

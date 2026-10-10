@@ -1,5 +1,9 @@
 # Market split and request budget — 2026-10-09
 
+The later Clinical-context batching implementation and live verification are
+documented in [Market live request budget](market-live-request-budget.md).
+The statements below describe this original implementation's validation status.
+
 Implementation baseline: `origin/main` at `68ece19479130862cc4ceeb957af3c5326c880f8`.
 Branch: `codex/r5-market-request-budget`. Related: #51, #6, #7, #14.
 This handoff supersedes the single-call runtime description in r5-01-handoff.md.

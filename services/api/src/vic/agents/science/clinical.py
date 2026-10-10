@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal, get_args
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, create_model, model_validator
 from vic.contracts import (
     CaseInput,
     Claim,
@@ -10,11 +10,12 @@ from vic.contracts import (
     Risk,
     RoleResult,
     RunContext,
+    RunStage,
     SectionContent,
 )
 
 PROMPT_ID = "clinical"
-PROMPT_VERSION = "1.1.0"
+PROMPT_VERSION = "1.2.0"
 
 ClinicalClaimKey = Literal[
     "clinical.target_population",
@@ -172,6 +173,72 @@ class ClinicalPlanAnalysis(BaseModel):
         if len(keys) != len(set(keys)):
             raise ValueError("clinical claim keys must be unique")
         return self
+
+
+_COMMON_FIELDS = {"claims", "risks", "unknowns", "change_conditions", "limitations",
+                  "science_gaps_carried_forward"}
+_DESIGN_FIELDS = {"target_population", "clinically_meaningful_outcome", "primary_endpoint",
+                  "secondary_endpoints", "comparator", "biomarker_strategy", "trial_size",
+                  "standard_of_care", "unmet_need"}
+_DEVELOPMENT_FIELDS = set(ClinicalPlanAnalysis.model_fields) - _COMMON_FIELDS - _DESIGN_FIELDS
+CLINICAL_REQUEST_SPLIT_BYTES = 14000
+_DESIGN_CLAIMS = {"clinical.target_population", "clinical.primary_endpoint",
+                  "clinical.secondary_endpoints", "clinical.comparator_choice",
+                  "clinical.biomarker_strategy", "clinical.trial_size_basis",
+                  "clinical.standard_of_care", "clinical.unmet_need"}
+
+
+def _pass_model(name: str, fields: set[str], keys: set[str]) -> type[BaseModel]:
+    claim_model = create_model(name + "Claim", __base__=_ClaimOutput,
+                               key=(Literal[tuple(sorted(keys))], ...))
+    return create_model(name, __config__=ConfigDict(extra="forbid", strict=True), **{
+        key: (list[claim_model] if key == "claims" else field.annotation, field)
+        for key, field in ClinicalPlanAnalysis.model_fields.items()
+        if key in fields | _COMMON_FIELDS
+    })
+
+
+ClinicalDesignAnalysis = _pass_model("ClinicalDesignAnalysis", _DESIGN_FIELDS, _DESIGN_CLAIMS)
+ClinicalDevelopmentAnalysis = _pass_model("ClinicalDevelopmentAnalysis", _DEVELOPMENT_FIELDS,
+                                         set(CLAIM_KEYS) - _DESIGN_CLAIMS)
+
+
+async def _split_analysis(payload: dict, ctx: RunContext) -> ClinicalPlanAnalysis:
+    parts = []
+    for prompt_id, model, keys in (
+        ("clinical_design", ClinicalDesignAnalysis, _DESIGN_CLAIMS),
+        ("clinical_development", ClinicalDevelopmentAnalysis, set(CLAIM_KEYS) - _DESIGN_CLAIMS),
+    ):
+        part_payload = {**payload, "claim_keys": sorted(keys)}
+        sizes = ctx.model.structured_request_size(prompt_id, part_payload, model, ctx)
+        ctx.trace.log(RunStage.ANALYZE, f"{prompt_id} request sizes {sizes}")
+        raw = await ctx.model.generate_structured(prompt_id, part_payload, model, ctx)
+        part = model.model_validate(raw.model_dump() if isinstance(raw, BaseModel) else raw)
+        if any(claim.key not in keys for claim in part.claims):
+            raise ValueError(f"{prompt_id}: claim outside assigned clinical task")
+        parts.append(part.model_dump())
+    merged = {key: value for part in parts for key, value in part.items()
+              if key not in _COMMON_FIELDS}
+    for key in _COMMON_FIELDS:
+        merged[key] = []
+        for part in parts:
+            for item in part[key]:
+                if key == "risks":
+                    prior = next((r for r in merged[key] if r["id"] == item["id"]), None)
+                    if prior:
+                        # Preserve both assessments under the existing stable risk id.
+                        for text_key in ("description", "impact", "next_check"):
+                            if item[text_key] != prior[text_key]:
+                                prior[text_key] += "; " + item[text_key]
+                        prior["related_claim_keys"] = list(dict.fromkeys(
+                            prior["related_claim_keys"] + item["related_claim_keys"]))
+                        priorities = ["critical", "major", "minor"]
+                        prior["priority"] = min(prior["priority"], item["priority"],
+                                                key=priorities.index)
+                        continue
+                if item not in merged[key]:
+                    merged[key].append(item)
+    return ClinicalPlanAnalysis.model_validate(merged)
 
 
 def _format_evidence(pack: EvidencePack) -> str:
@@ -386,9 +453,19 @@ async def analyze_clinical(
     ctx: RunContext,
 ) -> RoleResult:
     payload = _build_payload(case, pack, scientific_result, translation_result)
-    raw_analysis = await ctx.model.generate_structured(
-        PROMPT_ID, payload, ClinicalPlanAnalysis, ctx
-    )
+    split = False
+    measure = getattr(ctx.model, "structured_request_size", None)
+    if callable(measure):
+        sizes = measure(PROMPT_ID, payload, ClinicalPlanAnalysis, ctx)
+        if isinstance(sizes, dict):
+            ctx.trace.log(RunStage.ANALYZE, f"clinical request sizes {sizes}")
+            split = sizes["request_bytes"] > CLINICAL_REQUEST_SPLIT_BYTES
+    if split:
+        raw_analysis = await _split_analysis(payload, ctx)
+    else:
+        raw_analysis = await ctx.model.generate_structured(
+            PROMPT_ID, payload, ClinicalPlanAnalysis, ctx
+        )
     analysis = _validate_analysis(raw_analysis)
 
     claims = _to_claims(analysis, pack)
