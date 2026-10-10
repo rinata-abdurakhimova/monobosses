@@ -6,13 +6,12 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from vic.api import cases, evidence, health, reports, runs
+from vic.api import cases, evidence, health, reports, runs, science_test
 from vic.api.auth import require_api_key
 from vic.config import Settings, get_settings
 from vic.errors import register_error_handlers
-from vic.storage import get_repository
-
 from vic.runner import get_manager
+from vic.storage import get_repository
 
 API_VERSION = "0.2.0"
 logger = logging.getLogger("vic")
@@ -72,7 +71,7 @@ def create_app() -> FastAPI:
                        allow_methods=["*"], allow_headers=["*"], expose_headers=["X-VIC-Mock"])
     register_error_handlers(app)
     app.include_router(health.router)  # /health stays open for platform health checks
-    for module in (cases, runs, reports, evidence):
+    for module in (cases, runs, reports, evidence, science_test):
         app.include_router(module.router, dependencies=[Depends(require_api_key)])
     app.openapi = lambda: build_openapi(app)  # type: ignore[method-assign]
     return app

@@ -21,6 +21,9 @@ export default function HomePage() {
       <div className="input-layout">
         <CaseForm />
         <aside className="input-aside">
+          <Link href="/science-test">
+            Test Science connection with fictional evidence
+          </Link>
           <section className="workflow-card">
             <span className="eyebrow">FROM QUESTION TO CONVICTION</span>
             <div
