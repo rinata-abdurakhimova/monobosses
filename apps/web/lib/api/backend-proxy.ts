@@ -54,6 +54,7 @@ export async function proxyBackend(
   const allowed =
     request.method === "POST"
       ? path === "cases" ||
+        path === "diagnostics/science" ||
         new RegExp(`^cases/${id}/(runs|evidence|documents)$`).test(path)
       : request.method === "GET" &&
         (new RegExp(`^runs/${id}(/outputs)?$`).test(path) ||
@@ -128,7 +129,10 @@ export async function proxyBackend(
   const cancel = () => controller.abort(request.signal.reason);
   request.signal.addEventListener("abort", cancel, { once: true });
   if (request.signal.aborted) cancel();
-  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 8000);
+  const timer = setTimeout(
+    () => controller.abort(),
+    options.timeoutMs ?? (path === "diagnostics/science" ? 130000 : 8000),
+  );
   try {
     let body: string | FormData | undefined;
     if (request.method === "POST") {

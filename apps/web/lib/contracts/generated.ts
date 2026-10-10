@@ -216,6 +216,18 @@ export type RunStage =
 
 export type RunStatus = "queued" | "running" | "completed" | "failed";
 
+export type ScienceTestResult = {
+  error?: ErrorBody | null;
+  events?: Array<Record<string, unknown>>;
+  evidence_excerpt: string;
+  external_retrieval?: boolean;
+  result?: RoleResult | null;
+  status: "completed" | "failed";
+  synthetic?: boolean;
+  test_id: string;
+  usage?: Array<Record<string, unknown>>;
+};
+
 export type Scope = "approach" | "program";
 
 export type SectionContent = {
