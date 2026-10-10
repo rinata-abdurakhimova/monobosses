@@ -103,7 +103,7 @@ class Pipeline:
         return await asyncio.to_thread(fn, *args)
 
     # ------------------------------------------------------------------ lifecycle
-    async def execute(self, run: Run) -> Run:
+    async def execute(self, run: Run, *, resume: bool = False) -> Run:
         s = self.settings
         self.run = run
         self.ctx = RunContext(
@@ -112,6 +112,16 @@ class Pipeline:
             budget=RunBudget() if s.provider_input_limit_test else RunBudget(
                 max_cost_usd=s.max_run_cost_usd, max_seconds=s.max_run_seconds,
                 deadline=time.monotonic() + s.max_run_seconds))
+        self._resume_trace = await self._io(self.repo.get_trace, run.id) if resume else None
+        if resume and not self._resume_trace:
+            raise ValidationFailed("Saved trace is required to resume", code="resume_unavailable")
+        if self._resume_trace:
+            self.ctx.trace.events.extend(self._resume_trace.get('events', []))
+            self.ctx.trace.usage.extend(self._resume_trace.get('usage', []))
+            self.ctx.budget.spent_cost_usd = sum(u.get('cost_usd') or 0 for u in self.ctx.trace.usage)
+            self.ctx.budget.cost_unavailable = any(u.get('cost_usd') is None for u in self.ctx.trace.usage)
+            self._durations.update(self._resume_trace.get('stage_durations_ms', {}))
+            self._durations.pop('total', None)
         started = time.monotonic()
         failure: RunFailure | None = None
         try:
@@ -148,7 +158,7 @@ class Pipeline:
     async def _close(self, failure: RunFailure | None, started: float) -> Run:
         self._end_stage()
         ctx = self.ctx
-        durations = {**self._durations, "total": int((time.monotonic() - started) * 1000)}
+        durations = {**self._durations, "total": int((time.monotonic() - started) * 1000) + (self._resume_trace or {}).get("stage_durations_ms", {}).get("total", 0)}
         records = ctx.trace.usage
         ok = [u for u in records if u.get("outcome") == "ok"]
         tokens_known = bool(ok) and all(u["input_tokens"] is not None and u["output_tokens"] is not None
@@ -193,9 +203,35 @@ class Pipeline:
         case, parent, modules = await self._validate()
         self.ctx.as_of_date = case.as_of_date
         await self._enter(RunStage.RETRIEVE)
-        pack = await self._retrieve(case, parent, modules)
-        await self._enter(RunStage.ANALYZE)
-        results = await self._analyze_all(case, pack, modules)
+        if self._resume_trace:
+            pack = await self._io(self.repo.get_snapshot, self._resume_trace['snapshot_id'])
+            if pack is None:
+                raise ValidationFailed("Saved evidence snapshot missing", code="resume_unavailable")
+            self._snapshot_id = self.ctx.snapshot_id = pack.snapshot_id
+            integrity.assert_pack(pack)
+            nodes = await self._io(self.repo.get_nodes, self.run.id)
+            self._node_states = {n.role_id: n for n in nodes}
+            results = {}
+            for role in ROLE_ORDER:
+                node = self._node_states[role]
+                if node.status != 'completed' or node.stale or node.result is None:
+                    break
+                results[role] = node.result
+            remaining = set(ROLE_ORDER) - results.keys()
+            for role in [*remaining, RoleId.AUDIT, RoleId.CHAIR]:
+                old = self._node_states[role]
+                reset = NodeOutput(role_id=role, attempt=old.attempt)
+                await self._io(self.repo.save_node, self.run.id, reset)
+                self._node_states[role] = reset
+            self.ctx.trace.log(RunStage.ANALYZE, f"Resume reused completed nodes: {[r.value for r in results]}")
+            self._collect_claims(results, pack)
+            await self._enter(RunStage.ANALYZE)
+            await self._run_roles(remaining, results, case, pack, modules)
+            self._collect_claims(results, pack)
+        else:
+            pack = await self._retrieve(case, parent, modules)
+            await self._enter(RunStage.ANALYZE)
+            results = await self._analyze_all(case, pack, modules)
         await self._enter(RunStage.AUDIT)
         audit = await self._audit_and_repair(case, pack, modules, results)
         await self._enter(RunStage.SYNTHESIZE)

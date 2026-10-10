@@ -50,6 +50,36 @@ export function ApiCase({
     [flow],
   );
   const [attempt, setAttempt] = useState(0);
+  const [resuming, setResuming] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
+  async function resumeRun() {
+    if (!runId || resuming) return;
+    setResuming(true);
+    setResumeError(null);
+    try {
+      const response = await fetch(
+        `/api/backend/runs/${encodeURIComponent(runId)}/resume`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        },
+      );
+      const body = await response.json();
+      if (!response.ok)
+        throw new Error(body.error?.message ?? "Could not resume this run.");
+      if (body.run_id !== runId) throw new Error("Unexpected run identifier.");
+      setAttempt((value) => value + 1);
+    } catch (failure) {
+      setResumeError(
+        failure instanceof Error
+          ? failure.message
+          : "Could not resume this run.",
+      );
+    } finally {
+      setResuming(false);
+    }
+  }
   const [run, setRun] = useState<Run | null>(null);
   const [report, setReport] = useState<LoadedReport<Report> | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -298,10 +328,22 @@ export function ApiCase({
             </p>
           )}
           <p>
-            Refreshing or resuming checks the identifiers in this URL; it does
-            not start another run.
+            Refreshing checks this run. Retry from failed node continues the
+            same run using saved completed outputs and the original evidence
+            snapshot.
           </p>
+          {resumeError && <p role="alert">{resumeError}</p>}
           <div className="state-actions">
+            {flow === "api" && run?.status === "failed" && runId && (
+              <button
+                className="button button-primary"
+                type="button"
+                disabled={resuming}
+                onClick={resumeRun}
+              >
+                {resuming ? "Resuming…" : "Retry from failed node"}
+              </button>
+            )}
             {error.retryable && runId && (
               <button
                 className="button button-primary"

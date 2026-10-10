@@ -3,7 +3,7 @@ import asyncio
 from fastapi import APIRouter, Depends
 
 from vic.api.deps import errors, get_repo
-from vic.contracts import Run, RunOutputs
+from vic.contracts import Run, RunCreated, RunOutputs
 from vic.errors import ApiError
 from vic.storage import Repository
 
@@ -43,3 +43,13 @@ async def get_run_outputs(run_id: str, repo: Repository = Depends(get_repo)) -> 
             for section in node.result.section_content]})}) if node.result is not None else node
         for node in nodes]
     return RunOutputs(run_id=run.id, case_id=run.case_id, status=run.status, nodes=nodes)
+
+
+@router.post("/runs/{run_id}/resume", status_code=202, response_model=RunCreated, responses=errors(401, 404, 409, 429))
+async def resume_run(run_id: str):
+    from vic.config import get_settings
+    from vic.runner import get_manager
+    if get_settings().run_backend != 'pipeline':
+        raise ApiError(409, 'resume_unavailable', 'Resume requires the pipeline backend')
+    run = await get_manager().resume(run_id)
+    return RunCreated(run_id=run.id)

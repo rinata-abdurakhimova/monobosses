@@ -189,3 +189,17 @@ summary and limitations disclose the partial result, while commercial output and
 evidence-backed claims remain available for subsequent audit. Other validation
 failures still surface normally. Saved failed runs are not rewritten: deploy the
 change and start a new assessment.
+
+## Resume a failed assessment
+
+The failed assessment screen provides **Retry from failed node**. It posts to
+`/runs/{run_id}/resume` and continues the same run ID. A contiguous prefix of
+completed, non-stale specialist nodes is reused with the original saved evidence
+snapshot. The first incomplete specialist and all later specialists are rerun;
+audit and committee synthesis run again. Existing attempt counters and usage
+records are retained. No external evidence retrieval is repeated. Newly imported
+evidence is excluded from this snapshot; use a new assessment to include it.
+
+Only failed pipeline runs with a saved snapshot can resume. Active runs, runs
+with saved reports or a newer report, and duplicate requests are rejected.
+Deploy both API and website, then open the existing failed assessment and retry.

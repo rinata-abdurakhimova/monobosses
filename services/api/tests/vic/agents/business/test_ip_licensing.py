@@ -270,3 +270,45 @@ async def test_empty_evidence_rejects_asserted_records():
     pack=pack.model_copy(update={'sources':[],'evidence':[]})
     with pytest.raises(ValueError):
         await analyze_ip_licensing(case,pack,ctx(adapter(out)))
+
+
+@pytest.mark.asyncio
+async def test_foreign_risk_ids_are_normalized_before_validation_without_changing_findings():
+    from vic.agents.business.ip_licensing import normalize_ip_risk_ids
+    case, pack, output = fixture(full=True)
+    output['risks'][0]['id'] = 'market.transfer'
+    original = deepcopy(output)
+    adapter = type('Adapter', (), {'generate_structured': AsyncMock(return_value=output)})()
+    ctx = RunContext('case', 'run', pack.snapshot_id, None, 'evidence_only', model=adapter)
+    result = await analyze_ip_licensing(case, pack, ctx)
+    assert result.risks[0].id.startswith('ip_licensing.risk.')
+    assert result.risks[0].claim_ids == original['risks'][0]['claim_ids']
+    assert result.risks[0].description == original['risks'][0]['description']
+    assert output == original
+    analysis = IPLicensingAnalysis.model_validate(original)
+    fixed = normalize_ip_risk_ids(analysis)
+    assert fixed.risks[0].model_dump(exclude={'id'}) == analysis.risks[0].model_dump(exclude={'id'})
+    assert normalize_ip_risk_ids(fixed) == fixed
+    assert any('normalized risk IDs' in event['message'] for event in ctx.trace.events)
+
+
+def test_risk_normalization_reserves_valid_ids_and_avoids_collisions():
+    import hashlib
+    from vic.agents.business.ip_licensing import normalize_ip_risk_ids
+    _, _, output = fixture(full=True)
+    foreign = 'market.transfer'
+    reserved = 'ip_licensing.risk.' + hashlib.sha256(foreign.encode()).hexdigest()[:16]
+    output['risks'][0]['id'] = foreign
+    output['risks'].append({**deepcopy(output['risks'][0]), 'id': reserved})
+    fixed = normalize_ip_risk_ids(IPLicensingAnalysis.model_validate(output))
+    assert fixed.risks[1].id == reserved
+    assert fixed.risks[0].id == reserved + '_1'
+    assert len({risk.id for risk in fixed.risks}) == 2
+
+
+def test_ambiguous_duplicate_risk_ids_still_fail():
+    from vic.agents.business.ip_licensing import normalize_ip_risk_ids
+    _, _, output = fixture(full=True)
+    output['risks'].append(deepcopy(output['risks'][0]))
+    with pytest.raises(ValueError, match='Duplicate IP risk IDs'):
+        normalize_ip_risk_ids(IPLicensingAnalysis.model_validate(output))

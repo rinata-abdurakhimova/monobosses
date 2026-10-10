@@ -55,6 +55,7 @@ export async function proxyBackend(
     request.method === "POST"
       ? path === "cases" ||
         path === "diagnostics/science" ||
+        new RegExp(`^runs/${id}/resume$`).test(path) ||
         new RegExp(`^cases/${id}/(runs|evidence|documents)$`).test(path)
       : request.method === "GET" &&
         (new RegExp(`^runs/${id}(/outputs)?$`).test(path) ||
