@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     clinical_reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] | None = "low"
     market_reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] | None = "low"
     node_request_max_bytes: int = Field(default=15500, gt=0)
+    # Diagnostic mode: let the gateway decide whether a node request fits.
+    enforce_node_request_budget: bool = False
     node_initial_request_bytes: int = Field(default=13500, gt=0)
     node_reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] | None = "low"
     # Provisional application cap, NOT a measured mentor gateway limit.
@@ -97,6 +99,7 @@ class Settings(BaseSettings):
             "clinical_reasoning_effort": self.clinical_reasoning_effort,
             "market_reasoning_effort": self.market_reasoning_effort,
             "node_request_max_bytes": self.node_request_max_bytes,
+            "enforce_node_request_budget": self.enforce_node_request_budget,
             "node_initial_request_bytes": self.node_initial_request_bytes,
             "node_reasoning_effort": self.node_reasoning_effort,
             "market_request_max_bytes": self.market_request_max_bytes,
