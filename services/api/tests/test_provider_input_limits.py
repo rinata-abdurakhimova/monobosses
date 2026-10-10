@@ -101,10 +101,12 @@ def test_market_sends_one_complete_context_and_all_feedback():
 
 
 def test_retrieved_records_are_not_sampled_or_clipped():
-    from vic.evidence.retrieval import _bounded_external
+    from vic.evidence.retrieval import _finish
     from vic.evidence.importer import parse_text
     docs = [parse_text(f'Source {i}', f'Source {i}: ' + 'Untrimmed evidence. ' * 1000) for i in range(5)]
-    assert _bounded_external([docs[:3], docs[3:]], settings()) == docs
+    pack = _finish(docs, [], context(None))
+    assert len(pack.sources) == 5
+    assert sum(len(e.excerpt.encode()) for e in pack.evidence) > 2500
 
 
 def test_pipeline_has_no_run_deadline_even_with_legacy_limit_configured(tmp_path):

@@ -25,10 +25,6 @@ class Settings(BaseSettings):
     continue_on_node_validation_error: bool = True
     max_run_cost_usd: float | None = Field(default=None, gt=0)
     max_run_seconds: int = Field(default=600, gt=0)
-    retrieval_pubmed_retmax: int = Field(default=1, ge=1, le=100)
-    retrieval_trials_page_size: int = Field(default=1, ge=1, le=100)
-    retrieval_max_external_documents: int = Field(default=2, ge=1, le=100)
-    retrieval_excerpt_max_bytes: int = Field(default=500, ge=100, le=20000)
 
     # --- additive (R2-02)
     app_env: Literal["development", "production"] = "development"
@@ -122,10 +118,6 @@ class Settings(BaseSettings):
             "llm_price_output_per_mtok": self.llm_price_output_per_mtok,
             "llm_price_date": self.llm_price_date,
             "max_run_seconds": self.max_run_seconds, "max_run_cost_usd": self.max_run_cost_usd,
-            "retrieval_pubmed_retmax": self.retrieval_pubmed_retmax,
-            "retrieval_trials_page_size": self.retrieval_trials_page_size,
-            "retrieval_max_external_documents": self.retrieval_max_external_documents,
-            "retrieval_excerpt_max_bytes": self.retrieval_excerpt_max_bytes,
             "dev_stubs": self.dev_stubs,
             "stub_modules": self.stub_modules
         }
