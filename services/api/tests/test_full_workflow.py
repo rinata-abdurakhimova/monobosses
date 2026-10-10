@@ -147,6 +147,8 @@ class Provider:
                 output = {key: gate[key] for key in part.split("-")}
         elif "requested_path" in wire:
             output = next(item for item in output["financial_paths"] if item["path"] == wire["requested_path"])
+        elif wire.get("single_investment_component") == "time":
+            output = output["time"]
         elif "requested_components" in wire:
             output = {key: value for key, value in output.items() if key in wire["requested_components"]}
         return ProviderResponse(json.dumps(output), 100, 50)

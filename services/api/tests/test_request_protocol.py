@@ -12,6 +12,7 @@ from vic.request_protocol import (
     compact_references,
     compact_schema,
     consolidate_note_table,
+    context_aliases,
     context_records,
     expand_disposition_groups,
     fit_wire_context,
@@ -64,6 +65,28 @@ def test_reference_ranges_cover_exact_aliases():
     packed = compact_references(original, "refs")
     expanded = [f"ref{i}" for start, end in packed["alias_ranges"] for i in range(start, end + 1)]
     assert expanded == original
+
+
+def test_compatible_context_aliases_compress_interleaved_claims_without_losing_ids():
+    from vic.request_protocol import dumps
+
+    claims = [{"id": f"market.claim_{i}", "scope": "approach",
+               "support_status": "unknown" if i % 2 else "supported",
+               "importance": "critical", "evidence_ids": ["e1"]} for i in range(300)]
+    payload = {"upstream_context": {"market": {"claims": claims, "risks": []}}}
+    original = copy.deepcopy(payload)
+    mapping = context_aliases(payload)
+    inverse = {alias: reference for reference, alias in mapping.items()}
+    assert translate(translate(payload, mapping), inverse) == original
+    assert set(mapping) == {"e1", *(claim["id"] for claim in claims)}
+    supported = [claim["id"] for claim in claims if claim["support_status"] == "supported"]
+    packed = compact_references(translate({"refs": supported}, mapping))["refs"]
+    assert len(packed["alias_ranges"]) == 1
+    decoded = [inverse[f"ref{i}"] for start, end in packed["alias_ranges"]
+               for i in range(start, end + 1)]
+    assert set(decoded) == set(supported)
+    assert len(dumps(packed)) < len(dumps(supported))
+    assert payload == original
 
 
 def test_shared_text_does_not_mutate_input_or_change_content():
@@ -137,6 +160,68 @@ def test_large_partner_record_is_split_without_losing_identity_or_fields():
     for key, finding in fields.items():
         assert any(record["data"]["path"].endswith("." + key) and record["data"]["record"] == finding for record in own)
     assert payload == original
+
+
+@pytest.mark.parametrize("text", ["Safety unknown. " * 1800, 'Невідомо 🧬 "\\\n' * 1800],
+                         ids=["ascii", "unicode-escapes"])
+def test_oversized_summary_review_preserves_every_character_position_and_role(text):
+    from vic.request_protocol import briefing_payload, dumps
+
+    payload = {"upstream_context": {"market": {"summary": text,
+        "position": "insufficient_data", "claims": [], "risks": []}}}
+    original = copy.deepcopy(payload)
+    records, _ = context_records(payload)
+    assert len(records) > 1
+    assert "".join(record["data"]["summary"] for record in records) == text
+    offset = 0
+    for record in records:
+        data = record["data"]
+        assert record["role"] == "market" and record["kind"] == "summary"
+        assert data["position"] == "insufficient_data"
+        assert data["source_start"] == offset
+        offset = data["source_end"]
+        assert len(dumps(briefing_payload([record], 4500)).encode()) <= 10500
+    assert offset == len(text)
+    validate_brief(ContextBrief(groups=[BriefGroup(record_ids=[r["id"] for r in records],
+                                                  summary="Unresolved safety")]), records)
+    with pytest.raises(ValueError, match="omitted"):
+        validate_brief(ContextBrief(groups=[BriefGroup(record_ids=[r["id"] for r in records[:-1]],
+                                                      summary="Unresolved safety")]), records)
+    assert payload == original
+
+
+@pytest.mark.asyncio
+async def test_summary_segments_fit_real_envelope_and_preserve_coverage_in_final_notes():
+    import json
+
+    from vic.config import Settings
+    from vic.contracts import RunContext
+    from vic.llm import ProviderResponse, StructuredLlm, request_sizes
+    from vic.request_protocol import brief_context
+
+    text = "Немає клінічного підтвердження; safety unknown. " * 600
+    payload = {"upstream_context": {"market": {"summary": text,
+        "position": "insufficient_data", "claims": [], "risks": []}}}
+    received, sizes = [], []
+
+    class Provider:
+        async def complete(self, *, system, messages, **kwargs):
+            sizes.append(request_sizes(system, messages, model="test", max_tokens=4096)["request_bytes"])
+            request = json.loads(messages[0]["content"])
+            received.extend(record for group in request["groups"].values() for record in group
+                            if isinstance(record["data"], dict))
+            return ProviderResponse(json.dumps({name: "Human efficacy and safety remain unknown."
+                                    for name in request["groups"]}), None, None)
+
+    ctx = RunContext("case", "run", "snapshot", None, "evidence_only")
+    adapter = StructuredLlm(Provider(), Settings(_env_file=None, llm_model="test"))
+    notes, numeric = await brief_context(adapter, payload, ctx, target_bytes=4500)
+    received.sort(key=lambda record: record["data"]["source_start"])
+    assert "".join(record["data"]["summary"] for record in received) == text
+    assert len({record["id"] for record in received}) == len(received)
+    assert sizes and max(sizes) <= 13500
+    assert all(note["status"] == "insufficient_data" for note in notes["market"])
+    assert numeric == [] and payload["upstream_context"]["market"]["summary"] == text
 
 
 def test_reference_labels_are_not_quantities_and_duplicate_gaps_remain_once():
@@ -541,3 +626,79 @@ def test_ip_missing_identifier_is_a_gap_before_accepting_component():
         validate_component_references("ip_licensing", {}, {"patents": [{"publication_number": {"basis": "unknown"}}]}, {})
     with pytest.raises(ValueError, match="documented rights_granted"):
         validate_component_references("ip_licensing", {}, {"rights_and_licenses": [{"rights_granted": {"basis": "hypothesis"}}]}, {})
+
+
+@pytest.mark.parametrize("basis", ["documented", "hypothesis"])
+def test_ip_non_unknown_findings_require_own_claims_before_component_acceptance(basis):
+    payload = {"frozen_components": {"claims": {"rows": [
+        ["ref0", "Source observation", "supported"],
+        ["ref1", "Proposed work", "unverified"]]}}}
+    inverse = {"ref0": "ip_licensing.source", "ref1": "ip_licensing.proposal"}
+    finding = {"basis": basis, "value": "Potential option", "claim_ids": [],
+               "assumptions": ["Unverified proposal"], "unknowns": ["Agreement absent"]}
+    with pytest.raises(ValueError, match="nonempty"):
+        validate_component_references("ip_licensing", payload, {"finding": finding}, inverse)
+    claim = "ip_licensing.source" if basis == "documented" else "ip_licensing.proposal"
+    validate_component_references("ip_licensing", payload,
+                                  {"finding": {**finding, "claim_ids": [claim]}}, inverse)
+    wrong = "ip_licensing.proposal" if basis == "documented" else "ip_licensing.source"
+    with pytest.raises(ValueError) as error:
+        validate_component_references("ip_licensing", payload,
+                                      {"finding": {**finding, "claim_ids": [wrong]}}, inverse)
+    if basis == "hypothesis":
+        assert '"ref1"' in str(error.value)
+        assert "ip_licensing.proposal" not in str(error.value)
+
+
+def test_ip_position_cannot_claim_barriers_without_frozen_identified_barriers():
+    payload = {"frozen_components": {"fto_decision": {"status": "unresolved", "barrier_ids": []}}}
+    with pytest.raises(ValueError, match="requires identified barriers"):
+        validate_component_references("ip_licensing", payload, {"position": "potential_barriers"}, {})
+    validate_component_references("ip_licensing", payload, {"position": "insufficient_data"}, {})
+    payload["frozen_components"]["fto_decision"] = {"status": "potential_barriers",
+                                                      "barrier_ids": ["ip_barrier"]}
+    validate_component_references("ip_licensing", payload, {"position": "potential_barriers"}, {})
+
+
+@pytest.mark.parametrize("count,status", [(0, "supported"), (1, "unverified")])
+def test_ip_documented_coverage_requires_records_and_supported_own_claims(count, status):
+    payload = {"frozen_components": {"ip_coverage_counts": {"patents": count},
+               "claims": {"rows": [["ref0", "patent", status]]}}}
+    finding = {"status": "documented", "claim_ids": ["ip_licensing.patent"], "unknowns": []}
+    with pytest.raises(ValueError, match="existing entries"):
+        validate_component_references("ip_licensing", payload, {"coverage": {"patents": finding}},
+                                      {"ref0": "ip_licensing.patent"})
+    finding.update(status="insufficient_data", claim_ids=[], unknowns=["Patent record absent"])
+    validate_component_references("ip_licensing", payload, {"coverage": {"patents": finding}}, {})
+
+
+def test_unwrapped_investment_time_keeps_scenario_and_numeric_validation():
+    payload = {"single_investment_component": "time", "calculated_financials": {"scenarios": []}}
+    finding = {"basis": "unknown", "value": None, "claim_ids": [],
+               "unknowns": ["Duration absent"], "assumptions": []}
+    data = {"scheduling_basis": finding, "scenario_ids": [], "dependencies": [finding],
+            "possible_delays": [finding], "missing_inputs": ["Schedule missing"]}
+    validate_component_references("investment", payload, data, {})
+    with pytest.raises(ValueError, match="scenario_ids"):
+        validate_component_references("investment", payload, {**data, "scenario_ids": ["invented"]}, {})
+    with pytest.raises(ValueError, match="Numeric literals"):
+        validate_component_references("investment", payload, {**data, "missing_inputs": ["Delay 12 months"]}, {})
+
+
+def test_compressed_dependency_catalog_keeps_claim_and_record_namespaces_exact():
+    inverse = {f"ref{i}": f"market.claim_{i}" for i in range(100)}
+    inverse.update({f"ref{i}": f"market_record_{i}" for i in range(100, 200)})
+    payload = {"context_dependency_ids": {"market": {
+        "upstream_claim_ids": [f"ref{i}" for i in range(100)],
+        "record_ids": [f"ref{i}" for i in range(100, 200)]}}}
+    packed = compact_references(payload)
+    assert packed["context_dependency_ids"]["market"]["upstream_claim_ids"] == {"alias_ranges": [[0, 99]]}
+    assert packed["context_dependency_ids"]["market"]["record_ids"] == {"alias_ranges": [[100, 199]]}
+    valid = {"dependency": {"role_id": "market", "upstream_claim_ids": ["market.claim_99"],
+                            "record_ids": ["market_record_199"]}}
+    validate_component_references("investment", packed, valid, inverse)
+    for field, wrong in (("record_ids", "market.claim_99"), ("upstream_claim_ids", "market_record_199")):
+        broken = copy.deepcopy(valid)
+        broken["dependency"][field] = [wrong]
+        with pytest.raises(ValueError, match="never own claims or other record types"):
+            validate_component_references("investment", packed, broken, inverse)

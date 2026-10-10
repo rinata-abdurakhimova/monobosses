@@ -8,9 +8,9 @@ from pydantic import ValidationError
 
 from vic.agents.business.calculations import MarketScenario, estimate_market_scenarios
 from vic.agents.business.market import (
-    MarketAnalysis,
-    CompetitiveAnalysis,
     CommercialAnalysis,
+    CompetitiveAnalysis,
+    MarketAnalysis,
     analyze_market,
     prepare_market_inputs,
     validate_market_result,
@@ -568,9 +568,13 @@ async def test_explicit_r4_context_and_pending_alignment():
 import asyncio
 import copy
 import json
+
 from vic.agents.business.market import (
-    PASS_MODELS, merge_market_results, namespace_pass, plan_market_batches,
-    prepare_pass_inputs, project_clinical_context, _pass_context,
+    PASS_MODELS,
+    _pass_context,
+    merge_market_results,
+    namespace_pass,
+    prepare_pass_inputs,
 )
 from vic.config import Settings
 from vic.contracts import AuditFinding, Claim, RoleResult
@@ -775,17 +779,23 @@ async def test_real_adapter_repairs_and_unknown_cost_without_network():
 
 
 @pytest.mark.asyncio
-async def test_adapter_rejects_oversized_schema_repair_before_second_call():
+async def test_adapter_repairs_large_invalid_market_output_without_replaying_it():
+    _, _, output = fixture()
     calls = []
     class Provider:
         async def complete(self, **kwargs):
             calls.append(kwargs)
+            if len(calls) == 2:
+                return ProviderResponse(json.dumps(split_output(output, "market_competitive")), None, None)
             return ProviderResponse("invalid private text " * 2000, None, None)
     adapter = StructuredLlm(Provider(), Settings(_env_file=None, market_request_max_bytes=18000))
     context = run_context(adapter)
-    with pytest.raises(RunFailure, match="configured byte budget"):
-        await adapter.generate_structured("market_competitive", {}, CompetitiveAnalysis, context)
-    assert len(calls) == 1
+    result = await adapter.generate_structured("market_competitive", {}, CompetitiveAnalysis, context)
+    assert isinstance(result, CompetitiveAnalysis)
+    assert len(calls) == 2
+    assert "private text" not in json.dumps(calls[1])
+    assert all(request_sizes(call["system"], call["messages"])["request_bytes"] <= 18000
+               for call in calls)
     assert "private text" not in json.dumps(context.trace.events)
 
 

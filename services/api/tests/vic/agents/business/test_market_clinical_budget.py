@@ -187,3 +187,29 @@ def test_large_market_audit_feedback_is_partitioned_losslessly_with_measured_req
         assert '_market_audit_feedback' not in messages[0]['content']
         assert all(item['reason'] in json.loads(messages[1]['content'].split(': ', 1)[1])[i]['reason']
                    for i, item in enumerate(batch['_market_audit_feedback']))
+
+
+def test_feedback_below_old_fixed_limit_splits_when_full_envelope_does_not_fit():
+    case, pack, _ = fixture()
+    findings = [AuditFinding(claim_id=f"market.claim_{i}", verdict="unverified",
+                reason="Unresolved safety. " * 45, evidence_ids=["e1"], blocking=True)
+                for i in range(2)]
+    assert len(json.dumps([f.model_dump(mode="json") for f in findings]).encode()) < 2500
+
+    class Adapter:
+        market_request_budget = 18000
+
+        def structured_request_size(self, task, data, model, ctx):
+            # Fixed envelope/context leaves space for one finding, but not two.
+            feedback_bytes = len(json.dumps(ctx.feedback["market"], default=str).encode())
+            return {"request_bytes": 12000 + feedback_bytes}
+
+    ctx = run_context(Adapter())
+    ctx.feedback["market"] = findings
+    batches = plan_market_batches(prepare_market_inputs(case, pack), None,
+                                  "market_competitive", ctx)
+    groups = {b["coverage"]["audit_feedback_batch_id"]: b["_market_audit_feedback"]
+              for b in batches}
+    assert len(groups) == 2
+    assert [f["claim_id"] for g in groups.values() for f in g] == [f.claim_id for f in findings]
+    assert all(f["blocking"] for g in groups.values() for f in g)

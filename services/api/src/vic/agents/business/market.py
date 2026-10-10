@@ -299,25 +299,36 @@ def prepare_pass_inputs(payload, clinical, task, evidence):
 def plan_market_batches(payload, clinical, task, ctx, *, audit_batch_id=None):
     feedback = [item.model_dump(mode="json") if isinstance(item, BaseModel) else item
                 for item in ctx.feedback.get("market", [])]
-    if len(json.dumps(feedback, ensure_ascii=False).encode()) > 2500:
-        groups, current = [], []
-        for finding in feedback:
-            if current and len(json.dumps([*current, finding], ensure_ascii=False).encode()) > 2500:
-                groups.append(current)
-                current = []
-            current.append(finding)
-        if current:
-            groups.append(current)
-        if len(groups) < 2:
-            raise RunFailure("One exact Market audit finding exceeds the feedback budget", code="market_request_budget")
-        batches = []
-        for group in groups:
+    if feedback and audit_batch_id is None:
+        # Fit exact findings against the complete envelope, including the largest
+        # indivisible Clinical record and evidence. A fixed feedback size cannot
+        # account for their variable sizes or the serialized schema overhead.
+        try:
+            return _plan_market_batches(payload, clinical, task, ctx)
+        except RunFailure as exc:
+            if exc.code != "market_request_budget":
+                raise
+
+        def plan_group(group):
             child = replace(ctx, feedback={**ctx.feedback, "market": group})
             identity = hashlib.sha256(json.dumps(group, sort_keys=True).encode()).hexdigest()[:12]
-            for batch in plan_market_batches(payload, clinical, task, child, audit_batch_id=identity):
+            try:
+                planned = _plan_market_batches(payload, clinical, task, child,
+                                               audit_batch_id=identity)
+            except RunFailure as exc:
+                if exc.code != "market_request_budget" or len(group) == 1:
+                    raise
+                midpoint = len(group) // 2
+                return [*plan_group(group[:midpoint]), *plan_group(group[midpoint:])]
+            for batch in planned:
                 batch["_market_audit_feedback"] = group
-                batches.append(batch)
-        return batches
+            return planned
+
+        return plan_group(feedback)
+    return _plan_market_batches(payload, clinical, task, ctx, audit_batch_id=audit_batch_id)
+
+
+def _plan_market_batches(payload, clinical, task, ctx, *, audit_batch_id=None):
     model = PASS_MODELS[task]
     cap = getattr(ctx.model, "market_request_budget", DEFAULT_REQUEST_MAX_BYTES)
     initial_cap = int(cap * INITIAL_BUDGET_FRACTION)

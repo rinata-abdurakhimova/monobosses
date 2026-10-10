@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, create_model
 from vic.contracts import RunStage
 from vic.failures import RunFailure
 
-VERSION = "bounded-context.v2"
+VERSION = "bounded-context.v3"
 BOUNDED_PROMPTS = {"ip_licensing", "partnerships", "investment_plan", "investment",
                    "investment_threshold", "failure_miner", "chair", "science", "translation"}
 
@@ -102,6 +102,23 @@ def translate(value, mapping, key=""):
     return value
 
 
+def context_aliases(payload):
+    """Place compatible upstream references together for lossless range encoding."""
+    original = identifiers(payload)
+    signatures = {}
+    for role, raw in payload.get("upstream_context", {}).items():
+        if not raw:
+            continue
+        for claim in raw.get("claims", []):
+            signatures[claim["id"]] = (role, "claim", claim.get("scope", ""),
+                claim.get("support_status", ""), claim.get("importance", ""))
+        for risk in raw.get("risks", []):
+            signatures[risk["id"]] = (role, "risk", "", "", risk.get("priority", ""))
+    ordered = sorted(original, key=lambda reference: signatures.get(reference,
+                     ("", "reference", "", "", "")))
+    return {reference: f"ref{index}" for index, reference in enumerate(ordered)}
+
+
 def context_records(payload):
     """Collect canonical role records once, avoiding copies of ancestors in sections."""
     roles = payload.get("upstream_context", {})
@@ -175,7 +192,30 @@ def context_records(payload):
     for role, raw in roles.items():
         if raw is None:
             continue
-        add(role, "summary", {"summary": raw["summary"], "position": raw["position"]})
+        summary = raw["summary"]
+        if len(dumps({"summary": summary, "position": raw["position"]}).encode()) <= 6000:
+            add(role, "summary", {"summary": summary, "position": raw["position"]},
+                status=raw["position"])
+        else:
+            # Split only the review representation. Character offsets preserve
+            # exact source coverage, including Unicode and JSON escape overhead.
+            offset = 0
+            while offset < len(summary):
+                low, high = 1, len(summary) - offset
+                while low < high:
+                    middle = (low + high + 1) // 2
+                    data = {"summary": summary[offset:offset + middle],
+                            "position": raw["position"], "source_start": offset,
+                            "source_end": offset + middle}
+                    if len(dumps(data).encode()) <= 6000:
+                        low = middle
+                    else:
+                        high = middle - 1
+                end = offset + low
+                add(role, "summary", {"summary": summary[offset:end],
+                    "position": raw["position"], "source_start": offset, "source_end": end},
+                    status=raw["position"])
+                offset = end
         for claim in raw.get("claims", []):
             add(role, "claim", claim, refs=[claim["id"]], scope=claim["scope"],
                 status=claim["support_status"], priority=claim["importance"])
@@ -338,6 +378,13 @@ def bounded_prompt(prompt_id, fields=None):
             "Return only requested components as schema-valid JSON. Keep prose concise; no inventory counts or raw refN aliases in prose. Respect frozen recommendation." + focus
         )
     if prompt_id == "investment":
+        task += (" All narrative must be digit-free. Never put refN aliases, record codes or IDs "
+                 "in summary or other prose; use descriptive names. Exact IDs belong ONLY in schema "
+                 "reference fields, never in narrative. Do not enumerate the fixed-plan inventory.")
+        if fields and "summary" in fields:
+            task += (" Write a concise qualitative synthesis of readiness, constraints and missing "
+                     "funding/time inputs. Refer to the proposed milestone and stress types by plain "
+                     "descriptions, without identifiers, counts or numbers.")
         focus = {
             "capital": "Explain next-milestone capital, scenario IDs and missing inputs; distinguish asset funding from company cash.",
             "time": "Explain next-milestone scheduling basis, dependencies, possible delays and missing inputs; no guessed durations. scenario_ids must equal supplied next-milestone calculation IDs; no scenarios means []. Milestone and stress-event IDs are not scenarios.",
@@ -358,11 +405,30 @@ def bounded_prompt(prompt_id, fields=None):
                 "deal gaps/implications. Claim.evidence_ids may contain ONLY IDs from evidence[*].id, never "
                 "source or upstream claim IDs. Missing IP documentation means unknown, not confirmed absence. "
                 "Unknown/unverified claims require nonempty assumptions explaining gaps. Use supplied case scope.")
+    if prompt_id == "ip_licensing" and fields and "position" in fields:
+        task += (" Summarize the completed frozen IP assessment. Position potential_barriers requires "
+                 "nonempty frozen_components.fto_decision.barrier_ids. Missing patents, rights or FTO "
+                 "documentation alone is not an identified barrier. Preserve unresolved FTO and gaps; "
+                 "do not invent barriers or legal clearance.")
     if prompt_id == "ip_licensing" and fields == ["rights_and_licenses"]:
         task = ("List only EXISTING agreements with DOCUMENTED rights_granted backed by supported own claims. "
                 "No supplied agreement means rights_and_licenses=[]. Never create an unknown agreement "
                 "as a placeholder. Proposals belong in licensing_options. "
                 "IPFinding unknown requires value=null and explicit unknowns; hypothesis needs assumptions.")
+    if prompt_id == "ip_licensing" and fields == ["licensing_options"]:
+        task = ("Propose only defensible licensing options, never existing agreements. Each non-unknown "
+                "IPFinding, including rationale, needs value and nonempty supplied OWN claim_ids. "
+                "Hypothesis findings cite ONLY frozen unknown/unverified own claims, never supported "
+                "observations, and retain assumptions. Documented findings cite supported own claims. "
+                "Use exact wire aliases from frozen_components.claims. If no supplied claim justifies "
+                "an option, return licensing_options=[] rather than an unsupported placeholder. "
+                "Unestablished terms/rights use basis=unknown, value=null and explicit unknowns.")
+    if prompt_id == "ip_licensing" and fields == ["coverage"]:
+        task = ("Assess every supplied ip_coverage_counts domain exactly once. Documented coverage "
+                "requires a positive record count AND nonempty supported OWN claim_ids from frozen claims. "
+                "Absent entries or unsupported findings require insufficient_data with explicit unknowns. "
+                "Unresolved FTO with no barriers is insufficient_data, never documented legal clearance. "
+                "Use exact wire claim aliases; do not invent records, claims or evidence.")
     if prompt_id == "ip_licensing" and fields == ["freedom_to_operate"]:
         task = ("Assess FTO without legal clearance. Unresolved FTO requires barriers=[] and actionable missing_checks. "
                 "Unknown patent landscape or missing title/license documents are gaps, not identified barriers. "
@@ -442,13 +508,40 @@ async def brief_context(adapter, payload, ctx, target_bytes=6000):
                  for role, groups in notes.items()}
         return notes, numeric
     # IDs are local integers. Exact records stay in canonical node payloads.
+    def review_spec(source, target):
+        grouped = {}
+        for record in source:
+            grouped.setdefault(signature(record), []).append(record)
+        entries = {f"group{i}": members for i, members in enumerate(grouped.values())}
+        schema = create_model("ContextSummaries", __config__=ConfigDict(extra="forbid"), **{
+            name: (str, Field(min_length=1)) for name in entries})
+        request = {"groups": entries, "target_bytes": target,
+                   "task": "Return one TASK-RELEVANT MATERIAL synopsis per group key, aiming for 260 characters. "
+                           "Do not enumerate every repeated field or restate the original paragraphs. "
+                           "Use semicolon-separated short phrases and combine repetitive gaps. IDs, status, "
+                           "scope, priority and exact numeric values are retained separately by the caller. "
+                           "All records in each group "
+                           "share role/kind/scope/status/priority. Preserve negative premises and material gaps. "
+                           "Membership is enforced by the caller; do not output record IDs or change metadata."}
+        return entries, schema, request
+
+    def fits(source, target):
+        if len(dumps(briefing_payload(source, target)).encode()) > 10500:
+            return False
+        measure = getattr(adapter, "structured_request_size", None)
+        if callable(measure):
+            _, schema, request = review_spec(source, target)
+            cap = min(adapter._s.node_initial_request_bytes, adapter._s.node_request_max_bytes - 512)
+            return measure("context_brief", request, schema, ctx)["request_bytes"] <= cap
+        return True
+
     chunks, current = [], []
     for record in records:
-        if len(dumps(briefing_payload([*current, record], target_bytes)).encode()) > 10500:
+        if not fits([*current, record], target_bytes):
             if current:
                 chunks.append(current)
                 current = []
-            if len(dumps(briefing_payload([record], target_bytes)).encode()) > 10500:
+            if not fits([record], target_bytes):
                 raise RunFailure("An indivisible upstream record exceeds the context review budget",
                                  code="context_record_budget")
         current.append(record)
@@ -456,10 +549,10 @@ async def brief_context(adapter, payload, ctx, target_bytes=6000):
         chunks.append(current)
     groups = []
     async def review(source, target):
-        if len(dumps(briefing_payload(source, target)).encode()) > 10500:
+        if not fits(source, target):
             pieces, part = [], []
             for record in source:
-                if part and len(dumps(briefing_payload([*part, record], target)).encode()) > 10500:
+                if part and not fits([*part, record], target):
                     pieces.append(part)
                     part = []
                 part.append(record)
@@ -471,20 +564,7 @@ async def brief_context(adapter, payload, ctx, target_bytes=6000):
             for piece in pieces:
                 collected.extend((await review(piece, max(500, target // len(pieces)))).groups)
             return validate_brief(ContextBrief(groups=collected), source)
-        grouped = {}
-        for record in source:
-            grouped.setdefault(signature(record), []).append(record)
-        entries = {f"group{i}": records for i, records in enumerate(grouped.values())}
-        schema = create_model("ContextSummaries", __config__=ConfigDict(extra="forbid"), **{
-            name: (str, Field(min_length=1)) for name in entries})
-        request = {"groups": entries, "target_bytes": target,
-                   "task": "Return one TASK-RELEVANT MATERIAL synopsis per group key, aiming for 260 characters. "
-                           "Do not enumerate every repeated field or restate the original paragraphs. "
-                           "Use semicolon-separated short phrases and combine repetitive gaps. IDs, status, "
-                           "scope, priority and exact numeric values are retained separately by the caller. "
-                           "All records in each group "
-                           "share role/kind/scope/status/priority. Preserve negative premises and material gaps. "
-                           "Membership is enforced by the caller; do not output record IDs or change metadata."}
+        entries, schema, request = review_spec(source, target)
         raw = await adapter.generate_structured("context_brief", request, schema, ctx)
         return validate_brief(ContextBrief(groups=[BriefGroup(
             record_ids=[record["id"] for record in entries[name]], summary=summary)
@@ -502,7 +582,7 @@ async def brief_context(adapter, payload, ctx, target_bytes=6000):
                 "refs": refs, **{k: first[k] for k in ("scope", "status", "priority") if k in first}})
         return out
     notes = serialize(groups)
-    aliases = identifiers(payload)
+    aliases = context_aliases(payload)
     def note_bytes(value):
         return len(dumps(note_table(compact_references(translate(value, aliases)))).encode())
     # Consolidation preserves exhaustive source membership and incompatible flags.
@@ -569,7 +649,8 @@ def compact_references(value, key=""):
     if isinstance(value, dict):
         return {name: compact_references(child, name) for name, child in value.items()}
     if isinstance(value, list):
-        if (key == "refs" or key.endswith((".record", ".risk")) or key == "reference") and value and all(
+        if (key in {"refs", "reference", "upstream_claim_ids", "record_ids"}
+                or key.endswith((".record", ".risk"))) and value and all(
                 isinstance(item, str) and re.fullmatch(r"ref\d+", item) for item in value):
                 indices = sorted({int(item[3:]) for item in value})
                 ranges = []
@@ -658,6 +739,8 @@ def gate_rule_context(view):
 
 def validate_component_references(prompt_id, payload, data, inverse):
     """Reject mixed reference namespaces before accepting an IP wire component."""
+    if prompt_id == "investment" and payload.get("single_investment_component") == "time":
+        data = {"time": data}
     if prompt_id == "chair":
         def expand(ref):
             return inverse.get(ref, ref)
@@ -763,6 +846,9 @@ def validate_component_references(prompt_id, payload, data, inverse):
             raise ValueError("Listed patents require documented publication_number; absent identifiers mean patents=[] and explicit coverage gaps")
         if any(row.get("rights_granted", {}).get("basis") != "documented" for row in data.get("rights_and_licenses", [])):
             raise ValueError("Known licenses require documented rights_granted; hypothetical proposals belong in licensing_options")
+        decision = payload.get("frozen_components", {}).get("fto_decision")
+        if decision is not None and data.get("position") == "potential_barriers" and not decision["barrier_ids"]:
+            raise ValueError("Position potential_barriers requires identified barriers in frozen FTO; missing documentation alone is insufficient")
     if fto and ((fto.get("status") == "unresolved" and fto.get("barriers")) or
                 (fto.get("status") == "potential_barriers" and not fto.get("barriers"))):
         raise ValueError("Unresolved FTO requires barriers=[]; potential_barriers requires a nonempty barriers list")
@@ -773,6 +859,17 @@ def validate_component_references(prompt_id, payload, data, inverse):
     claim_rows.extend([item["id"], "", item["support_status"]] for item in payload.get("fixed_plan", {}).get("claims", []))
     def expand(value):
         return inverse.get(value, value)
+    if prompt_id == "ip_licensing" and "coverage" in data and "ip_coverage_counts" in frozen:
+        counts = frozen["ip_coverage_counts"]
+        if set(data["coverage"]) != set(counts):
+            raise ValueError("Coverage must assess every frozen IP domain exactly once")
+        supported = {expand(row[0]) for row in claim_rows if row[2] == "supported"}
+        for name, finding in data["coverage"].items():
+            if finding["status"] == "insufficient_data" and not finding.get("unknowns"):
+                raise ValueError(f"Coverage {name} requires explicit gaps")
+            if finding["status"] == "documented" and (not counts[name] or not finding.get("claim_ids")
+                    or not set(finding["claim_ids"]) <= supported):
+                raise ValueError(f"Coverage {name}: documented requires existing entries and supported own claims; otherwise insufficient_data with gaps")
     if prompt_id == "investment":
         scenarios = payload.get("calculated_financials", {}).get("scenarios", [])
         if any(item.get("role_id") != "market" for item in data.get("commercial_constraints", [])):
@@ -887,7 +984,7 @@ def validate_component_references(prompt_id, payload, data, inverse):
                         raise ValueError(f"{field} must use only {value.get('role_id')} IDs from "
                                          "context_dependency_ids, never own claims or other record types; "
                                          "use [] when no supplied reference applies")
-            if prompt_id != "ip_licensing" and "basis" in value and "value" in value:
+            if "basis" in value and "value" in value:
                 if prompt_id == "failure_miner" and value["basis"] == "unknown" and value.get("claim_ids"):
                     raise ValueError("Unknown Failure Miner findings require value=null, explicit gaps and claim_ids=[]")
                 if value["basis"] == "unknown" and (value["value"] is not None or not value.get("unknowns")):
@@ -906,7 +1003,9 @@ def validate_component_references(prompt_id, payload, data, inverse):
                                      "documented findings with empty claim_ids.")
                 if value["basis"] == "hypothesis" and (not value.get("assumptions") or
                         any(status not in {"unknown", "unverified"} for status in linked)):
-                    allowed_hypotheses = [item for item, status in statuses.items() if status in {"unknown", "unverified"}]
+                    reverse = {original: alias for alias, original in inverse.items()}
+                    allowed_hypotheses = [reverse.get(item, item) for item, status in statuses.items()
+                                          if status in {"unknown", "unverified"}]
                     raise ValueError("Hypothesis claim_ids may ONLY contain " + dumps(allowed_hypotheses) +
                                      "; supported claims are forbidden here, even as background. Keep assumptions nonempty.")
             for key, child in value.items():
@@ -921,7 +1020,8 @@ def validate_component_references(prompt_id, payload, data, inverse):
                 visit(child, path + f"[{index}]")
     visit(data)
     if unknown_paths:
-        raise ValueError("Set value=null and explain gaps in unknowns for: " + ",".join(unknown_paths))
+        raise ValueError("Set value=null and explain gaps in unknowns for ALL unknown Findings, "
+                         "not only these examples: " + ",".join(unknown_paths))
     if prompt_id == "investment_plan":
         future = [item["milestone_id"] for item in data.get("future_milestones", [])]
         current = {expand(item["id"]) for item in frozen.get("record_descriptors", [])
@@ -1089,9 +1189,9 @@ async def generate_bounded(adapter, prompt_id, payload, response_model, ctx):
         prepared["fixed_plan"]["brief"] = note_table({"fixed_plan": [group for group in prepared["fixed_plan"]["brief"]
                                                                  if group["kind"] not in {"claim", "summary"}]})
     if payload.get("upstream_context") is not None:
-        prepared["upstream_context"] = note_table(compact_references(translate(context, identifiers(payload))))
+        prepared["upstream_context"] = note_table(compact_references(translate(context, context_aliases(payload))))
         prepared["exact_numeric_context"] = numeric_table(numeric)
-    mapping = identifiers(payload)
+    mapping = context_aliases(payload)
     inverse = {alias: original for original, alias in mapping.items()}
     prepared = compact_references(translate(prepared, mapping))
     if prompt_id == "chair":
@@ -1145,6 +1245,11 @@ async def generate_bounded(adapter, prompt_id, payload, response_model, ctx):
     claim_view = None
     claim_view_hash = None
     components = response_model
+    if prompt_id == "ip_licensing":
+        ordered = [name for name in response_model.model_fields if name not in {"summary", "position"}]
+        ordered.extend(["summary", "position"])
+        components = create_model(response_model.__name__ + "Ordered", __config__=response_model.model_config, **{
+            name: (response_model.model_fields[name].annotation, response_model.model_fields[name]) for name in ordered})
     if prompt_id == "partnerships":
         order = ["summary", "position", "claims", "risks", "candidates"]
         ordered = [*order, *(name for name in response_model.model_fields if name not in order)]
@@ -1269,6 +1374,22 @@ async def generate_bounded(adapter, prompt_id, payload, response_model, ctx):
                 mapping[original] = f"ref{len(mapping)}"
         inverse = {alias: original for original, alias in mapping.items()}
         frozen = {"available_components": list(results)}
+        if prompt_id == "ip_licensing" and "freedom_to_operate" in results:
+            fto = results["freedom_to_operate"]
+            frozen["fto_decision"] = {"status": fto["status"],
+                                      "barrier_ids": [row["id"] for row in fto["barriers"]]}
+        if prompt_id == "ip_licensing" and fields == ["coverage"]:
+            frozen["ip_coverage_counts"] = {
+                "patents": len(results.get("patents", [])),
+                "protected_subjects": sum(len(row["protected_subjects"]) for row in results.get("patents", [])),
+                "territories_and_term": sum(len(row["territories_and_term"]) for row in results.get("patents", [])),
+                "rights_and_licenses": len(results.get("rights_and_licenses", [])),
+                "freedom_to_operate": len(results["freedom_to_operate"]["barriers"]),
+                "licensable_assets": len(results.get("licensable_assets", [])),
+                "licensing_options": len(results.get("licensing_options", [])),
+                "deal_data": len(results.get("deal_data_gaps", [])),
+                "partnership_investment_implications": len(results.get("implications", [])),
+            }
         if prompt_id == "chair" and "recommendation" in results:
             frozen["recommendation"] = results["recommendation"]
         frozen["claims"] = {"columns": ["id", "semantic_key", "support_status"], "rows": [
@@ -1559,6 +1680,11 @@ async def generate_bounded(adapter, prompt_id, payload, response_model, ctx):
                 component_payload = {**data}
             results["financial_paths"] = paths
             continue
+        single_time = prompt_id == "investment" and fields == ["time"]
+        if single_time:
+            component = component.model_fields["time"].annotation
+            component_payload["single_investment_component"] = "time"
+            component_system += " Return one TimeAssessment object directly, without a time wrapper."
         component_payload = await fit_wire_context(adapter, prompt_id, component_payload, component, ctx,
                                                    component_system)
         if "upstream_context" in component_payload and not (prompt_id == "chair" and fields == ["conflicts"]):
@@ -1570,7 +1696,10 @@ async def generate_bounded(adapter, prompt_id, payload, response_model, ctx):
         raw = await adapter._generate_direct(prompt_id, component_payload, component, ctx,
                                               system_override=component_system, compact=True,
                                               inverse=inverse)
-        results.update(raw.model_dump(mode="json"))
+        if single_time:
+            results["time"] = raw.model_dump(mode="json")
+        else:
+            results.update(raw.model_dump(mode="json"))
     if "domain_reviews" in response_model.model_fields:
         for original in identifiers(results):
             if original not in mapping:
