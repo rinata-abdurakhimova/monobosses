@@ -201,7 +201,7 @@ def structured_request(prompt_id, payload, response_model, ctx, *, system_overri
                                   default=str, separators=(",", ":"))}]
     owner = "investment" if prompt_id == "investment_plan" else (
         "market" if prompt_id in MARKET_PROMPTS else
-        "clinical" if prompt_id in {"clinical_design", "clinical_development"} else prompt_id)
+        "clinical" if prompt_id.startswith("clinical_") else prompt_id)
     feedback = ctx.feedback.get(owner)
     if owner == "market" and "_market_audit_feedback" in payload:
         feedback = payload["_market_audit_feedback"]
@@ -253,7 +253,7 @@ class StructuredLlm:
     def _reasoning_effort(self, prompt_id):
         if not isinstance(self._provider, OpenAICompatibleProvider):
             return None
-        if prompt_id in {"clinical", "clinical_design", "clinical_development"}:
+        if prompt_id == "clinical" or prompt_id.startswith("clinical_"):
             return self._s.clinical_reasoning_effort
         if prompt_id in MARKET_PROMPTS:
             return self._s.market_reasoning_effort
@@ -265,6 +265,10 @@ class StructuredLlm:
     def cost_limit_enforceable(self) -> bool:
         return (self._s.llm_price_input_per_mtok is not None
                 and self._s.llm_price_output_per_mtok is not None)
+
+    async def generate_clinical_subtasks(self, case, pack, science, translation, ctx):
+        from vic.clinical_requests import generate_clinical
+        return await generate_clinical(self, case, pack, science, translation, ctx)
 
     async def generate_structured(self, prompt_id: str, payload: dict[str, Any],
                                   response_model: type[T], ctx: RunContext) -> T:
@@ -409,7 +413,7 @@ class StructuredLlm:
 
 def build_llm(settings: Settings) -> StructuredLlm:
     return StructuredLlm(make_provider(settings), settings)
-PROMPT_IDS = ("science", "translation", "clinical", "clinical_design", "clinical_development", "market", "market_competitive", "market_commercial", "investment_plan", "investment",
+PROMPT_IDS = ("science", "translation", "clinical", "clinical_design", "clinical_development", "clinical_planning", "clinical_population", "clinical_endpoints", "clinical_safety", "market", "market_competitive", "market_commercial", "investment_plan", "investment",
               "chair", "audit", "ip_licensing", "partnerships", "investment_threshold", "failure_miner", "context_brief")
 
 
