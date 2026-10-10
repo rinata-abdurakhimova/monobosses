@@ -1,5 +1,7 @@
 "use client";
 
+import { analysisStatus, visibleFindings } from "@/lib/analysis-status";
+
 import { useState } from "react";
 import { EvidenceDialog } from "@/components/EvidenceDialog";
 import { AnalysisDetails } from "@/components/AnalysisDetails";
@@ -19,7 +21,10 @@ export function RoleCard({
         <span className="role-initials">{role.initials}</span>
         <h3>{role.name}</h3>
       </div>
-      <span className="role-position">{role.position}</span>
+      <span className="role-position">{analysisStatus(role).label}</span>
+      {analysisStatus(role).explanation && (
+        <p>{analysisStatus(role).explanation}</p>
+      )}
       <p>{role.summary}</p>
       <div className="role-unknown">
         <span>Key unknown</span>
@@ -28,8 +33,20 @@ export function RoleCard({
           <small>{role.unknowns.length - 1} more in reasoning details</small>
         )}
       </div>
+      {role.claims.length > 0 && (
+        <div>
+          <h4>Findings from this analysis</h4>
+          <ul>
+            {visibleFindings(role.claims).map((item) => (
+              <li key={item.id}>
+                {item.text} <small>({item.support_status})</small>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <details>
-        <summary>Reasoning and decision conditions</summary>
+        <summary>All claims, reasoning and decision conditions</summary>
         <div className="claims-list">
           {role.claims.map((item) => (
             <button

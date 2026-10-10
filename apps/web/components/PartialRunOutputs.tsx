@@ -1,3 +1,5 @@
+import { isVisibleRole } from "@/lib/visible-roles";
+import { analysisStatus, visibleFindings } from "@/lib/analysis-status";
 import type { RunOutputs } from "@/lib/api/types";
 import { AnalysisDetails } from "@/components/AnalysisDetails";
 
@@ -18,9 +20,9 @@ const names: Record<string, string> = {
 export function PartialRunOutputs({ outputs }: { outputs: RunOutputs }) {
   const hasAttempts = outputs.nodes.some((node) => (node.attempt ?? 0) > 0);
   const order = Object.keys(names);
-  const nodes = [...outputs.nodes].sort(
-    (a, b) => order.indexOf(a.role_id) - order.indexOf(b.role_id),
-  );
+  const nodes = outputs.nodes
+    .filter((node) => isVisibleRole(node.role_id))
+    .sort((a, b) => order.indexOf(a.role_id) - order.indexOf(b.role_id));
   return (
     <section
       className="panel partial-run-outputs"
@@ -63,11 +65,31 @@ export function PartialRunOutputs({ outputs }: { outputs: RunOutputs }) {
             {node.result && (
               <>
                 <p>
-                  <strong>{node.result.position}</strong>
+                  <strong>{analysisStatus(node.result).label}</strong>
                 </p>
+                {analysisStatus(node.result).explanation && (
+                  <p>{analysisStatus(node.result).explanation}</p>
+                )}
                 <p>{node.result.summary}</p>
+                <p>
+                  {node.result.claims?.length ?? 0} claims ·{" "}
+                  {node.result.risks?.length ?? 0} risks ·{" "}
+                  {node.result.unknowns?.length ?? 0} evidence gaps
+                </p>
+                {(node.result.claims?.length ?? 0) > 0 && (
+                  <div>
+                    <h4>Findings from this analysis</h4>
+                    <ul>
+                      {visibleFindings(node.result.claims).map((claim) => (
+                        <li key={claim.id}>
+                          {claim.text} <small>({claim.support_status})</small>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <details>
-                  <summary>Claims, risks, gaps and analysis</summary>
+                  <summary>All claims, risks, gaps and analysis</summary>
                   <AnalysisDetails
                     value={{
                       claims: node.result.claims,

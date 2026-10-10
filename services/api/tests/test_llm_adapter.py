@@ -203,3 +203,15 @@ def test_science_translation_repair_does_not_replay_large_invalid_answer(prompt_
     assert result.answer == "corrected"
     assert all(message["role"] != "assistant" for message in provider.calls[1])
     assert sum(len(message["content"].encode()) for message in provider.calls[1]) < 1000
+
+
+@pytest.mark.parametrize('payload', [{'scope': 'approach'}, {'case': {'scope': 'approach'}}])
+def test_approach_scope_instruction_reaches_flat_and_nested_agent_payloads(payload):
+    _, system, _ = llm_module.structured_request('translation', payload, Out, _ctx())
+    assert 'All output claims must remain at approach scope' in system
+    assert 'Do not merely relabel program-specific facts' in system
+
+
+def test_program_assessment_keeps_program_scope_available():
+    _, system, _ = llm_module.structured_request('translation', {'scope': 'program'}, Out, _ctx())
+    assert 'All output claims must remain at approach scope' not in system

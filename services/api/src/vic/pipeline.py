@@ -16,6 +16,7 @@ from pydantic import ValidationError
 from vic import integrity
 from vic.config import Settings
 from vic.contracts import (
+    AuditFinding,
     AuditResult,
     CaseInput,
     Claim,
@@ -38,9 +39,16 @@ from vic.contracts import (
     SupportStatus,
     Usage,
 )
-from vic.failures import ProviderAuthError, RunFailure, RunTimeout, SourceOutage, ValidationFailed
+from vic.failures import (
+    MalformedModelOutput,
+    ProviderAuthError,
+    RunFailure,
+    RunTimeout,
+    SourceOutage,
+    ValidationFailed,
+)
 from vic.modules import STUB_ORIGIN, Modules, call_audit, call_clinical, call_investment
-from vic.report_builder import build_report
+from vic.report_builder import SECTION_OWNERS, build_report
 from vic.storage import ReportExistsError, Repository, new_id
 from vic.tracing import config_version, scrub
 
@@ -85,6 +93,7 @@ class Pipeline:
     def __init__(self, repo: Repository, settings: Settings, modules_factory: Callable[[], Modules],
                  llm_factory: Callable[[], Any]):
         self.repo, self.settings = repo, settings
+        self.role_order = ROLE_ORDER[:7] if settings.short_committee else ROLE_ORDER
         self._modules_factory, self._llm_factory = modules_factory, llm_factory
         self.run: Run
         self.ctx: RunContext
@@ -103,18 +112,30 @@ class Pipeline:
         return await asyncio.to_thread(fn, *args)
 
     # ------------------------------------------------------------------ lifecycle
-    async def execute(self, run: Run) -> Run:
+    async def execute(self, run: Run, *, resume: bool = False) -> Run:
         s = self.settings
         self.run = run
         self.ctx = RunContext(
             case_id=run.case_id, run_id=run.id, snapshot_id=None, as_of_date=None,
             mode=run.mode or RunMode.LIVE, model=None,
-            budget=RunBudget(max_cost_usd=s.max_run_cost_usd, max_seconds=s.max_run_seconds,
-                             deadline=time.monotonic() + s.max_run_seconds))
+            budget=RunBudget() if s.provider_input_limit_test else RunBudget(
+                max_cost_usd=s.max_run_cost_usd, max_seconds=s.max_run_seconds,
+                deadline=time.monotonic() + s.max_run_seconds))
+        self._resume_trace = await self._io(self.repo.get_trace, run.id) if resume else None
+        if resume and not self._resume_trace:
+            raise ValidationFailed("Saved trace is required to resume", code="resume_unavailable")
+        if self._resume_trace:
+            self.ctx.trace.events.extend(self._resume_trace.get('events', []))
+            self.ctx.trace.usage.extend(self._resume_trace.get('usage', []))
+            self.ctx.budget.spent_cost_usd = sum(u.get('cost_usd') or 0 for u in self.ctx.trace.usage)
+            self.ctx.budget.cost_unavailable = any(u.get('cost_usd') is None for u in self.ctx.trace.usage)
+            self._durations.update(self._resume_trace.get('stage_durations_ms', {}))
+            self._durations.pop('total', None)
         started = time.monotonic()
         failure: RunFailure | None = None
         try:
-            await asyncio.wait_for(self._body(), timeout=s.max_run_seconds)
+            await asyncio.wait_for(self._body(),
+                timeout=None if s.provider_input_limit_test else s.max_run_seconds)
         except TimeoutError:
             failure = RunTimeout(f"The run exceeded the time limit of {s.max_run_seconds} seconds")
         except RunFailure as exc:
@@ -146,7 +167,7 @@ class Pipeline:
     async def _close(self, failure: RunFailure | None, started: float) -> Run:
         self._end_stage()
         ctx = self.ctx
-        durations = {**self._durations, "total": int((time.monotonic() - started) * 1000)}
+        durations = {**self._durations, "total": int((time.monotonic() - started) * 1000) + (self._resume_trace or {}).get("stage_durations_ms", {}).get("total", 0)}
         records = ctx.trace.usage
         ok = [u for u in records if u.get("outcome") == "ok"]
         tokens_known = bool(ok) and all(u["input_tokens"] is not None and u["output_tokens"] is not None
@@ -190,12 +211,50 @@ class Pipeline:
         await self._enter(RunStage.VALIDATE)
         case, parent, modules = await self._validate()
         self.ctx.as_of_date = case.as_of_date
+        self._case_scope = case.scope
         await self._enter(RunStage.RETRIEVE)
-        pack = await self._retrieve(case, parent, modules)
-        await self._enter(RunStage.ANALYZE)
-        results = await self._analyze_all(case, pack, modules)
-        await self._enter(RunStage.AUDIT)
-        audit = await self._audit_and_repair(case, pack, modules, results)
+        if self._resume_trace:
+            pack = await self._io(self.repo.get_snapshot, self._resume_trace['snapshot_id'])
+            if pack is None:
+                raise ValidationFailed("Saved evidence snapshot missing", code="resume_unavailable")
+            self._snapshot_id = self.ctx.snapshot_id = pack.snapshot_id
+            integrity.assert_pack(pack)
+            nodes = await self._io(self.repo.get_nodes, self.run.id)
+            self._node_states = {n.role_id: n for n in nodes}
+            results = {}
+            scope_recovered = set()
+            for role in self.role_order:
+                node = self._node_states[role]
+                if node.status != 'completed' or node.stale or node.result is None:
+                    break
+                results[role] = self._scope_safe_result(role, node.result)
+                if results[role] != node.result:
+                    scope_recovered.add(role)
+                    await self._save_node(role, 'completed', result=results[role])
+            # Cached dependent outputs were produced from the now-rejected input.
+            for role in _expand(scope_recovered) - scope_recovered:
+                results.pop(role, None)
+            remaining = set(self.role_order) - results.keys()
+            for role in [*remaining, RoleId.AUDIT, RoleId.CHAIR]:
+                old = self._node_states[role]
+                reset = NodeOutput(role_id=role, attempt=old.attempt)
+                await self._io(self.repo.save_node, self.run.id, reset)
+                self._node_states[role] = reset
+            self.ctx.trace.log(RunStage.ANALYZE, f"Resume reused completed nodes: {[r.value for r in results]}")
+            self._collect_claims(results, pack)
+            await self._enter(RunStage.ANALYZE)
+            await self._run_roles(remaining, results, case, pack, modules)
+            self._collect_claims(results, pack)
+        else:
+            pack = await self._retrieve(case, parent, modules)
+            await self._enter(RunStage.ANALYZE)
+            results = await self._analyze_all(case, pack, modules)
+        if self.settings.short_committee:
+            audit = AuditResult(warnings=['Short assessment: semantic audit, investment threshold and failure miner were not run.'])
+            self.ctx.warnings.extend(audit.warnings)
+        else:
+            await self._enter(RunStage.AUDIT)
+            audit = await self._audit_and_repair(case, pack, modules, results)
         await self._enter(RunStage.SYNTHESIZE)
         decision = await self._track(RoleId.CHAIR,
             lambda: self._synthesize(case, pack, modules, results, audit),
@@ -303,14 +362,126 @@ class Pipeline:
                                    "confirmed absence of data") from exc
             raise RunFailure(f"The {name} step failed ({type(exc).__name__})", code=code) from exc
 
+    def _validation_reason(self, exc: RunFailure) -> str:
+        cause = exc.__cause__ or exc
+        if isinstance(cause, ValidationError):
+            detail = '; '.join(('.'.join(str(part) for part in e['loc']) or '<root>')
+                + ': ' + e['type'] + ': ' + e['msg']
+                for e in cause.errors(include_input=False, include_context=False))
+        else:
+            detail = str(cause)
+        return scrub(detail, secrets=[self.settings.llm_api_key,
+            self.settings.api_shared_secret])[:500]
+
+    def _scope_safe_result(self, role: RoleId, result: RoleResult) -> RoleResult:
+        if getattr(self, '_case_scope', None) != 'approach':
+            return result
+        incompatible = [c.id for c in result.claims if c.scope == 'program']
+        if not incompatible:
+            return result
+        if not self.settings.continue_on_node_validation_error:
+            raise ValidationFailed('Program claim expands approach scope', code='scope_mismatch')
+        message = (f"{role.value} analysis unavailable: program-specific claims conflict with this approach-level assessment. "
+            "The assessment scope was not changed; the rejected analysis must be regenerated at the correct scope.")
+        self.ctx.warnings.append(message)
+        self.ctx.trace.log(RunStage.ANALYZE, f'{role.value} scope recovery: incompatible_claim_count={len(incompatible)}')
+        return RoleResult(role_id=role, summary=message, position='insufficient_data',
+            unknowns=[message, 'Incompatible claim IDs: ' + ', '.join(incompatible)],
+            section_content=[SectionContent(key=key, summary=message, limitations=[message],
+                structured_data={'node_recovery': {'role': role.value,
+                    'status': 'analysis_unavailable', 'error_code': 'scope_mismatch',
+                    'rejected_claim_ids': incompatible}})
+                for key in ([k for k, owner in SECTION_OWNERS.items() if owner == role] or ['critical_unknowns'])])
+
+    def _partial_assessment(self, result: RoleResult) -> RoleResult:
+        if (result.role_id not in {RoleId.CLINICAL, RoleId.MARKET, RoleId.PARTNERSHIPS}
+                or result.position != 'insufficient_data'):
+            return result
+        if any((section.structured_data or {}).get('node_recovery')
+                for section in result.section_content):
+            return result
+        findings = [c for c in result.claims if c.evidence_ids
+            and c.support_status in {SupportStatus.SUPPORTED, SupportStatus.MIXED,
+                SupportStatus.CONTRADICTED}]
+        if not findings:
+            return result
+        # Partial is a description of usable output, not a positive feasibility/fit verdict.
+        return result.model_copy(update={'position': 'partial_assessment',
+            'section_content': [section.model_copy(update={'structured_data': {
+                **(section.structured_data or {}), 'assessment_coverage': {
+                    'status': 'partial_assessment', 'original_position': result.position,
+                    'finding_claim_ids': [c.id for c in findings],
+                    'limitation': 'Findings support a preliminary analysis; missing evidence still limits definitive conclusions.'}}})
+                for section in result.section_content]})
+
     async def _agent(self, role: RoleId, factory) -> RoleResult:
         async def invoke():
-            result = await self._module(f"{role.value} analysis", factory)
+            previous_feedback = self.ctx.feedback.get(role.value)
+            repair_feedback_added = False
+            try:
+                for attempt in range(2):
+                    try:
+                        result = await self._module(f"{role.value} analysis", factory)
+                    except RunFailure as exc:
+                        # Domain checks run after schema generation in specialist modules.
+                        # Give their exact defect one bounded correction before recovery.
+                        if (attempt or not self.settings.continue_on_node_validation_error
+                                or not isinstance(exc.__cause__, ValueError)):
+                            raise
+                        detail = self._validation_reason(exc)
+                        self.ctx.trace.log(RunStage.ANALYZE,
+                            f"{role.value} domain repair: {detail}")
+                        self.ctx.feedback[role.value] = [*(previous_feedback or []),
+                            AuditFinding(claim_id=f'{role.value}.output_validation',
+                                verdict=SupportStatus.UNVERIFIED, blocking=True,
+                                reason='Regenerate the analysis correcting this validation error: ' + detail
+                                    + '. Preserve evidence-backed findings, explicit unknowns and all required '
+                                    'schema fields; do not invent evidence or convert unknowns to facts.')]
+                        repair_feedback_added = True
+                        continue
+                    if not isinstance(result, RoleResult) or result.role_id != role:
+                        break
+                    incompatible = [c.id for c in result.claims if c.scope == 'program']
+                    if (attempt or not incompatible or getattr(self, '_case_scope', None) != 'approach'
+                            or not self.settings.continue_on_node_validation_error):
+                        break
+                    self.ctx.trace.log(RunStage.ANALYZE,
+                        f"{role.value} scope repair: regenerate incompatible claims {incompatible}")
+                    self.ctx.feedback[role.value] = [*(previous_feedback or []), *[
+                        AuditFinding(claim_id=cid, verdict=SupportStatus.UNVERIFIED, blocking=True,
+                            reason="This case assesses an approach, not a specific program. Regenerate the analysis "
+                                "at approach scope. Preserve evidence-backed class conclusions and candidate "
+                                "examples with applicability limitations. Express missing candidate PK/PD, "
+                                "exposure and safety as approach-level diligence gaps. Do not relabel "
+                                "candidate-specific conclusions as class facts or invent missing evidence.")
+                        for cid in incompatible]]
+                    repair_feedback_added = True
+            except RunFailure as exc:
+                recoverable = isinstance(exc, MalformedModelOutput) or isinstance(exc.__cause__, ValueError)
+                if not self.settings.continue_on_node_validation_error or not recoverable:
+                    raise
+                message = f"{role.value} analysis unavailable: output failed validation. No conclusions from the rejected output were retained."
+                detail = self._validation_reason(exc)
+                self.ctx.warnings.append(message)
+                self.ctx.trace.log(RunStage.ANALYZE, f"{role.value} validation recovery: {exc.code}: {detail}")
+                result = RoleResult(role_id=role, position='insufficient_data', summary=message,
+                    unknowns=[message, 'Validation reason: ' + detail, 'Rerun this specialist after correcting its output; downstream conclusions require review.'],
+                    section_content=[SectionContent(key=key, summary=message,
+                        limitations=[message], structured_data={'node_recovery': {
+                            'role': role.value, 'status': 'analysis_unavailable', 'error_code': exc.code,
+                            'validation_reason': detail}})
+                        for key in ([k for k, owner in SECTION_OWNERS.items() if owner == role] or ['critical_unknowns'])])
+            finally:
+                if repair_feedback_added:
+                    if previous_feedback is None:
+                        self.ctx.feedback.pop(role.value, None)
+                    else:
+                        self.ctx.feedback[role.value] = previous_feedback
             if not isinstance(result, RoleResult):
                 raise RunFailure(f"The {role.value} analysis returned an invalid result", code="agent_error")
             if result.role_id != role:
                 raise ValidationFailed(f"The {role.value} analysis returned role_id '{result.role_id.value}'")
-            return result
+            return self._partial_assessment(self._scope_safe_result(role, result))
         return await self._track(role, invoke)
 
     async def _save_node(self, role, status, *, result=None, error=None):
@@ -403,14 +574,14 @@ class Pipeline:
 
     async def _analyze_all(self, case, pack, modules) -> dict[RoleId, RoleResult]:
         results: dict[RoleId, RoleResult] = {}
-        await self._run_roles(set(ROLE_ORDER), results, case, pack, modules)
+        await self._run_roles(set(self.role_order), results, case, pack, modules)
         self._collect_claims(results, pack)  # fail fast on dangling evidence / duplicate claims
         return results
 
     def _collect_claims(self, results: dict[RoleId, RoleResult], pack: EvidencePack) -> list[Claim]:
         evidence_ids = {e.id for e in pack.evidence}
         merged: dict[str, Claim] = {}
-        for role in ROLE_ORDER:
+        for role in self.role_order:
             for c in (results[role].claims if role in results else []):
                 if c.id in merged and merged[c.id] != c:
                     raise ValidationFailed(f"Claim '{c.id}' was produced twice with different content",
@@ -445,7 +616,17 @@ class Pipeline:
         documents = await self._io(self.repo.list_documents, self.run.case_id)
         async def invoke():
             return await call_audit(modules.audit_claims, claims, pack, self.ctx, documents=documents)
-        audit = await self._module("claim audit", invoke, code="audit_error")
+        try:
+            audit = await self._module("claim audit", invoke, code="audit_error")
+        except RunFailure as exc:
+            recoverable = isinstance(exc, MalformedModelOutput) or isinstance(exc.__cause__, ValueError)
+            if not self.settings.continue_on_node_validation_error or not recoverable:
+                raise
+            audit = AuditResult(findings=[AuditFinding(claim_id=c.id,
+                verdict=SupportStatus.UNVERIFIED, reason='Audit output failed validation; evidence support remains unverified.',
+                evidence_ids=c.evidence_ids, blocking=True) for c in claims],
+                unresolved_critical_claim_ids=[c.id for c in claims if c.importance == Importance.CRITICAL],
+                warnings=['Semantic audit unavailable: output failed validation. Chair must treat this as an evidence limitation.'])
         if not isinstance(audit, AuditResult):
             raise RunFailure("The claim audit returned an invalid result", code="audit_error")
         self.ctx.warnings.extend(f"Audit: {w}"[:300] for w in audit.warnings)
@@ -464,7 +645,9 @@ class Pipeline:
         ids = {c.id for c in claims}
         audit = await self._audit(claims, pack, modules)
         problem = self._blocking(audit, ids)
-        if problem:  # ONE subject-level repair: only the owners of the blocked claims (+ dependents)
+        if problem and self.settings.continue_on_node_validation_error:
+            self.ctx.trace.log(RunStage.AUDIT, 'Audit blockers retained for Chair; specialist reruns skipped')
+        if problem and not self.settings.continue_on_node_validation_error:  # ONE subject-level repair: only the owners of the blocked claims (+ dependents)
             owners = {r for r, res in results.items() if {c.id for c in res.claims} & problem}
             for role in owners:
                 self.ctx.feedback[role.value] = [f for f in audit.findings if f.claim_id in
@@ -503,6 +686,12 @@ class Pipeline:
 
     async def _synthesize(self, case, pack, modules, results, audit) -> CommitteeDecision:
         ctx = self.ctx
+        if self.settings.short_committee:
+            from vic.short_committee import synthesize_short_committee
+            decision, chair = await synthesize_short_committee(
+                case, pack, [results[r] for r in self.role_order if r in results], ctx)
+            results[RoleId.CHAIR] = chair
+            return decision
         ordered = [results[r] for r in ROLE_ORDER if r in results]
         known = {c.id for res in ordered for c in res.claims}
 
@@ -550,7 +739,14 @@ class Pipeline:
             decision = decision.model_copy(update={"additional_claims": extra})
             self._unresolved |= {c.id for c in extra if c.id in blocked and c.importance == Importance.CRITICAL}
             ctx.warnings.append("Chair claims set to 'unverified' after the audit: " + ", ".join(sorted(blocked)))
-        if self._unresolved and decision.recommendation == Recommendation.INVEST:
+        unavailable = [r.value for r, result in results.items() if any(
+            (section.structured_data or {}).get('node_recovery', {}).get('status') == 'analysis_unavailable'
+            or (section.structured_data or {}).get('investment', {}).get('explanation_recovery', {}).get('status') == 'analysis_unavailable'
+            for section in result.section_content)]
+        if unavailable:
+            decision = decision.model_copy(update={'conditions': [*decision.conditions,
+                'Required specialist analyses unavailable: ' + ', '.join(unavailable) + '. Complete them before acting on this assessment.']})
+        if (self._unresolved or unavailable) and decision.recommendation == Recommendation.INVEST:
             decision = decision.model_copy(update={
                 "recommendation": Recommendation.CONDITIONAL,
                 "conditions": [*decision.conditions, "Recommendation lowered to Conditional: critical claims "
@@ -583,14 +779,15 @@ class Pipeline:
         audited_claims = [claim for claim in claims if claim.id in self._audit_findings]
         findings = [self._audit_findings[claim.id].model_dump(mode="json") for claim in audited_claims]
         audit_summary = f"Checked {len(audited_claims)} claims; {len(self._unresolved)} unresolved critical claims."
-        roles.append(RoleResult(role_id=RoleId.AUDIT, summary=audit_summary,
-            position="Review required" if self._unresolved else "Audit completed with limitations",
-            claims=audited_claims, unknowns=list(dict.fromkeys(self._audit_warnings)),
-            section_content=[SectionContent(key="sources", summary=audit_summary,
-                claim_ids=[claim.id for claim in audited_claims],
-                limitations=["Automated audit is not independent expert verification."],
-                structured_data={"findings": findings,
-                                 "unresolved_critical_claim_ids": sorted(self._unresolved)})]))
+        if not self.settings.short_committee:
+            roles.append(RoleResult(role_id=RoleId.AUDIT, summary=audit_summary,
+                position="Review required" if self._unresolved else "Audit completed with limitations",
+                claims=audited_claims, unknowns=list(dict.fromkeys(self._audit_warnings)),
+                section_content=[SectionContent(key="sources", summary=audit_summary,
+                    claim_ids=[claim.id for claim in audited_claims],
+                    limitations=["Automated audit is not independent expert verification."],
+                    structured_data={"findings": findings,
+                                     "unresolved_critical_claim_ids": sorted(self._unresolved)})]))
         report_id = new_id("rep")
 
         def make(version: int) -> Report:

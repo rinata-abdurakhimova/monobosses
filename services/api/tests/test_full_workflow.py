@@ -47,7 +47,7 @@ def response(prompt_id, payload):
             "change_conditions": ["Reviewed human data"], "limitations": ["Synthetic integration test"]}
     if prompt_id == "translation":
         return translation_output().model_dump(mode="json")
-    if prompt_id == "clinical":
+    if prompt_id == "clinical" or prompt_id.startswith("clinical_"):
         raw = clinical_output().model_dump(mode="json")
         # Preserve an honestly missing statistical basis rather than importing another fixture's facts.
         raw["trial_size"] = {"has_basis": False, "estimate": None, "assumptions": [],
@@ -55,6 +55,10 @@ def response(prompt_id, payload):
         raw["claims"] = []
         raw["risks"] = []
         raw["historical_analogues"] = []
+        if prompt_id != "clinical":
+            from vic.agents.science.clinical import _COMMON_FIELDS
+            from vic.clinical_requests import TASKS
+            raw = {key: value for key, value in raw.items() if key in TASKS[prompt_id][0] | _COMMON_FIELDS}
         return raw
     if prompt_id in ("market_competitive", "market_commercial"):
         return split_output(market_fixture()[2], prompt_id)
@@ -169,10 +173,15 @@ class Model(StructuredLlm):
 
     async def _generate_direct(self, *args, **kwargs):
         token = INVERSE.set(kwargs.get("inverse") or {})
+        direct_token = CURRENT.set((args[0], args[1])) if args[0].startswith("clinical_") else None
+        if direct_token is not None:
+            self.calls.append((args[0], args[1]))
         try:
             return await super()._generate_direct(*args, **kwargs)
         finally:
             INVERSE.reset(token)
+            if direct_token is not None:
+                CURRENT.reset(direct_token)
 
 
 def test_http_runs_all_real_nodes_and_preserves_rich_results(tmp_path, monkeypatch):

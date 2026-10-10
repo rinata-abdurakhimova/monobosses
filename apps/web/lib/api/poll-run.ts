@@ -9,7 +9,7 @@ export async function pollRun(
   options: {
     signal?: AbortSignal;
     intervalMs?: number;
-    maxWaitMs?: number;
+    maxWaitMs?: number | null;
     onUpdate?: (run: Run) => void;
   } = {},
 ): Promise<Run> {
@@ -17,18 +17,21 @@ export async function pollRun(
   const cancel = () => controller.abort(options.signal?.reason);
   options.signal?.addEventListener("abort", cancel, { once: true });
   if (options.signal?.aborted) cancel();
-  const deadline = setTimeout(
-    () =>
-      controller.abort(
-        new ApiError(
-          "POLL_TIMEOUT",
-          "Status checks paused after the waiting limit. The existing run was not restarted.",
-          null,
-          true,
-        ),
-      ),
-    options.maxWaitMs ?? 15000,
-  );
+  const deadline =
+    options.maxWaitMs === null
+      ? null
+      : setTimeout(
+          () =>
+            controller.abort(
+              new ApiError(
+                "POLL_TIMEOUT",
+                "Status checks paused after the waiting limit. The existing run was not restarted.",
+                null,
+                true,
+              ),
+            ),
+          options.maxWaitMs ?? 15000,
+        );
   try {
     while (true) {
       throwIfAborted(controller.signal);
@@ -53,7 +56,7 @@ export async function pollRun(
       );
     throw error;
   } finally {
-    clearTimeout(deadline);
+    if (deadline !== null) clearTimeout(deadline);
     options.signal?.removeEventListener("abort", cancel);
   }
 }

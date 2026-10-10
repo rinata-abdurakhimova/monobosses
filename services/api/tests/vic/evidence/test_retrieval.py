@@ -6,7 +6,7 @@ import httpx
 
 from vic.contracts import CaseInput, RunContext, RunMode, Scope
 from vic.evidence.connectors.clinicaltrials import STOPPED
-from vic.evidence.importer import parse_text, verify_pack  # noqa: F401
+from vic.evidence.importer import parse_text, verify_pack
 from vic.evidence.retrieval import build_evidence_pack
 
 from .test_clinicaltrials import RECRUITING, TERMINATED
@@ -115,3 +115,27 @@ def test_user_document_is_merged_and_deduplicated_with_external():
     pack = _run(_router(), extra_documents=[doc, doc])
     assert sorted({s.type for s in pack.sources}) == ["peer_reviewed", "registry", "user_upload"]
     assert sum(s.type == "user_upload" for s in pack.sources) == 1
+
+def test_pre_cap_connector_defaults_are_restored_even_with_retired_variables(monkeypatch):
+    monkeypatch.setenv('RETRIEVAL_PUBMED_RETMAX', '1')
+    monkeypatch.setenv('RETRIEVAL_TRIALS_PAGE_SIZE', '1')
+    seen = []
+    _run(_router(seen))
+    pubmed = [r for r in seen if r.url.path.endswith('esearch.fcgi')]
+    trials = [r for r in seen if r.url.host == CT]
+    assert pubmed and all(r.url.params['retmax'] == '3' for r in pubmed)
+    assert trials and all(r.url.params['pageSize'] == '4' for r in trials)
+
+
+def test_full_external_records_and_excerpts_survive_pack_assembly():
+    from vic.evidence.retrieval import _finish
+    docs = [parse_text(f'Paper {i}', f'Paper {i}: ' + 'Untrimmed safety evidence. ' * 1000) for i in range(12)]
+    from vic.evidence.importer import Annotation
+    for doc in docs:
+        doc.annotations = [Annotation(u.text, u.locator, Scope.APPROACH, []) for u in doc.units]
+    pack = _finish(docs, [], _ctx())
+    assert len(pack.sources) == 12
+    expected = {doc.source_id: [u.text for u in doc.units] for doc in docs}
+    for evidence in pack.evidence:
+        assert evidence.excerpt in expected[evidence.source_id]
+    assert sum(len(e.excerpt.encode('utf-8')) for e in pack.evidence) > 1000

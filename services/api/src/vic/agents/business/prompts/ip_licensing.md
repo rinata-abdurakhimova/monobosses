@@ -83,3 +83,5 @@ R2: register this prompt path under ip_licensing, record version/hash, and imple
 bounded timeout/retry, invalid-output handling and trace in the shared adapter.
 This prompt and structural validator alone do not guarantee factual accuracy or
 protection from prompt injection. R3 audits evidence; a specialist reviews law.
+
+All risk IDs must be unique and start with ip_licensing. (for example ip_licensing.risk.title_gap). Risk claim_ids refer to claims, never to risk IDs.

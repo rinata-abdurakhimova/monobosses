@@ -1,4 +1,5 @@
 """Evidence-only IP screening. No retrieval, deal valuation or legal clearance."""
+import hashlib
 from datetime import date
 from pathlib import Path
 from typing import Annotated, Literal
@@ -6,7 +7,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from vic.contracts import (
-    CaseInput, Claim, EvidencePack, Risk, RoleResult, RunContext, SectionContent,
+    CaseInput, Claim, EvidencePack, Risk, RoleResult, RunContext, RunStage, SectionContent,
 )
 from vic.integrity import assert_pack
 
@@ -229,6 +230,28 @@ def _walk(value):
             yield from _walk(child)
 
 
+def normalize_ip_risk_ids(analysis: IPLicensingAnalysis) -> IPLicensingAnalysis:
+    """Namespace model risk IDs without changing claims or substantive IP findings."""
+    original_ids = [risk.id for risk in analysis.risks]
+    if len(set(original_ids)) != len(original_ids):
+        raise ValueError("Duplicate IP risk IDs are ambiguous")
+    occupied = {rid for rid in original_ids if rid.startswith("ip_licensing.")}
+    normalized = []
+    for risk in analysis.risks:
+        if risk.id.startswith("ip_licensing."):
+            normalized.append(risk)
+            continue
+        # Hash the full original ID: distinct foreign namespaces stay distinct.
+        base = "ip_licensing.risk." + hashlib.sha256(risk.id.encode("utf-8")).hexdigest()[:16]
+        candidate, suffix = base, 1
+        while candidate in occupied:
+            candidate = f"{base}_{suffix}"
+            suffix += 1
+        occupied.add(candidate)
+        normalized.append(risk.model_copy(update={"id": candidate}))
+    return analysis.model_copy(update={"risks": normalized})
+
+
 def validate_ip_licensing_result(analysis: IPLicensingAnalysis,
                                  case: CaseInput, pack: EvidencePack) -> None:
     """Structural screening only. Excerpt support and FTO need expert review."""
@@ -286,6 +309,8 @@ def validate_ip_licensing_result(analysis: IPLicensingAnalysis,
                 raise ValueError("Incomplete patent requires explicit gaps")
         if isinstance(block, LicenseRecord) and block.rights_granted.basis != "documented":
             raise ValueError("Known license requires documented rights; proposals belong in options")
+    if len({r.id for r in analysis.risks}) != len(analysis.risks):
+        raise ValueError("Duplicate IP risk IDs are ambiguous")
     if any(not r.id.startswith("ip_licensing.") for r in analysis.risks):
         raise ValueError("Risk IDs must belong to ip_licensing")
     if set(analysis.coverage) != set(CoverageArea.__args__):
@@ -348,6 +373,11 @@ async def analyze_ip_licensing(case: CaseInput, pack: EvidencePack, ctx: RunCont
         raise RuntimeError("R2 model adapter with generate_structured is required")
     raw = await ctx.model.generate_structured(PROMPT_ID, payload, IPLicensingAnalysis, ctx)
     analysis = IPLicensingAnalysis.model_validate(raw)
+    original_risk_ids = [risk.id for risk in analysis.risks]
+    analysis = normalize_ip_risk_ids(analysis)
+    changed = sum(before != risk.id for before, risk in zip(original_risk_ids, analysis.risks))
+    if changed:
+        ctx.trace.log(RunStage.ANALYZE, f"ip_licensing normalized risk IDs: count={changed}")
     validate_ip_licensing_result(analysis, case, pack)
     gaps = identify_ip_licensing_gaps(analysis)
     limitations = list(dict.fromkeys([*analysis.limitations, *pack.retrieval_warnings,

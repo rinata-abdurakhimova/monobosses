@@ -145,3 +145,107 @@ Screenshot saved locally at `apps/web/artifacts/railway-check/deployed-revision.
 39 frontend tests pass, including the HTTPS-origin regression test. TypeScript, contract drift, formatting, production build and `git diff --check` pass. A local production server check confirms health/fixture HTTP 200, a configured HTTPS-origin submission HTTP 201 through Python, and a cross-origin submission HTTP 403. Docker image builds and Railway networking/volume behavior require Docker or an actual Railway deployment; Docker is not installed in this workspace, so those are not locally verified. No hosting account, paid resource or deployment is created by adding these files.
 
 Platform references: [Railway monorepos](https://docs.railway.com/guides/deploying-a-monorepo), [Dockerfiles](https://docs.railway.com/builds/dockerfiles), [private networking](https://docs.railway.com/networking/private-networking), [health checks](https://docs.railway.com/deployments/healthchecks), [volumes](https://docs.railway.com/volumes), [trial](https://docs.railway.com/pricing/free-trial).
+
+External retrieval retains every returned document and its original annotations,
+without a post-retrieval document-count or excerpt-byte cap. PubMed and trial
+queries use the earlier RETRIEVAL_PUBMED_PER_QUERY=3 and
+RETRIEVAL_TRIALS_PER_QUERY=4 defaults. These query counts do not guarantee an
+exhaustive search. The retired RETRIEVAL_PUBMED_RETMAX,
+RETRIEVAL_TRIALS_PAGE_SIZE, RETRIEVAL_MAX_EXTERNAL_DOCUMENTS and
+RETRIEVAL_EXCERPT_MAX_BYTES variables are ignored. Restart and start a new
+assessment to retrieve new evidence; Retry deliberately reuses the old snapshot.
+
+## Provider input-limit diagnostics
+
+`PROVIDER_INPUT_LIMIT_TEST=true` is now the default. It sends complete scoped
+LLM inputs without Science reviews, general-node budgeting, Market byte/audit
+batching, or semantic-audit batching. Retrieved documents keep their full selected
+annotations rather than the local document/excerpt sample caps. Connector query
+page sizes still control search breadth, not acceptance of supplied input.
+
+Run cost ceilings, run deadlines (including the Science diagnostic deadline),
+and LLM request timeouts are bypassed. OpenAI-compatible requests omit the output
+token cap and let the gateway choose it. Anthropic still requires max_tokens.
+Existing limit variables cannot re-enable these checks while this mode is true.
+Set false to opt back into the older bounded behavior. Restart and use a new run.
+
+Schema/citation validation, authentication, concurrency, file-upload validation,
+connector timeouts, and finite error/repair retries remain. These protect data
+correctness and transport behavior; they are not LLM input-size budgets. Provider
+and hosting limits can still reject requests. No local run cost/time ceiling
+means runs can last longer and incur more provider charges.
+
+## Market competitor status recovery
+
+Market checks competitor status/category consistency before merging responses.
+A conflict receives one targeted correction with the full original input and
+audit feedback. If that same conflict remains, the inconsistent competitor entries
+and their dependent comparisons become explicit gaps in a partial Market result.
+Affected coverage becomes insufficient_data where no valid entry remains. The
+summary and limitations disclose the partial result, while commercial output and
+evidence-backed claims remain available for subsequent audit. Other validation
+failures still surface normally. Saved failed runs are not rewritten: deploy the
+change and start a new assessment.
+
+## Resume a failed assessment
+
+The failed assessment screen provides **Retry from failed node**. It posts to
+`/runs/{run_id}/resume` and continues the same run ID. A contiguous prefix of
+completed, non-stale specialist nodes is reused with the original saved evidence
+snapshot. The first incomplete specialist and all later specialists are rerun;
+audit and committee synthesis run again. Existing attempt counters and usage
+records are retained. No external evidence retrieval is repeated. Newly imported
+evidence is excluded from this snapshot; use a new assessment to include it.
+
+Only failed pipeline runs with a saved snapshot can resume. Active runs, runs
+with saved reports or a newer report, and duplicate requests are rejected.
+Deploy both API and website, then open the existing failed assessment and retry.
+
+## Partnerships missing uncertainty basis
+
+An unknown/unverified claim without assumptions receives an explicit qualification
+that its supporting basis was not provided and requires verification. Its ID,
+text, evidence references and support status stay unchanged. This qualification
+is also exposed in unknowns, and the result is marked insufficient_data with a
+partial-result limitation. No substantive assumption, partner interest or verified
+fit is invented. Other evidence, reference and domain validation remains active.
+After deployment, retry the failed node to reuse the saved upstream results.
+
+## Shared specialist validation recovery
+
+CONTINUE_ON_NODE_VALIDATION_ERROR defaults to true. If a specialist rejects its
+output with a validation error or exhausts schema correction, the pipeline saves
+an explicit analysis_unavailable / insufficient_data result with no rejected
+claims, numbers or risks. Required report sections display this limitation, and
+subsequent specialists and the real Chair still run. Missing specialist analyses
+are included in committee conditions and prevent an unconditional Invest result.
+Set false for strict stop-on-validation-error behavior. Authentication, transport,
+retrieval, cancellation, audit and report-integrity failures still surface.
+
+Investment also marks non-unknown plan findings with a missing value or empty
+claim references as unknown, preserving their original text in visible gaps. It
+does not fabricate financial inputs or supporting claims. Chair domain validation
+receives one corrective model request; an invalid Chair result is not fabricated.
+
+## Chair after audit blockers
+
+With validation recovery enabled, audit blockers no longer trigger an automatic
+specialist repair cascade. The available analyses are preserved, blocked claims
+are marked unverified, and the actual Chair receives the audit findings and gaps.
+Malformed audit output is represented as unavailable verification, never a pass.
+The strict mode still retains its one subject-repair round.
+
+The website keeps polling API runs until completion, failure or navigation away;
+the former ten-minute polling pause is removed. This does not impose a provider
+timeout or guarantee that a provider request will finish. Existing processes use
+the code they started with; deploy and retry an interrupted/failed run to apply
+the new orchestration behavior.
+
+## Scope-safe Chair inputs
+
+In approach-level assessments, an upstream role containing program-scoped claims
+is now exposed as analysis_unavailable / scope_mismatch before downstream nodes
+consume it. No claim is relabeled to pretend its scope is broader. Compatible
+roles remain intact, and Chair receives explicit missing-analysis limitations.
+Retry applies the same check to saved outputs and reruns cached dependents of
+any replaced role. Program-level assessments continue to accept program claims.

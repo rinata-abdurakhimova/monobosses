@@ -49,7 +49,7 @@ async def science_test(case: CaseInput, settings: Settings = Depends(get_setting
     test_id = new_id("science-test")
     ctx = RunContext(case_id=test_id, run_id=test_id, snapshot_id="science-test-snapshot",
                      as_of_date=case.as_of_date, mode=RunMode.LIVE,
-                     budget=RunBudget(max_seconds=240, deadline=time.monotonic()+240,
+                     budget=RunBudget() if settings.provider_input_limit_test else RunBudget(max_seconds=240, deadline=time.monotonic()+240,
                                       max_cost_usd=settings.max_run_cost_usd))
     output = ScienceTestResult(test_id=test_id, status="failed")
     try:

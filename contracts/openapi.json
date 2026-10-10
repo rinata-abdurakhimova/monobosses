@@ -2115,9 +2115,9 @@
         ]
       }
     },
-    "/runs/{run_id}/trace": {
-      "get": {
-        "operationId": "get_run_trace_runs__run_id__trace_get",
+    "/runs/{run_id}/resume": {
+      "post": {
+        "operationId": "resume_run_runs__run_id__resume_post",
         "parameters": [
           {
             "in": "path",
@@ -2130,13 +2130,11 @@
           }
         ],
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Run Trace Runs  Run Id  Trace Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/RunCreated"
                 }
               }
             },
@@ -2162,6 +2160,16 @@
             },
             "description": "Not found"
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -2171,6 +2179,16 @@
               }
             },
             "description": "Validation error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Too many runs in progress"
           }
         },
         "security": [
@@ -2178,7 +2196,7 @@
             "APIKeyHeader": []
           }
         ],
-        "summary": "Get Run Trace",
+        "summary": "Resume Run",
         "tags": [
           "runs"
         ]

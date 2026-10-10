@@ -11,7 +11,7 @@ import hashlib
 
 import httpx
 
-from vic.config import get_settings
+from vic.config import Settings, get_settings
 from vic.contracts import CaseInput, EvidencePack, RunContext, RunMode, RunStage
 
 from .connectors.base import ConnectorResult, Sleep
@@ -42,6 +42,7 @@ async def build_evidence_pack(
     extra_documents: list[ParsedDocument] | None = None,
     overall_timeout: float = 60.0,
     sleep: Sleep = asyncio.sleep,
+    settings: Settings | None = None,
 ) -> EvidencePack:
     extra = list(extra_documents or [])
     warnings: list[str] = []
@@ -55,7 +56,7 @@ async def build_evidence_pack(
         return _finish(extra, warnings, ctx)
 
     as_of = ctx.as_of_date or case.as_of_date
-    settings = get_settings()
+    settings = settings or get_settings()
     ctx.trace.log(RunStage.RETRIEVE, f"retrieval caps: PubMed={settings.retrieval_pubmed_per_query}; trials={settings.retrieval_trials_per_query} per query; full excerpts retained")
     warnings.append(f"Reduced retrieval sample: up to {settings.retrieval_pubmed_per_query} PubMed records and {settings.retrieval_trials_per_query} trial records per query; this is not an exhaustive search.")
     own_client = client is None

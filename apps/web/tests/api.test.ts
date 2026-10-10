@@ -466,3 +466,18 @@ test("network and malformed responses stop without substituting a fixture", asyn
     createHttpApiClient({ basePath: "https://backend.example" }),
   );
 });
+
+test("API polling can run without a deadline and still stops at completion", async () => {
+  let calls = 0;
+  const result = await pollRun(
+    {
+      async getRun() {
+        return run(++calls === 3 ? "completed" : "running");
+      },
+    },
+    "run-1",
+    { intervalMs: 0, maxWaitMs: null },
+  );
+  assert.equal(result.status, "completed");
+  assert.equal(calls, 3);
+});

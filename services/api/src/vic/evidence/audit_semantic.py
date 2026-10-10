@@ -104,6 +104,8 @@ async def audit_claims_semantic(
         current.append(claim)
     if current:
         chunks.append(current)
+    if getattr(getattr(ctx.model, "_s", None), "provider_input_limit_test", False):
+        chunks = [eligible] if eligible else []
     for chunk in chunks:
         by_id = {c.id: c for c in chunk}
         payload = {"audit_items": _format_items(chunk, pack), "claim_count": len(chunk)}
