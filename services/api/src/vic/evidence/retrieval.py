@@ -8,19 +8,43 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+from dataclasses import replace
 
 import httpx
 
-from vic.config import get_settings
+from vic.config import Settings, get_settings
 from vic.contracts import CaseInput, EvidencePack, RunContext, RunMode, RunStage
 
 from .connectors.base import ConnectorResult, Sleep
 from .connectors.clinicaltrials import ClinicalTrialsConnector
 from .connectors.opentargets import OpenTargetsConnector, TargetResolution
 from .connectors.pubmed import PubMedConnector, build_queries
-from .importer import ParsedDocument, build_pack
+from .importer import Annotation, ParsedDocument, build_pack
 
 USER_AGENT = "vic-evidence/0.1 (virtual investment committee hackathon)"
+
+
+def _bounded_external(groups: list[list[ParsedDocument]], settings: Settings) -> list[ParsedDocument]:
+    """Keep a small, explicit sample and literal excerpts with original locators."""
+    selected = []
+    seen = set()
+    for index in range(max((len(group) for group in groups), default=0)):
+        for group in groups:
+            if index >= len(group) or group[index].source_id in seen:
+                continue
+            doc = group[index]
+            seen.add(doc.source_id)
+            annotation = doc.annotations[0] if doc.annotations else Annotation(
+                doc.units[0].text, doc.units[0].locator, "approach", [])
+            excerpt = annotation.excerpt.encode("utf-8")[:settings.retrieval_excerpt_max_bytes].decode("utf-8", "ignore")
+            if len(excerpt) < len(annotation.excerpt) and " " in excerpt:
+                excerpt = excerpt.rsplit(" ", 1)[0]
+            selected.append(replace(doc, annotations=[replace(annotation, excerpt=excerpt,
+                limitations=[*annotation.limitations,
+                    "Limited retrieval sample: omitted text may include safety or contradictory findings."])]))
+            if len(selected) >= settings.retrieval_max_external_documents:
+                return selected
+    return selected
 
 
 def _empty_pack(ctx: RunContext, warnings: list[str]) -> EvidencePack:
@@ -42,6 +66,7 @@ async def build_evidence_pack(
     extra_documents: list[ParsedDocument] | None = None,
     overall_timeout: float = 60.0,
     sleep: Sleep = asyncio.sleep,
+    settings: Settings | None = None,
 ) -> EvidencePack:
     extra = list(extra_documents or [])
     warnings: list[str] = []
@@ -55,16 +80,17 @@ async def build_evidence_pack(
         return _finish(extra, warnings, ctx)
 
     as_of = ctx.as_of_date or case.as_of_date
-    settings = get_settings()
-    ctx.trace.log(RunStage.RETRIEVE, f"retrieval caps: PubMed={settings.retrieval_pubmed_per_query}; trials={settings.retrieval_trials_per_query} per query; full excerpts retained")
-    warnings.append(f"Reduced retrieval sample: up to {settings.retrieval_pubmed_per_query} PubMed records and {settings.retrieval_trials_per_query} trial records per query; this is not an exhaustive search.")
+    settings = settings or get_settings()
+    pubmed_limit = min(settings.retrieval_pubmed_retmax, settings.retrieval_pubmed_per_query)
+    trials_limit = min(settings.retrieval_trials_page_size, settings.retrieval_trials_per_query)
+    ctx.trace.log(RunStage.RETRIEVE, f"retrieval caps: PubMed={pubmed_limit}; trials={trials_limit} per query")
     own_client = client is None
     client = client or httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
     try:
         jobs = {
-            "PubMed": PubMedConnector.from_env(client, retmax=settings.retrieval_pubmed_per_query, sleep=sleep).search(
+            "PubMed": PubMedConnector.from_env(client, retmax=pubmed_limit, sleep=sleep).search(
                 build_queries(case.mechanism, case.indication), as_of=as_of),
-            "ClinicalTrials.gov": ClinicalTrialsConnector(client, page_size=settings.retrieval_trials_per_query, sleep=sleep).search(
+            "ClinicalTrials.gov": ClinicalTrialsConnector(client, page_size=trials_limit, sleep=sleep).search(
                 condition=case.indication, intervention=case.mechanism, as_of=as_of),
             "Open Targets": OpenTargetsConnector(client, sleep=sleep).resolve(case.mechanism),
         }
@@ -79,6 +105,7 @@ async def build_evidence_pack(
             await client.aclose()
 
     external: list[ParsedDocument] = []
+    groups: list[list[ParsedDocument]] = []
     for name, task in tasks.items():
         if task in pending:
             warnings.append(
@@ -89,13 +116,14 @@ async def build_evidence_pack(
             continue
         try:
             result = task.result()
-        except Exception as exc:  # noqa: BLE001 -- connector failures become explicit source warnings
+        except Exception as exc:  # noqa: BLE001 - one connector failure must not stop retrieval
             warnings.append(f"{name}: unexpected error ({type(exc).__name__}); source skipped.")
             ctx.trace.log(RunStage.RETRIEVE, f"{name}: error {type(exc).__name__}")
             continue
         warnings.extend(result.warnings)
         if isinstance(result, ConnectorResult):
             external.extend(result.documents)
+            groups.append(result.documents)
             ctx.trace.log(RunStage.RETRIEVE, f"{name}: {result.status}, {len(result.documents)} documents")
         elif isinstance(result, TargetResolution):
             ctx.trace.log(RunStage.RETRIEVE, f"{name}: {result.status}")
@@ -105,7 +133,15 @@ async def build_evidence_pack(
             "No external evidence was retrieved. Do not read this as evidence of absence: "
             "see the per-source warnings above."
         )
-    return _finish(extra + external, warnings, ctx)
+    bounded = _bounded_external(groups, settings)
+    if external:
+        warnings.append(f"Limited external retrieval: {len(bounded)} of {len(external)} retrieved documents, "
+                        f"one excerpt per document, at most {settings.retrieval_excerpt_max_bytes} UTF-8 bytes each. "
+                        "This is a partial sample, not a systematic search or evidence of absence; "
+                        "omitted text may contain safety findings or contradictions.")
+        ctx.trace.log(RunStage.RETRIEVE, f"external input limited: documents={len(bounded)}, "
+                      f"excerpt_bytes={sum(len(d.annotations[0].excerpt.encode('utf-8')) for d in bounded)}")
+    return _finish(extra + bounded, warnings, ctx)
 
 
 async def _demo(indication: str, mechanism: str) -> None:
